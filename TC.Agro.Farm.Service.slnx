@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/common/">
+    <Project Path="../../common/src/TC.Agro.Contracts/TC.Agro.Contracts.csproj" />
+    <Project Path="../../common/src/TC.Agro.SharedKernel/TC.Agro.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+  </Folder>
+  <Folder Name="/src/Adapters/Driven (Outbound)/" />
+  <Folder Name="/src/Adapters/Driver (Inbound)/" />
+  <Folder Name="/src/Core/">
+    <Project Path="src/Core/TC.Agro.Farm.Domain/TC.Agro.Farm.Domain.csproj" />
+  </Folder>
+  <Folder Name="/test/" />
+</Solution>
