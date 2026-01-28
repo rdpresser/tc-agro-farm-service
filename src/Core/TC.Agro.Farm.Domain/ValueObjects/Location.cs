@@ -107,7 +107,8 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         }
 
         /// <summary>
-        /// Creates a Location from database values without validation.
+        /// Creates a Location from database values with minimal validation.
+        /// Only checks for null/whitespace address, skips length and format validation assuming database integrity.
         /// </summary>
         public static Result<Location> FromDb(string address, string city, string state, string country, double? latitude, double? longitude)
         {
