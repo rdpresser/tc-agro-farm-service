@@ -45,7 +45,7 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         }
 
         /// <summary>
-        /// Creates an Area from database value without validation.
+        /// Creates an Area from database value with minimal validation.
         /// </summary>
         public static Result<Area> FromDb(double hectares)
         {
