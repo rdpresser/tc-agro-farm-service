@@ -61,7 +61,8 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         }
 
         /// <summary>
-        /// Creates a Name from database value without validation.
+        /// Creates a Name from database value with minimal validation.
+        /// Only checks for null/whitespace, skips length and format validation assuming database integrity.
         /// </summary>
         public static Result<Name> FromDb(string value)
         {
