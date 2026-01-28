@@ -19,6 +19,9 @@
     <!-- Builds mais determinísticos -->
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Enable new .NET 10 Testing Platform for dotnet test -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
   <!-- Remove SonarAnalyzer from docker-compose projects -->
