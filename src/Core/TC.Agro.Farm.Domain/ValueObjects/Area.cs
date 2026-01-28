@@ -8,7 +8,6 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         private const double MinValue = 0.01; // Minimum 0.01 hectare (100 m²)
         private const double MaxValue = 1_000_000; // Maximum 1 million hectares
 
-        public static readonly ValidationError Required = new("Area.Required", "Area is required.");
         public static readonly ValidationError TooSmall = new("Area.TooSmall", $"Area must be at least {MinValue} hectares.");
         public static readonly ValidationError TooLarge = new("Area.TooLarge", $"Area cannot exceed {MaxValue:N0} hectares.");
         public static readonly ValidationError InvalidValue = new("Area.InvalidValue", "Area must be a positive number.");
