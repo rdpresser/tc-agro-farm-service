@@ -56,7 +56,8 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         }
 
         /// <summary>
-        /// Creates a SensorType from database value without validation.
+        /// Creates a SensorType from database value with minimal validation.
+        /// Only checks for null/whitespace, skips format validation assuming database integrity.
         /// </summary>
         public static Result<SensorType> FromDb(string value)
         {
