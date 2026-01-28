@@ -42,42 +42,47 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         {
             var errors = new List<ValidationError>();
 
+            var trimmedAddress = address?.Trim() ?? string.Empty;
+            var trimmedCity = city?.Trim() ?? string.Empty;
+            var trimmedState = state?.Trim() ?? string.Empty;
+            var trimmedCountry = country?.Trim() ?? string.Empty;
+
             // Address validation
-            if (string.IsNullOrWhiteSpace(address))
+            if (string.IsNullOrWhiteSpace(trimmedAddress))
             {
                 errors.Add(AddressRequired);
             }
-            else if (address.Length > MaxAddressLength)
+            else if (trimmedAddress.Length > MaxAddressLength)
             {
                 errors.Add(AddressTooLong);
             }
 
             // City validation
-            if (string.IsNullOrWhiteSpace(city))
+            if (string.IsNullOrWhiteSpace(trimmedCity))
             {
                 errors.Add(CityRequired);
             }
-            else if (city.Length > MaxCityLength)
+            else if (trimmedCity.Length > MaxCityLength)
             {
                 errors.Add(CityTooLong);
             }
 
             // State validation
-            if (string.IsNullOrWhiteSpace(state))
+            if (string.IsNullOrWhiteSpace(trimmedState))
             {
                 errors.Add(StateRequired);
             }
-            else if (state.Length > MaxStateLength)
+            else if (trimmedState.Length > MaxStateLength)
             {
                 errors.Add(StateTooLong);
             }
 
             // Country validation
-            if (string.IsNullOrWhiteSpace(country))
+            if (string.IsNullOrWhiteSpace(trimmedCountry))
             {
                 errors.Add(CountryRequired);
             }
-            else if (country.Length > MaxCountryLength)
+            else if (trimmedCountry.Length > MaxCountryLength)
             {
                 errors.Add(CountryTooLong);
             }
@@ -98,7 +103,7 @@ namespace TC.Agro.Farm.Domain.ValueObjects
                 return Result.Invalid(errors.ToArray());
             }
 
-            return Result.Success(new Location(address.Trim(), city.Trim(), state.Trim(), country.Trim(), latitude, longitude));
+            return Result.Success(new Location(trimmedAddress, trimmedCity, trimmedState, trimmedCountry, latitude, longitude));
         }
 
         /// <summary>

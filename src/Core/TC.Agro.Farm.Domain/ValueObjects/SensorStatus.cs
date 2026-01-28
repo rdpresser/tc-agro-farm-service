@@ -36,13 +36,15 @@ namespace TC.Agro.Farm.Domain.ValueObjects
                 return Result.Invalid(Required);
             }
 
-            if (!ValidStatuses.Contains(value))
+            var trimmedValue = value.Trim();
+
+            if (!ValidStatuses.Contains(trimmedValue))
             {
                 return Result.Invalid(InvalidValue);
             }
 
             // Normalize to proper casing
-            string normalizedValue = ValidStatuses.First(s => s.Equals(value, StringComparison.OrdinalIgnoreCase));
+            string normalizedValue = ValidStatuses.First(s => s.Equals(trimmedValue, StringComparison.OrdinalIgnoreCase));
 
             return Result.Success(new SensorStatus(normalizedValue));
         }
@@ -75,7 +77,7 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         public bool IsMaintenance => Value == Maintenance;
         public bool IsFaulty => Value == Faulty;
 
-        public static IReadOnlyCollection<string> GetValidStatuses() => ValidStatuses;
+        public static IReadOnlyCollection<string> GetValidStatuses() => ValidStatuses.ToList().AsReadOnly();
 
         public static implicit operator string(SensorStatus status) => status.Value;
 

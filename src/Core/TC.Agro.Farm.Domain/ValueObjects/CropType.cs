@@ -57,23 +57,27 @@ namespace TC.Agro.Farm.Domain.ValueObjects
             }
             else
             {
-                if (value.Length > MaxLength)
+                var trimmedValue = value.Trim();
+
+                if (trimmedValue.Length > MaxLength)
                 {
                     errors.Add(TooLong);
                 }
 
-                if (!ValidCropTypeRegex.IsMatch(value))
+                if (!ValidCropTypeRegex.IsMatch(trimmedValue))
                 {
                     errors.Add(InvalidValue);
                 }
+
+                if (errors.Count > 0)
+                {
+                    return Result.Invalid(errors.ToArray());
+                }
+
+                return Result.Success(new CropType(trimmedValue));
             }
 
-            if (errors.Count > 0)
-            {
-                return Result.Invalid(errors.ToArray());
-            }
-
-            return Result.Success(new CropType(value.Trim()));
+            return Result.Invalid(errors.ToArray());
         }
 
         /// <summary>

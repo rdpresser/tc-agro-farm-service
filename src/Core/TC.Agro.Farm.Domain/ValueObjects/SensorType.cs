@@ -42,13 +42,15 @@ namespace TC.Agro.Farm.Domain.ValueObjects
                 return Result.Invalid(Required);
             }
 
-            if (!ValidTypes.Contains(value))
+            var trimmedValue = value.Trim();
+
+            if (!ValidTypes.Contains(trimmedValue))
             {
                 return Result.Invalid(InvalidValue);
             }
 
             // Normalize to proper casing
-            string normalizedValue = ValidTypes.First(t => t.Equals(value, StringComparison.OrdinalIgnoreCase));
+            string normalizedValue = ValidTypes.First(t => t.Equals(trimmedValue, StringComparison.OrdinalIgnoreCase));
 
             return Result.Success(new SensorType(normalizedValue));
         }
@@ -66,7 +68,7 @@ namespace TC.Agro.Farm.Domain.ValueObjects
             return Result.Success(new SensorType(value));
         }
 
-        public static IReadOnlyCollection<string> GetValidTypes() => ValidTypes;
+        public static IReadOnlyCollection<string> GetValidTypes() => ValidTypes.ToList().AsReadOnly();
 
         public static implicit operator string(SensorType sensorType) => sensorType.Value;
 
