@@ -81,7 +81,8 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         }
 
         /// <summary>
-        /// Creates a CropType from database value without validation.
+        /// Creates a CropType from database value with minimal validation.
+        /// Only checks for null/whitespace, skips length and format validation assuming database integrity.
         /// </summary>
         public static Result<CropType> FromDb(string value)
         {
