@@ -15,5 +15,7 @@
   <Folder Name="/src/Core/">
     <Project Path="src/Core/TC.Agro.Farm.Domain/TC.Agro.Farm.Domain.csproj" />
   </Folder>
-  <Folder Name="/test/" />
+  <Folder Name="/test/">
+    <Project Path="test/TC.Agro.Farm.Tests/TC.Agro.Farm.Tests.csproj" />
+  </Folder>
 </Solution>
