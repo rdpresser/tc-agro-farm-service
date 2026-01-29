@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\common\src\TC.Agro.Contracts\TC.Agro.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\common\src\TC.Agro.SharedKernel\TC.Agro.SharedKernel.csproj" />
+    <ProjectReference Include="..\TC.Agro.Farm.Domain\TC.Agro.Farm.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FastEndpoints" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>

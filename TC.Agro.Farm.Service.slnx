@@ -13,6 +13,7 @@
   <Folder Name="/src/Adapters/Driven (Outbound)/" />
   <Folder Name="/src/Adapters/Driver (Inbound)/" />
   <Folder Name="/src/Core/">
+    <Project Path="src/Core/TC.Agro.Farm.Application/TC.Agro.Farm.Application.csproj" />
     <Project Path="src/Core/TC.Agro.Farm.Domain/TC.Agro.Farm.Domain.csproj" />
   </Folder>
   <Folder Name="/test/">
