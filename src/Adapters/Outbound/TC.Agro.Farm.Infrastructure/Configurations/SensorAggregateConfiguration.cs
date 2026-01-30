@@ -28,6 +28,10 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                     .HasMaxLength(50);
 
                 type.WithOwner();
+
+                // Index for type filtering
+                type.HasIndex(t => t.Value)
+                    .HasDatabaseName("ix_sensors_type");
             });
 
             // SensorStatus value object - single column
@@ -39,6 +43,9 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                     .HasMaxLength(20);
 
                 status.WithOwner();
+
+                status.HasIndex(st => st.Value)
+                    .HasDatabaseName("ix_sensors_status");
             });
 
             // InstalledAt - required timestamp
@@ -60,14 +67,6 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             // Navigation properties
             builder.Navigation(s => s.Type).IsRequired();
             builder.Navigation(s => s.Status).IsRequired();
-
-            // Index for type filtering
-            builder.HasIndex(s => s.Type)
-                .HasDatabaseName("ix_sensors_type");
-
-            // Index for status filtering
-            builder.HasIndex(s => s.Status)
-                .HasDatabaseName("ix_sensors_status");
         }
     }
 }

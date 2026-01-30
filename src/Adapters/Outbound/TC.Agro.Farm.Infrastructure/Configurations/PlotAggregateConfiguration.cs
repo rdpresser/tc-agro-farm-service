@@ -57,7 +57,8 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             builder.Navigation(p => p.AreaHectares).IsRequired();
 
             // Composite index for name uniqueness per property
-            builder.HasIndex(p => new { p.PropertyId, p.Name })
+            builder.HasIndex(p => new { p.PropertyId, p.Name.Value })
+                .IsUnique()
                 .HasDatabaseName("ix_plots_property_id_name");
         }
     }
