@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TC.Agro.Farm.Domain.Aggregates;
-using TC.Agro.Farm.Domain.ValueObjects;
 using TC.Agro.SharedKernel.Infrastructure.Database.EfCore;
 
 namespace TC.Agro.Farm.Infrastructure.Configurations
