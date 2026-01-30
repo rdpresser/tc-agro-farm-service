@@ -16,9 +16,9 @@ namespace TC.Agro.Farm.Infrastructure
         /// </summary>
         public const string Schema = "farm";
 
-        public DbSet<PropertyAggregate> Properties { get; set; }
-        public DbSet<PlotAggregate> Plots { get; set; }
-        public DbSet<SensorAggregate> Sensors { get; set; }
+        public DbSet<PropertyAggregate> Properties { get; set; } = default!;
+        public DbSet<PlotAggregate> Plots { get; set; } = default!;
+        public DbSet<SensorAggregate> Sensors { get; set; } = default!;
 
         /// <inheritdoc />
         public DbContext DbContext => this;
