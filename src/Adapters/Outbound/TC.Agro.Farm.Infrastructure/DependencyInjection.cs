@@ -51,7 +51,7 @@ namespace TC.Agro.Farm.Infrastructure
 
                 // Enable lazy loading proxies
                 ////opts.UseLazyLoadingProxies();
-                ///
+
                 // Use Serilog for EF Core logging
                 opts.LogTo(Log.Logger.Information, LogLevel.Information);
 
