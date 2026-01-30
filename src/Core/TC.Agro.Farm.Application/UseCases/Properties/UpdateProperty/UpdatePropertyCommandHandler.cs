@@ -98,7 +98,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.UpdateProperty
                     handlerName: nameof(UpdatePropertyCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, PropertyUpdatedIntegrationEvent>>
                     {
-                        { typeof(PropertyUpdatedDomainEvent), e => UpdatePropertyMapper.ToIntegrationEvent((PropertyUpdatedDomainEvent)e) }
+                        { typeof(PropertyUpdatedDomainEvent), e => UpdatePropertyMapper.ToIntegrationEvent((PropertyUpdatedDomainEvent)e, aggregate.OwnerId) }
                     });
 
             foreach (var evt in integrationEvents)

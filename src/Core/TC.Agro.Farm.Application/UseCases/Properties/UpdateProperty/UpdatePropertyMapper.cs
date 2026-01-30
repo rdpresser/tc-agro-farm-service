@@ -18,7 +18,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.UpdateProperty
                 UpdatedAt: aggregate.UpdatedAt ?? aggregate.CreatedAt);
         }
 
-        public static PropertyUpdatedIntegrationEvent ToIntegrationEvent(PropertyUpdatedDomainEvent domainEvent)
+        public static PropertyUpdatedIntegrationEvent ToIntegrationEvent(PropertyUpdatedDomainEvent domainEvent, Guid ownerId)
             => new(
                 domainEvent.AggregateId,
                 domainEvent.Name,
@@ -29,6 +29,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.UpdateProperty
                 domainEvent.Latitude,
                 domainEvent.Longitude,
                 domainEvent.AreaHectares,
+                ownerId,
                 domainEvent.OccurredOn);
     }
 }
