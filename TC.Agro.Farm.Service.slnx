@@ -10,7 +10,11 @@
     <File Path="Directory.Packages.props" />
     <File Path="global.json" />
   </Folder>
-  <Folder Name="/src/Adapters/Driven (Outbound)/" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/Adapters/" />
+  <Folder Name="/src/Adapters/Driven (Outbound)/">
+    <Project Path="src/Adapters/Outbound/TC.Agro.Farm.Infrastructure/TC.Agro.Farm.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Adapters/Driver (Inbound)/" />
   <Folder Name="/src/Core/">
     <Project Path="src/Core/TC.Agro.Farm.Application/TC.Agro.Farm.Application.csproj" />
