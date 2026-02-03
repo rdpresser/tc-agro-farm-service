@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "TC.Agro.Farm.Service": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:54007;http://localhost:54008"
+    }
+  }
+}
