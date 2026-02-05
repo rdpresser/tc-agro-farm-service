@@ -43,7 +43,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
                     "Fazenda Boa Vista",
                     "Temperature",
                     "Active",
-                    "Sensor Norte #1",
+                    "Sensor Norte 1",
                     DateTimeOffset.UtcNow.AddDays(-30),
                     DateTimeOffset.UtcNow.AddDays(-7));
                 s.Responses[200] = "Returned when the sensor is found.";

@@ -37,13 +37,13 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
                 s.ExampleRequest = new RegisterSensorCommand(
                     Guid.NewGuid(),
                     faker.PickRandom(SensorTypes),
-                    "Sensor Norte #1");
+                    "Sensor Norte 1");
                 s.ResponseExamples[201] = new RegisterSensorResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
                     "Temperature",
                     "Active",
-                    "Sensor Norte #1",
+                    "Sensor Norte 1",
                     DateTimeOffset.UtcNow);
                 s.Responses[201] = "Returned when the sensor is successfully registered.";
                 s.Responses[400] = "Returned when the request contains validation errors.";
