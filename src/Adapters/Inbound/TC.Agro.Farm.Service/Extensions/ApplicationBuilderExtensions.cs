@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.HttpOverrides;
+
 namespace TC.Agro.Farm.Service.Extensions
 {
     [ExcludeFromCodeCoverage]
@@ -166,15 +168,31 @@ namespace TC.Agro.Farm.Service.Extensions
             return app;
         }
 
-        // Configures custom middlewares including HTTPS redirection, exception handling, correlation, logging, and health checks
+        /// <summary>
+        /// Configures early-stage middlewares that must run BEFORE TelemetryMiddleware and Authentication.
+        /// This includes exception handling, correlation ID extraction, request logging, and health checks.
+        ///
+        /// MIDDLEWARE EXECUTION ORDER (CRITICAL):
+        /// 1. ExceptionHandler - Catches all exceptions and transforms to problem details
+        /// 2. CorrelationMiddleware - Extracts/generates correlation ID and sets ICorrelationIdGenerator
+        /// 3. SerilogRequestLogging - Logs HTTP requests with correlation ID in context
+        /// 4. HealthChecks - /health, /ready, /live, /metrics endpoints
+        ///
+        /// THEN (in Program.cs):
+        /// 5. TelemetryMiddleware - Uses correlation ID from ICorrelationIdGenerator, creates root Activity/span
+        /// 6. Authentication/Authorization - JWT validation
+        /// 7. FastEndpoints - Route handlers
+        ///
+        /// NOTE: This method is called in Program.cs BEFORE TelemetryMiddleware, but AFTER CORS and IngressPathBase.
+        /// TelemetryMiddleware is registered separately in Program.cs to maintain correct execution order.
+        /// </summary>
         public static IApplicationBuilder UseCustomMiddlewares(this IApplicationBuilder app)
         {
             // Enables proxy headers (important for ACA)
-            ////app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All });
+            app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All });
 
             app.UseCustomExceptionHandler()
                 .UseCorrelationMiddleware()
-                ////.UseMiddleware<TelemetryMiddleware>() // Add telemetry middleware after correlation --------------> chamada futura
                 .UseSerilogRequestLogging()
                 .UseHealthChecks("/health", new HealthCheckOptions
                 {
@@ -191,7 +209,24 @@ namespace TC.Agro.Farm.Service.Extensions
                     Predicate = check => check.Tags.Contains("live"),
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                 })
-                // Add Prometheus metrics endpoint
+                // ============================================================
+                // METRICS ENDPOINT STRATEGY
+                // ============================================================
+                // This endpoint exposes metrics in Prometheus format for scraping.
+                //
+                // DUAL APPROACH (Current):
+                // 1. OTLP Push: App sends metrics to OTEL Collector (AddOtlpExporter in ServiceCollectionExtensions)
+                //    → Centralized processing, label normalization, batching
+                // 2. Prometheus Scrape: This endpoint allows backup scraping if needed
+                //    → Direct access without OTEL Collector dependency
+                //
+                // WHEN TO USE EACH:
+                // - Use OTLP Push (primary): When you need OTEL Collector processing (label cleanup, aggregation)
+                // - Use Prometheus Scrape (backup): For direct Prometheus access, troubleshooting, or redundancy
+                //
+                // NO DUPLICATION: Prometheus scrapes from OTEL Collector:8889, not this endpoint
+                // This endpoint is here for flexibility and direct access if needed.
+                // ============================================================
                 .UseOpenTelemetryPrometheusScrapingEndpoint("/metrics");
 
             return app;
