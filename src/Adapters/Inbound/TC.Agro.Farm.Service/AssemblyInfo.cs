@@ -54,7 +54,9 @@ global using Wolverine.EntityFrameworkCore;
 global using Wolverine.ErrorHandling;
 global using Wolverine.Postgresql;
 global using Wolverine.RabbitMQ;
+// ZiggyCreatures.Caching.Fusion
 global using ZiggyCreatures.Caching.Fusion;
+global using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 global using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 //**//
 using System.Runtime.CompilerServices;
