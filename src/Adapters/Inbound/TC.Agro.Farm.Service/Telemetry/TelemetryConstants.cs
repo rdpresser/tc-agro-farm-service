@@ -19,9 +19,11 @@ namespace TC.Agro.Farm.Service.Telemetry
         public const string FarmActivitySource = "TC.Agro.Farm.Service";
         public const string DatabaseActivitySource = "TC.Agro.Farm.Service.Database";
         public const string CacheActivitySource = "TC.Agro.Farm.Service.Cache";
+        public const string HandlersActivitySource = "TC.Agro.Farm.Handlers";
+        public const string FastEndpointsActivitySource = "TC.Agro.Farm.FastEndpoints";
 
         // Header Names (standardized)
-        public const string CorrelationIdHeader = "x-correlation-id";
+        public const string CorrelationIdHeader = "X-Correlation-ID";
 
         // Tag Names (using underscores for consistency with Loki labels)
         public const string ServiceComponent = "service.component";
