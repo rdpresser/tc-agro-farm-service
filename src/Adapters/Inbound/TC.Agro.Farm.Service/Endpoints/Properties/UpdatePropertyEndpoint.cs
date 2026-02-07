@@ -1,15 +1,3 @@
-using System.Net;
-
-using Bogus;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Properties.UpdateProperty;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
-
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
     public sealed class UpdatePropertyEndpoint : BaseApiEndpoint<UpdatePropertyCommand, UpdatePropertyResponse>
@@ -18,6 +6,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         {
             Put("property/{id:guid}");
             PostProcessor<LoggingCommandPostProcessorBehavior<UpdatePropertyCommand, UpdatePropertyResponse>>();
+            PostProcessor<CacheInvalidationPostProcessorBehavior<UpdatePropertyCommand, UpdatePropertyResponse>>();
 
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(

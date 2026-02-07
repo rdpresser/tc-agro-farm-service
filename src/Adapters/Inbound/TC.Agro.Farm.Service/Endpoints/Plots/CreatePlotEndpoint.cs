@@ -1,13 +1,3 @@
-using System.Net;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Plots.CreatePlot;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
-
 namespace TC.Agro.Farm.Service.Endpoints.Plots
 {
     public sealed class CreatePlotEndpoint : BaseApiEndpoint<CreatePlotCommand, CreatePlotResponse>
@@ -16,6 +6,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
         {
             Post("plot");
             PostProcessor<LoggingCommandPostProcessorBehavior<CreatePlotCommand, CreatePlotResponse>>();
+            PostProcessor<CacheInvalidationPostProcessorBehavior<CreatePlotCommand, CreatePlotResponse>>();
 
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(

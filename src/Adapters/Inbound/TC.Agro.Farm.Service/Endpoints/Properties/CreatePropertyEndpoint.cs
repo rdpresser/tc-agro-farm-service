@@ -1,15 +1,3 @@
-using System.Net;
-
-using Bogus;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Properties.CreateProperty;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
-
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
     public sealed class CreatePropertyEndpoint : BaseApiEndpoint<CreatePropertyCommand, CreatePropertyResponse>
@@ -18,6 +6,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         {
             Post("property");
             PostProcessor<LoggingCommandPostProcessorBehavior<CreatePropertyCommand, CreatePropertyResponse>>();
+            PostProcessor<CacheInvalidationPostProcessorBehavior<CreatePropertyCommand, CreatePropertyResponse>>();
 
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(

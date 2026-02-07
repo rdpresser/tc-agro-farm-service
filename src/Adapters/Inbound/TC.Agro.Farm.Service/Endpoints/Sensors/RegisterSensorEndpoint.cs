@@ -1,15 +1,3 @@
-using System.Net;
-
-using Bogus;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Sensors.RegisterSensor;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
-
 namespace TC.Agro.Farm.Service.Endpoints.Sensors
 {
     public sealed class RegisterSensorEndpoint : BaseApiEndpoint<RegisterSensorCommand, RegisterSensorResponse>
@@ -20,6 +8,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         {
             Post("sensor");
             PostProcessor<LoggingCommandPostProcessorBehavior<RegisterSensorCommand, RegisterSensorResponse>>();
+            PostProcessor<CacheInvalidationPostProcessorBehavior<RegisterSensorCommand, RegisterSensorResponse>>();
 
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
