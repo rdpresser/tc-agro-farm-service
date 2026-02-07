@@ -12,6 +12,12 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.GetPlotById
         public TimeSpan? Duration => null;
         public TimeSpan? DistributedCacheDuration => null;
 
+        public IReadOnlyCollection<string> CacheTags =>
+        [
+            CacheTagCatalog.Plots,
+            CacheTagCatalog.PlotById
+        ];
+
         public void SetCacheKey(string cacheKey)
             => _cacheKey = $"GetPlotByIdQuery-{Id}-{cacheKey}";
     }

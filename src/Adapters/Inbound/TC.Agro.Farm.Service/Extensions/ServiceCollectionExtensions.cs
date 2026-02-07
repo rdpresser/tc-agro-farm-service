@@ -1,9 +1,3 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Tokens;
-using TC.Agro.Farm.Service.Telemetry;
-
 namespace TC.Agro.Farm.Service.Extensions
 {
     internal static class ServiceCollectionExtensions

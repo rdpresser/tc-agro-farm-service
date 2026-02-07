@@ -22,6 +22,12 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.GetPlotList
         public TimeSpan? Duration => null;
         public TimeSpan? DistributedCacheDuration => null;
 
+        public IReadOnlyCollection<string> CacheTags =>
+        [
+            CacheTagCatalog.Plots,
+            CacheTagCatalog.PlotList
+        ];
+
         public void SetCacheKey(string cacheKey)
         {
             _cacheKey = $"GetPlotListQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{PropertyId}-{CropType}-{cacheKey}";

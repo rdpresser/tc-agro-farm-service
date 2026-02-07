@@ -23,6 +23,11 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList
 
         public TimeSpan? Duration => null;
         public TimeSpan? DistributedCacheDuration => null;
+        public IReadOnlyCollection<string> CacheTags => new[]
+        {
+            global::TC.Agro.Farm.Application.Abstractions.CacheTags.Sensors,
+            global::TC.Agro.Farm.Application.Abstractions.CacheTags.SensorList
+        };
 
         public void SetCacheKey(string cacheKey)
         {

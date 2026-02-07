@@ -21,6 +21,12 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList
         public TimeSpan? Duration => null;
         public TimeSpan? DistributedCacheDuration => null;
 
+        public IReadOnlyCollection<string> CacheTags =>
+        [
+            CacheTagCatalog.Properties,
+            CacheTagCatalog.PropertyList
+        ];
+
         public void SetCacheKey(string cacheKey)
         {
             _cacheKey = $"GetPropertyListQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{OwnerId}-{cacheKey}";
