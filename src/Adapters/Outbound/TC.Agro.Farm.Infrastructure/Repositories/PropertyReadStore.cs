@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyById;
 using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList;
@@ -18,7 +17,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         /// <inheritdoc />
         public async Task<PropertyByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var property = await _dbContext.Set<PropertyAggregate>()
+            var property = await _dbContext.Properties
                 .AsNoTracking()
                 .Where(p => p.Id == id && p.IsActive)
                 .Select(p => new
@@ -44,7 +43,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 return null;
 
             // Get plot count
-            var plotCount = await _dbContext.Set<PlotAggregate>()
+            var plotCount = await _dbContext.Plots
                 .AsNoTracking()
                 .CountAsync(plot => plot.PropertyId == id && plot.IsActive, cancellationToken)
                 .ConfigureAwait(false);
@@ -67,11 +66,11 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<IReadOnlyList<PropertyListResponse>> GetPropertyListAsync(
+        public async Task<(IReadOnlyList<PropertyListResponse> Properties, int TotalCount)> GetPropertyListAsync(
             GetPropertyListQuery query,
             CancellationToken cancellationToken = default)
         {
-            var propertiesQuery = _dbContext.Set<PropertyAggregate>()
+            var propertiesQuery = _dbContext.Properties
                 .AsNoTracking()
                 .Where(p => p.IsActive);
 
@@ -91,6 +90,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     EF.Functions.ILike(p.Location.State, pattern) ||
                     EF.Functions.ILike(p.Location.Country, pattern));
             }
+
+            // Get total count before pagination
+            var totalCount = await propertiesQuery.CountAsync(cancellationToken).ConfigureAwait(false);
 
             // Apply sorting
             propertiesQuery = query.SortBy.ToLowerInvariant() switch
@@ -135,7 +137,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             // Get plot counts for all properties in a single query
             var propertyIds = properties.Select(p => p.Id).ToList();
-            var plotCounts = await _dbContext.Set<PlotAggregate>()
+            var plotCounts = await _dbContext.Plots
                 .AsNoTracking()
                 .Where(plot => propertyIds.Contains(plot.PropertyId) && plot.IsActive)
                 .GroupBy(plot => plot.PropertyId)
@@ -143,7 +145,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .ToDictionaryAsync(x => x.PropertyId, x => x.Count, cancellationToken)
                 .ConfigureAwait(false);
 
-            return properties.Select(p => new PropertyListResponse(
+            var results = properties.Select(p => new PropertyListResponse(
                 p.Id,
                 p.Name,
                 p.City,
@@ -154,35 +156,8 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 p.IsActive,
                 plotCounts.GetValueOrDefault(p.Id, 0),
                 p.CreatedAt)).ToList();
-        }
 
-        /// <inheritdoc />
-        public async Task<int> GetPropertyCountAsync(
-            GetPropertyListQuery query,
-            CancellationToken cancellationToken = default)
-        {
-            var propertiesQuery = _dbContext.Set<PropertyAggregate>()
-                .AsNoTracking()
-                .Where(p => p.IsActive);
-
-            // Apply owner filter
-            if (query.OwnerId.HasValue)
-            {
-                propertiesQuery = propertiesQuery.Where(p => p.OwnerId == query.OwnerId.Value);
-            }
-
-            // Apply text filter
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var pattern = $"%{query.Filter}%";
-                propertiesQuery = propertiesQuery.Where(p =>
-                    EF.Functions.ILike(p.Name.Value, pattern) ||
-                    EF.Functions.ILike(p.Location.City, pattern) ||
-                    EF.Functions.ILike(p.Location.State, pattern) ||
-                    EF.Functions.ILike(p.Location.Country, pattern));
-            }
-
-            return await propertiesQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+            return ([.. results], totalCount);
         }
     }
 }

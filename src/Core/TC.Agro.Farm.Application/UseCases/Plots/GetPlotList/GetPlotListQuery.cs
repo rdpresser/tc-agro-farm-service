@@ -1,9 +1,11 @@
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
+
 namespace TC.Agro.Farm.Application.UseCases.Plots.GetPlotList
 {
     /// <summary>
     /// Query to get a paginated list of plots.
     /// </summary>
-    public sealed record GetPlotListQuery : ICachedQuery<IReadOnlyList<PlotListResponse>>
+    public sealed record GetPlotListQuery : ICachedQuery<PaginatedResponse<PlotListResponse>>
     {
         public int PageNumber { get; init; } = 1;
         public int PageSize { get; init; } = 10;

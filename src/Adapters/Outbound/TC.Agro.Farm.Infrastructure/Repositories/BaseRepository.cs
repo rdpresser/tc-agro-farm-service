@@ -1,6 +1,3 @@
-using TC.Agro.SharedKernel.Domain.Aggregate;
-using TC.Agro.SharedKernel.Infrastructure.Database.EfCore;
-
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     /// <summary>

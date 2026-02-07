@@ -1,9 +1,11 @@
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
+
 namespace TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList
 {
     /// <summary>
     /// Query to get a paginated list of properties.
     /// </summary>
-    public sealed record GetPropertyListQuery : ICachedQuery<IReadOnlyList<PropertyListResponse>>
+    public sealed record GetPropertyListQuery : ICachedQuery<PaginatedResponse<PropertyListResponse>>
     {
         public int PageNumber { get; init; } = 1;
         public int PageSize { get; init; } = 10;

@@ -1,17 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Serilog;
 using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Infrastructure.Messaging;
 using TC.Agro.Farm.Infrastructure.Repositories;
-using TC.Agro.SharedKernel.Application.Ports;
 using TC.Agro.SharedKernel.Infrastructure;
-using TC.Agro.SharedKernel.Infrastructure.Database;
-using Wolverine.EntityFrameworkCore;
 
 namespace TC.Agro.Farm.Infrastructure
 {

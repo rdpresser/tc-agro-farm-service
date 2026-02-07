@@ -1,10 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
 using TC.Agro.Farm.Domain.Aggregates;
-using TC.Agro.SharedKernel.Application.Ports;
-using TC.Agro.SharedKernel.Domain.Events;
-using TC.Agro.SharedKernel.Infrastructure.Database.EfCore;
 
 namespace TC.Agro.Farm.Infrastructure
 {

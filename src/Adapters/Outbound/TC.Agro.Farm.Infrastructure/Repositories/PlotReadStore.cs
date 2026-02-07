@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Application.UseCases.Plots.GetPlotById;
 using TC.Agro.Farm.Application.UseCases.Plots.GetPlotList;
@@ -18,7 +17,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         /// <inheritdoc />
         public async Task<PlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var plot = await _dbContext.Set<PlotAggregate>()
+            var plot = await _dbContext.Plots
                 .AsNoTracking()
                 .Where(p => p.Id == id && p.IsActive)
                 .Select(p => new
@@ -39,7 +38,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 return null;
 
             // Get property name
-            var propertyName = await _dbContext.Set<PropertyAggregate>()
+            var propertyName = await _dbContext.Properties
                 .AsNoTracking()
                 .Where(prop => prop.Id == plot.PropertyId)
                 .Select(prop => prop.Name.Value)
@@ -47,7 +46,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .ConfigureAwait(false) ?? "Unknown";
 
             // Get sensor count
-            var sensorCount = await _dbContext.Set<SensorAggregate>()
+            var sensorCount = await _dbContext.Sensors
                 .AsNoTracking()
                 .CountAsync(s => s.PlotId == id && s.IsActive, cancellationToken)
                 .ConfigureAwait(false);
@@ -66,11 +65,11 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<IReadOnlyList<PlotListResponse>> GetPlotListAsync(
+        public async Task<(IReadOnlyList<PlotListResponse> Plots, int TotalCount)> GetPlotListAsync(
             GetPlotListQuery query,
             CancellationToken cancellationToken = default)
         {
-            var plotsQuery = _dbContext.Set<PlotAggregate>()
+            var plotsQuery = _dbContext.Plots
                 .AsNoTracking()
                 .Where(p => p.IsActive);
 
@@ -94,6 +93,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     EF.Functions.ILike(p.Name.Value, pattern) ||
                     EF.Functions.ILike(p.CropType.Value, pattern));
             }
+
+            // Get total count before pagination
+            var totalCount = await plotsQuery.CountAsync(cancellationToken).ConfigureAwait(false);
 
             // Apply sorting
             plotsQuery = query.SortBy.ToLowerInvariant() switch
@@ -133,7 +135,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             // Get property names for all plots in a single query
             var propertyIds = plots.Select(p => p.PropertyId).Distinct().ToList();
-            var propertyNames = await _dbContext.Set<PropertyAggregate>()
+            var propertyNames = await _dbContext.Properties
                 .AsNoTracking()
                 .Where(prop => propertyIds.Contains(prop.Id))
                 .Select(prop => new { prop.Id, Name = prop.Name.Value })
@@ -142,7 +144,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             // Get sensor counts for all plots in a single query
             var plotIds = plots.Select(p => p.Id).ToList();
-            var sensorCounts = await _dbContext.Set<SensorAggregate>()
+            var sensorCounts = await _dbContext.Sensors
                 .AsNoTracking()
                 .Where(s => plotIds.Contains(s.PlotId) && s.IsActive)
                 .GroupBy(s => s.PlotId)
@@ -150,7 +152,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .ToDictionaryAsync(x => x.PlotId, x => x.Count, cancellationToken)
                 .ConfigureAwait(false);
 
-            return plots.Select(p => new PlotListResponse(
+            var results = plots.Select(p => new PlotListResponse(
                 p.Id,
                 p.PropertyId,
                 propertyNames.GetValueOrDefault(p.PropertyId, "Unknown"),
@@ -160,39 +162,8 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 p.IsActive,
                 sensorCounts.GetValueOrDefault(p.Id, 0),
                 p.CreatedAt)).ToList();
-        }
 
-        /// <inheritdoc />
-        public async Task<int> GetPlotCountAsync(
-            GetPlotListQuery query,
-            CancellationToken cancellationToken = default)
-        {
-            var plotsQuery = _dbContext.Set<PlotAggregate>()
-                .AsNoTracking()
-                .Where(p => p.IsActive);
-
-            // Apply property filter
-            if (query.PropertyId.HasValue)
-            {
-                plotsQuery = plotsQuery.Where(p => p.PropertyId == query.PropertyId.Value);
-            }
-
-            // Apply crop type filter
-            if (!string.IsNullOrWhiteSpace(query.CropType))
-            {
-                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(p.CropType.Value, query.CropType));
-            }
-
-            // Apply text filter
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var pattern = $"%{query.Filter}%";
-                plotsQuery = plotsQuery.Where(p =>
-                    EF.Functions.ILike(p.Name.Value, pattern) ||
-                    EF.Functions.ILike(p.CropType.Value, pattern));
-            }
-
-            return await plotsQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+            return ([.. results], totalCount);
         }
     }
 }

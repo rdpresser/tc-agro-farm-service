@@ -16,14 +16,7 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         /// <summary>
         /// Gets a paginated list of plots with optional filtering.
         /// </summary>
-        Task<IReadOnlyList<PlotListResponse>> GetPlotListAsync(
-            GetPlotListQuery query,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets the total count of plots matching the filter criteria.
-        /// </summary>
-        Task<int> GetPlotCountAsync(
+        Task<(IReadOnlyList<PlotListResponse> Plots, int TotalCount)> GetPlotListAsync(
             GetPlotListQuery query,
             CancellationToken cancellationToken = default);
     }

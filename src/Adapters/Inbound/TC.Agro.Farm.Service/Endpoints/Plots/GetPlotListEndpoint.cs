@@ -1,18 +1,8 @@
-using System.Net;
-
-using Bogus;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Plots.GetPlotList;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
 
 namespace TC.Agro.Farm.Service.Endpoints.Plots
 {
-    public sealed class GetPlotListEndpoint : BaseApiEndpoint<GetPlotListQuery, IReadOnlyList<PlotListResponse>>
+    public sealed class GetPlotListEndpoint : BaseApiEndpoint<GetPlotListQuery, PaginatedResponse<PlotListResponse>>
     {
         private static readonly string[] CropTypes = ["Soja", "Milho", "Café", "Cana-de-açúcar", "Algodão"];
 
@@ -24,11 +14,11 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
             RequestBinder(new RequestBinder<GetPlotListQuery>(BindingSource.QueryParams));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<GetPlotListQuery, IReadOnlyList<PlotListResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<GetPlotListQuery, IReadOnlyList<PlotListResponse>>>();
+            PreProcessor<QueryCachingPreProcessorBehavior<GetPlotListQuery, PaginatedResponse<PlotListResponse>>>();
+            PostProcessor<QueryCachingPostProcessorBehavior<GetPlotListQuery, PaginatedResponse<PlotListResponse>>>();
 
             Description(
-                x => x.Produces<IReadOnlyList<PlotListResponse>>(200)
+                x => x.Produces<PaginatedResponse<PlotListResponse>>(200)
                       .ProducesProblemDetails()
                       .Produces((int)HttpStatusCode.Forbidden)
                       .Produces((int)HttpStatusCode.Unauthorized));
@@ -49,6 +39,13 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365))));
             }
 
+            var exampleResponse = new PaginatedResponse<PlotListResponse>(
+                data: [.. plotList],
+                totalCount: 42,
+                pageNumber: 1,
+                pageSize: 5
+            );
+
             Summary(s =>
             {
                 s.Summary = "Get a paginated list of plots.";
@@ -63,7 +60,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     PropertyId = null,
                     CropType = null
                 };
-                s.ResponseExamples[200] = plotList;
+                s.ResponseExamples[200] = exampleResponse;
                 s.Responses[200] = "Returned when the plot list is successfully retrieved.";
                 s.Responses[400] = "Returned when the request contains invalid parameters.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";

@@ -1,6 +1,8 @@
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
+
 namespace TC.Agro.Farm.Application.UseCases.Plots.GetPlotList
 {
-    internal sealed class GetPlotListQueryHandler : BaseQueryHandler<GetPlotListQuery, IReadOnlyList<PlotListResponse>>
+    internal sealed class GetPlotListQueryHandler : BaseQueryHandler<GetPlotListQuery, PaginatedResponse<PlotListResponse>>
     {
         private readonly IPlotReadStore _plotReadStore;
         private readonly ILogger<GetPlotListQueryHandler> _logger;
@@ -13,7 +15,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.GetPlotList
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public override async Task<Result<IReadOnlyList<PlotListResponse>>> ExecuteAsync(
+        public override async Task<Result<PaginatedResponse<PlotListResponse>>> ExecuteAsync(
             GetPlotListQuery query,
             CancellationToken ct = default)
         {
@@ -24,16 +26,24 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.GetPlotList
                 query.PropertyId,
                 query.CropType);
 
-            var plots = await _plotReadStore
+            var (plots, totalCount) = await _plotReadStore
                 .GetPlotListAsync(query, ct)
                 .ConfigureAwait(false);
 
             if (plots is null || !plots.Any())
             {
-                return Result<IReadOnlyList<PlotListResponse>>.Success([]);
+                return Result<PaginatedResponse<PlotListResponse>>.Success(
+                    new PaginatedResponse<PlotListResponse>([], totalCount, query.PageNumber, query.PageSize));
             }
 
-            return Result.Success<IReadOnlyList<PlotListResponse>>([.. plots]);
+            var response = new PaginatedResponse<PlotListResponse>(
+                data: [.. plots],
+                totalCount: totalCount,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize
+            );
+
+            return Result.Success(response);
         }
     }
 }

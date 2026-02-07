@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Domain.Aggregates;
 
@@ -16,8 +15,8 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         {
             return await DbSet
                 .AsNoTracking()
-                .AnyAsync(p => p.OwnerId == ownerId && 
-                              p.IsActive && 
+                .AnyAsync(p => p.OwnerId == ownerId &&
+                              p.IsActive &&
                               EF.Functions.ILike(p.Name.Value, name), cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -27,9 +26,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         {
             return await DbSet
                 .AsNoTracking()
-                .AnyAsync(p => p.OwnerId == ownerId && 
-                              p.Id != excludeId && 
-                              p.IsActive && 
+                .AnyAsync(p => p.OwnerId == ownerId &&
+                              p.Id != excludeId &&
+                              p.IsActive &&
                               EF.Functions.ILike(p.Name.Value, name), cancellationToken)
                 .ConfigureAwait(false);
         }

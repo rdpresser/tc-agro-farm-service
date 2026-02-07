@@ -1,6 +1,3 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
-
 #nullable disable
 
 namespace TC.Agro.Farm.Infrastructure.Migrations

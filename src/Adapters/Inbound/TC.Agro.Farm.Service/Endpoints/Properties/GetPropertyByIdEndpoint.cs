@@ -1,13 +1,3 @@
-using System.Net;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyById;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
-
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
     public sealed class GetPropertyByIdEndpoint : BaseApiEndpoint<GetPropertyByIdQuery, PropertyByIdResponse>

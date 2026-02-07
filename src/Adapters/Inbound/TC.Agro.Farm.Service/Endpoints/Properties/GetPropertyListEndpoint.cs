@@ -1,18 +1,8 @@
-using System.Net;
-
-using Bogus;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
 
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
-    public sealed class GetPropertyListEndpoint : BaseApiEndpoint<GetPropertyListQuery, IReadOnlyList<PropertyListResponse>>
+    public sealed class GetPropertyListEndpoint : BaseApiEndpoint<GetPropertyListQuery, PaginatedResponse<PropertyListResponse>>
     {
         public override void Configure()
         {
@@ -22,11 +12,11 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
             RequestBinder(new RequestBinder<GetPropertyListQuery>(BindingSource.QueryParams));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<GetPropertyListQuery, IReadOnlyList<PropertyListResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<GetPropertyListQuery, IReadOnlyList<PropertyListResponse>>>();
+            PreProcessor<QueryCachingPreProcessorBehavior<GetPropertyListQuery, PaginatedResponse<PropertyListResponse>>>();
+            PostProcessor<QueryCachingPostProcessorBehavior<GetPropertyListQuery, PaginatedResponse<PropertyListResponse>>>();
 
             Description(
-                x => x.Produces<IReadOnlyList<PropertyListResponse>>(200)
+                x => x.Produces<PaginatedResponse<PropertyListResponse>>(200)
                       .ProducesProblemDetails()
                       .Produces((int)HttpStatusCode.Forbidden)
                       .Produces((int)HttpStatusCode.Unauthorized));
@@ -48,6 +38,13 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
                     DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365))));
             }
 
+            var exampleResponse = new PaginatedResponse<PropertyListResponse>(
+                data: [.. propertyList],
+                totalCount: 42,
+                pageNumber: 1,
+                pageSize: 5
+            );
+
             Summary(s =>
             {
                 s.Summary = "Get a paginated list of properties.";
@@ -61,7 +58,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
                     Filter = "",
                     OwnerId = null
                 };
-                s.ResponseExamples[200] = propertyList;
+                s.ResponseExamples[200] = exampleResponse;
                 s.Responses[200] = "Returned when the property list is successfully retrieved.";
                 s.Responses[400] = "Returned when the request contains invalid parameters.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";

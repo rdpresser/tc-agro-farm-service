@@ -1,6 +1,8 @@
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
+
 namespace TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList
 {
-    internal sealed class GetSensorListQueryHandler : BaseQueryHandler<GetSensorListQuery, IReadOnlyList<SensorListResponse>>
+    internal sealed class GetSensorListQueryHandler : BaseQueryHandler<GetSensorListQuery, PaginatedResponse<SensorListResponse>>
     {
         private readonly ISensorReadStore _sensorReadStore;
         private readonly ILogger<GetSensorListQueryHandler> _logger;
@@ -13,7 +15,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public override async Task<Result<IReadOnlyList<SensorListResponse>>> ExecuteAsync(
+        public override async Task<Result<PaginatedResponse<SensorListResponse>>> ExecuteAsync(
             GetSensorListQuery query,
             CancellationToken ct = default)
         {
@@ -25,16 +27,24 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList
                 query.Type,
                 query.Status);
 
-            var sensors = await _sensorReadStore
+            var (sensors, totalCount) = await _sensorReadStore
                 .GetSensorListAsync(query, ct)
                 .ConfigureAwait(false);
 
             if (sensors is null || !sensors.Any())
             {
-                return Result<IReadOnlyList<SensorListResponse>>.Success([]);
+                return Result<PaginatedResponse<SensorListResponse>>.Success(
+                    new PaginatedResponse<SensorListResponse>([], totalCount, query.PageNumber, query.PageSize));
             }
 
-            return Result.Success<IReadOnlyList<SensorListResponse>>([.. sensors]);
+            var response = new PaginatedResponse<SensorListResponse>(
+                data: [.. sensors],
+                totalCount: totalCount,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize
+            );
+
+            return Result.Success(response);
         }
     }
 }

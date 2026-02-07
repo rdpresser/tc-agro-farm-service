@@ -1,9 +1,11 @@
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
+
 namespace TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList
 {
     /// <summary>
     /// Query to get a paginated list of sensors.
     /// </summary>
-    public sealed record GetSensorListQuery : ICachedQuery<IReadOnlyList<SensorListResponse>>
+    public sealed record GetSensorListQuery : ICachedQuery<PaginatedResponse<SensorListResponse>>
     {
         public int PageNumber { get; init; } = 1;
         public int PageSize { get; init; } = 10;

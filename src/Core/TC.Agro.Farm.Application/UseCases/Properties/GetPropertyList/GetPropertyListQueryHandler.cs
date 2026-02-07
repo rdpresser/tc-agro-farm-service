@@ -1,6 +1,8 @@
+using TC.Agro.SharedKernel.Infrastructure.Pagination;
+
 namespace TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList
 {
-    internal sealed class GetPropertyListQueryHandler : BaseQueryHandler<GetPropertyListQuery, IReadOnlyList<PropertyListResponse>>
+    internal sealed class GetPropertyListQueryHandler : BaseQueryHandler<GetPropertyListQuery, PaginatedResponse<PropertyListResponse>>
     {
         private readonly IPropertyReadStore _propertyReadStore;
         private readonly IUserContext _userContext;
@@ -16,7 +18,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public override async Task<Result<IReadOnlyList<PropertyListResponse>>> ExecuteAsync(
+        public override async Task<Result<PaginatedResponse<PropertyListResponse>>> ExecuteAsync(
             GetPropertyListQuery query,
             CancellationToken ct = default)
         {
@@ -33,16 +35,24 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList
                 effectiveQuery = query with { OwnerId = _userContext.Id };
             }
 
-            var properties = await _propertyReadStore
+            var (properties, totalCount) = await _propertyReadStore
                 .GetPropertyListAsync(effectiveQuery, ct)
                 .ConfigureAwait(false);
 
             if (properties is null || !properties.Any())
             {
-                return Result<IReadOnlyList<PropertyListResponse>>.Success([]);
+                return Result<PaginatedResponse<PropertyListResponse>>.Success(
+                    new PaginatedResponse<PropertyListResponse>([], totalCount, query.PageNumber, query.PageSize));
             }
 
-            return Result.Success<IReadOnlyList<PropertyListResponse>>([.. properties]);
+            var response = new PaginatedResponse<PropertyListResponse>(
+                data: [.. properties],
+                totalCount: totalCount,
+                pageNumber: query.PageNumber,
+                pageSize: query.PageSize
+            );
+
+            return Result.Success(response);
         }
     }
 }

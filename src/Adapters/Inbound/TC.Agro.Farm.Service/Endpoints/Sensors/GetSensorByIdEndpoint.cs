@@ -1,13 +1,3 @@
-using System.Net;
-
-using FastEndpoints;
-
-using TC.Agro.Farm.Application.Abstractions;
-using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorById;
-using TC.Agro.SharedKernel.Api.Endpoints;
-using TC.Agro.SharedKernel.Application.Behaviors;
-using TC.Agro.SharedKernel.Infrastructure;
-
 namespace TC.Agro.Farm.Service.Endpoints.Sensors
 {
     public sealed class GetSensorByIdEndpoint : BaseApiEndpoint<GetSensorByIdQuery, SensorByIdResponse>

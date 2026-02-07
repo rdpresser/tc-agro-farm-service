@@ -16,14 +16,7 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         /// <summary>
         /// Gets a paginated list of properties with optional filtering.
         /// </summary>
-        Task<IReadOnlyList<PropertyListResponse>> GetPropertyListAsync(
-            GetPropertyListQuery query,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets the total count of properties matching the filter criteria.
-        /// </summary>
-        Task<int> GetPropertyCountAsync(
+        Task<(IReadOnlyList<PropertyListResponse> Properties, int TotalCount)> GetPropertyListAsync(
             GetPropertyListQuery query,
             CancellationToken cancellationToken = default);
     }

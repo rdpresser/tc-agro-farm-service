@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorById;
 using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList;
@@ -18,7 +17,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         /// <inheritdoc />
         public async Task<SensorByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var sensor = await _dbContext.Set<SensorAggregate>()
+            var sensor = await _dbContext.Sensors
                 .AsNoTracking()
                 .Where(s => s.Id == id && s.IsActive)
                 .Select(s => new
@@ -38,7 +37,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 return null;
 
             // Get plot info
-            var plotInfo = await _dbContext.Set<PlotAggregate>()
+            var plotInfo = await _dbContext.Plots
                 .AsNoTracking()
                 .Where(p => p.Id == sensor.PlotId)
                 .Select(p => new { PlotName = p.Name.Value, p.PropertyId })
@@ -49,7 +48,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 return null;
 
             // Get property name
-            var propertyName = await _dbContext.Set<PropertyAggregate>()
+            var propertyName = await _dbContext.Properties
                 .AsNoTracking()
                 .Where(prop => prop.Id == plotInfo.PropertyId)
                 .Select(prop => prop.Name.Value)
@@ -73,11 +72,11 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<IReadOnlyList<SensorListResponse>> GetSensorListAsync(
+        public async Task<(IReadOnlyList<SensorListResponse> Sensors, int TotalCount)> GetSensorListAsync(
             GetSensorListQuery query,
             CancellationToken cancellationToken = default)
         {
-            var sensorsQuery = _dbContext.Set<SensorAggregate>()
+            var sensorsQuery = _dbContext.Sensors
                 .AsNoTracking()
                 .Where(s => s.IsActive);
 
@@ -90,7 +89,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             // Apply property filter (need to join with plots)
             if (query.PropertyId.HasValue)
             {
-                var propertyPlotIds = await _dbContext.Set<PlotAggregate>()
+                var propertyPlotIds = await _dbContext.Plots
                     .AsNoTracking()
                     .Where(p => p.PropertyId == query.PropertyId.Value && p.IsActive)
                     .Select(p => p.Id)
@@ -119,6 +118,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 sensorsQuery = sensorsQuery.Where(s =>
                     s.Label != null && EF.Functions.ILike(s.Label.Value, pattern));
             }
+
+            // Get total count before pagination
+            var totalCount = await sensorsQuery.CountAsync(cancellationToken).ConfigureAwait(false);
 
             // Apply sorting
             sensorsQuery = query.SortBy.ToLowerInvariant() switch
@@ -157,7 +159,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             // Get plot info for all sensors in a single query
             var plotIds = sensors.Select(s => s.PlotId).Distinct().ToList();
-            var plotInfos = await _dbContext.Set<PlotAggregate>()
+            var plotInfos = await _dbContext.Plots
                 .AsNoTracking()
                 .Where(p => plotIds.Contains(p.Id))
                 .Select(p => new { p.Id, PlotName = p.Name.Value, p.PropertyId })
@@ -166,14 +168,14 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             // Get property names for all plots in a single query
             var propertyIds = plotInfos.Values.Select(p => p.PropertyId).Distinct().ToList();
-            var propertyNames = await _dbContext.Set<PropertyAggregate>()
+            var propertyNames = await _dbContext.Properties
                 .AsNoTracking()
                 .Where(prop => propertyIds.Contains(prop.Id))
                 .Select(prop => new { prop.Id, Name = prop.Name.Value })
                 .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken)
                 .ConfigureAwait(false);
 
-            return sensors.Select(s =>
+            var results = sensors.Select(s =>
             {
                 var plotInfo = plotInfos.GetValueOrDefault(s.PlotId);
                 var plotName = plotInfo?.PlotName ?? "Unknown";
@@ -191,57 +193,8 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     s.Label,
                     s.InstalledAt);
             }).ToList();
-        }
 
-        /// <inheritdoc />
-        public async Task<int> GetSensorCountAsync(
-            GetSensorListQuery query,
-            CancellationToken cancellationToken = default)
-        {
-            var sensorsQuery = _dbContext.Set<SensorAggregate>()
-                .AsNoTracking()
-                .Where(s => s.IsActive);
-
-            // Apply plot filter
-            if (query.PlotId.HasValue)
-            {
-                sensorsQuery = sensorsQuery.Where(s => s.PlotId == query.PlotId.Value);
-            }
-
-            // Apply property filter (need to join with plots)
-            if (query.PropertyId.HasValue)
-            {
-                var filterPlotIds = await _dbContext.Set<PlotAggregate>()
-                    .AsNoTracking()
-                    .Where(p => p.PropertyId == query.PropertyId.Value && p.IsActive)
-                    .Select(p => p.Id)
-                    .ToListAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-                sensorsQuery = sensorsQuery.Where(s => filterPlotIds.Contains(s.PlotId));
-            }
-
-            // Apply type filter
-            if (!string.IsNullOrWhiteSpace(query.Type))
-            {
-                sensorsQuery = sensorsQuery.Where(s => EF.Functions.ILike(s.Type.Value, query.Type));
-            }
-
-            // Apply status filter
-            if (!string.IsNullOrWhiteSpace(query.Status))
-            {
-                sensorsQuery = sensorsQuery.Where(s => EF.Functions.ILike(s.Status.Value, query.Status));
-            }
-
-            // Apply text filter (on label)
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var pattern = $"%{query.Filter}%";
-                sensorsQuery = sensorsQuery.Where(s =>
-                    s.Label != null && EF.Functions.ILike(s.Label.Value, pattern));
-            }
-
-            return await sensorsQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+            return ([.. results], totalCount);
         }
     }
 }
