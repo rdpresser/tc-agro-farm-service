@@ -5,15 +5,6 @@ namespace TC.Agro.Farm.Service.Extensions
     [ExcludeFromCodeCoverage]
     internal static class ApplicationBuilderExtensions
     {
-        // Applies pending migrations to the database
-        public static async Task ApplyMigrations(this IApplicationBuilder app)
-        {
-            using var scope = app.ApplicationServices.CreateScope();
-            await using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            await dbContext.Database.MigrateAsync().ConfigureAwait(false);
-        }
-
         // Normalizes PathBase when the service runs behind an ingress with a path prefix (e.g. /farm)
         // CRITICAL: When nginx rewrite-target is used with X-Forwarded-Prefix header,
         // this middleware restores the original path for the application context.

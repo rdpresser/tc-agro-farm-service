@@ -1,3 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Tokens;
 using TC.Agro.Farm.Service.Telemetry;
 
 namespace TC.Agro.Farm.Service.Extensions
@@ -113,10 +117,33 @@ namespace TC.Agro.Farm.Service.Extensions
         // Authentication and Authorization
         public static IServiceCollection AddCustomAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
-            var jwtSettings = configuration.GetSection("Auth:Jwt").Get<JwtOptions>();
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(opt =>
+            {
+                var jwtSettings = JwtHelper.Build(configuration);
 
-            services.AddAuthenticationJwtBearer(s => s.SigningKey = jwtSettings!.SecretKey)
-                    .AddAuthorization()
+                opt.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSettings!.Issuer, // Ensure this matches the issuer in your token
+                    ValidateAudience = true,
+                    ValidAudiences = jwtSettings!.Audience, // Ensure this matches the audience in your token
+                    ValidateLifetime = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtSettings!.SecretKey ?? string.Empty)), // Use the same secret key
+                    ValidateIssuerSigningKey = true,
+                    RoleClaimType = "role",
+                    NameClaimType = JwtRegisteredClaimNames.Name
+                };
+
+                opt.MapInboundClaims = false; // Keep original claim types
+            });
+
+            services.AddAuthorization()
                     .AddHttpContextAccessor();
 
             return services;
