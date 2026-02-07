@@ -6,7 +6,7 @@
     <!-- ========================= -->
     <!-- Code Quality / Analyzers -->
     <!-- ========================= -->
-    <GlobalPackageReference Include="SonarAnalyzer.CSharp" Version="10.18.0.131500">
+    <GlobalPackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </GlobalPackageReference>
@@ -27,10 +27,14 @@
     <!-- ========================= -->
     <!-- Logging -->
     <!-- ========================= -->
+    <PackageVersion Include="Serilog" Version="4.1.1" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Enrichers.Sensitive" Version="2.1.0" />
     <PackageVersion Include="Serilog.Enrichers.Span" Version="3.1.0" />
+    <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.Grafana.Loki" Version="8.3.2" />
+    <PackageVersion Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
     <!-- ========================= -->
     <!-- Misc -->
     <!-- ========================= -->
@@ -44,11 +48,11 @@
     <!-- ========================= -->
     <!-- Wolverine -->
     <!-- ========================= -->
-    <PackageVersion Include="Weasel.Core" Version="8.4.3" />
-    <PackageVersion Include="WolverineFx" Version="5.12.0" />
-    <PackageVersion Include="WolverineFx.Postgresql" Version="5.12.0" />
-    <PackageVersion Include="WolverineFx.RabbitMQ" Version="5.12.0" />
-    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="5.12.0" />
+    <PackageVersion Include="Weasel.Core" Version="8.5.0" />
+    <PackageVersion Include="WolverineFx" Version="5.12.1" />
+    <PackageVersion Include="WolverineFx.Postgresql" Version="5.12.1" />
+    <PackageVersion Include="WolverineFx.RabbitMQ" Version="5.12.1" />
+    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="5.12.1" />
     <!-- ========================= -->
     <!-- OpenTelemetry -->
     <!-- ========================= -->
@@ -76,6 +80,14 @@
     <PackageVersion Include="Npgsql" Version="10.0.1" />
     <PackageVersion Include="Z.EntityFramework.Plus.EFCore" Version="10.105.2.1" />
     <!-- ========================= -->
+    <!-- Caching -->
+    <!-- ========================= -->
+    <PackageVersion Include="ZiggyCreatures.FusionCache" Version="2.5.0" />
+    <PackageVersion Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" Version="2.5.0" />
+    <PackageVersion Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" Version="2.5.0" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.2" />
+    <PackageVersion Include="StackExchange.Redis" Version="2.9.56" />
+    <!-- ========================= -->
     <!-- Domain / Application -->
     <!-- ========================= -->
     <PackageVersion Include="Ardalis.Result" Version="10.1.0" />
@@ -89,7 +101,8 @@
     <!-- Testing -->
     <!-- ========================= -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.0.2" />
+    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.9.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.Telemetry" Version="1.9.1" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
