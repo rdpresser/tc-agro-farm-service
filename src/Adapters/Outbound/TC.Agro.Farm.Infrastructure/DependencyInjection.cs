@@ -37,7 +37,7 @@ namespace TC.Agro.Farm.Infrastructure
 
                 opts.UseNpgsql(dbFactory.ConnectionString, npgsql =>
                 {
-                    npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.Schema);
+                    npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DefaultSchemas.Default);
                 });
 
                 opts.UseSnakeCaseNamingConvention();
