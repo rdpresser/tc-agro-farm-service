@@ -336,11 +336,10 @@ namespace TC.Agro.Farm.Service.Extensions
             var serviceName = TelemetryConstants.ServiceName;
             var serviceNamespace = TelemetryConstants.ServiceNamespace;
 
-            builder.Logging.AddOpenTelemetry(logging =>
-            {
-                logging.IncludeFormattedMessage = true;
-                logging.IncludeScopes = true;
-            });
+            // NOTE: Serilog handles all logging (no OpenTelemetry logging)
+            // This prevents log duplication and simplifies trace_id/span_id correlation
+            // Serilog.Enrichers.Span automatically adds trace_id/span_id from Activity.Current
+            // ❌ REMOVED: builder.Logging.AddOpenTelemetry() - use Serilog only
 
             var otelBuilder = services.AddOpenTelemetry()
                 .ConfigureResource(resource => resource
@@ -399,6 +398,25 @@ namespace TC.Agro.Farm.Service.Extensions
                                 activity.SetTag("user.authenticated", request.HttpContext.User?.Identity?.IsAuthenticated);
                                 activity.SetTag("http.route", request.HttpContext.GetRouteValue("action")?.ToString());
                                 activity.SetTag("http.client_ip", request.HttpContext.Connection.RemoteIpAddress?.ToString());
+
+                                // Enhanced domain attributes
+                                activity.SetTag("http.endpoint_handler", request.Path);
+                                activity.SetTag("http.query_params", request.QueryString.Value ?? "");
+
+                                // User context from JWT/Principal
+                                var userId = request.HttpContext.User?.FindFirst("sub")?.Value ??
+                                             request.HttpContext.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                                if (!string.IsNullOrWhiteSpace(userId))
+                                    activity.SetTag("user.id", userId);
+
+                                // Request correlation ID
+                                if (request.HttpContext.Request.Headers.TryGetValue(TelemetryConstants.CorrelationIdHeader, out var correlationId))
+                                    activity.SetTag("correlation_id", correlationId.ToString());
+
+                                // User roles
+                                var roles = string.Join(",", request.HttpContext.User?.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value) ?? new string[] { });
+                                if (!string.IsNullOrWhiteSpace(roles))
+                                    activity.SetTag("user.roles", roles);
                             };
 
                             options.EnrichWithHttpResponse = (activity, response) =>
@@ -406,6 +424,9 @@ namespace TC.Agro.Farm.Service.Extensions
                                 activity.SetTag("http.status_code", response.StatusCode);
                                 if (response.ContentLength.HasValue)
                                     activity.SetTag("http.response.size", response.ContentLength.Value);
+
+                                // HTTP status category
+                                activity.SetTag("http.status_category", response.StatusCode >= 400 ? "error" : "success");
                             };
 
                             options.EnrichWithException = (activity, ex) =>
@@ -423,6 +444,7 @@ namespace TC.Agro.Farm.Service.Extensions
                                 return !path.Contains("/health") && !path.Contains("/metrics") && !path.Contains("/prometheus");
                             };
                         })
+                        .AddRedisInstrumentation()
                         .AddFusionCacheInstrumentation()
                         .AddNpgsql()
                         .AddSource(TelemetryConstants.FarmActivitySource)
