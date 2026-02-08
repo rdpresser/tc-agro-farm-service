@@ -1,15 +1,11 @@
 using TC.Agro.Farm.Domain.Aggregates;
+using TC.Agro.SharedKernel.Infrastructure.Database;
 
 namespace TC.Agro.Farm.Infrastructure
 {
     [ExcludeFromCodeCoverage]
     public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     {
-        /// <summary>
-        /// Database schema for Farm service tables.
-        /// </summary>
-        public const string Schema = "farm";
-
         public DbSet<PropertyAggregate> Properties { get; set; } = default!;
         public DbSet<PlotAggregate> Plots { get; set; } = default!;
         public DbSet<SensorAggregate> Sensors { get; set; } = default!;
@@ -23,7 +19,7 @@ namespace TC.Agro.Farm.Infrastructure
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.HasDefaultSchema(Schema);
+            modelBuilder.HasDefaultSchema(DefaultSchemas.Default);
 
             // Ignore domain events - they are not persisted as separate entities
             modelBuilder.Ignore<BaseDomainEvent>();

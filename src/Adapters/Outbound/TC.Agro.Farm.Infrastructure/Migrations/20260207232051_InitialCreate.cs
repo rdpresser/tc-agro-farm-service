@@ -1,3 +1,6 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
 #nullable disable
 
 namespace TC.Agro.Farm.Infrastructure.Migrations
@@ -9,11 +12,11 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "farm");
+                name: "public");
 
             migrationBuilder.CreateTable(
                 name: "plots",
-                schema: "farm",
+                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -32,7 +35,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "properties",
-                schema: "farm",
+                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -56,7 +59,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "sensors",
-                schema: "farm",
+                schema: "public",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -76,31 +79,31 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "ix_plots_property_id",
-                schema: "farm",
+                schema: "public",
                 table: "plots",
                 column: "property_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_properties_owner_id",
-                schema: "farm",
+                schema: "public",
                 table: "properties",
                 column: "owner_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_sensors_plot_id",
-                schema: "farm",
+                schema: "public",
                 table: "sensors",
                 column: "plot_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_sensors_status",
-                schema: "farm",
+                schema: "public",
                 table: "sensors",
                 column: "status");
 
             migrationBuilder.CreateIndex(
                 name: "ix_sensors_type",
-                schema: "farm",
+                schema: "public",
                 table: "sensors",
                 column: "type");
         }
@@ -110,15 +113,15 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "plots",
-                schema: "farm");
+                schema: "public");
 
             migrationBuilder.DropTable(
                 name: "properties",
-                schema: "farm");
+                schema: "public");
 
             migrationBuilder.DropTable(
                 name: "sensors",
-                schema: "farm");
+                schema: "public");
         }
     }
 }

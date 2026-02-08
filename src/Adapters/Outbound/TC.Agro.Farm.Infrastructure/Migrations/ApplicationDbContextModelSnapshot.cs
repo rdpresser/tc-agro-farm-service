@@ -17,7 +17,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("farm")
+                .HasDefaultSchema("public")
                 .HasAnnotation("ProductVersion", "10.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
                 .HasAnnotation("WolverineEnabled", "true");
@@ -57,7 +57,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.HasIndex("PropertyId")
                         .HasDatabaseName("ix_plots_property_id");
 
-                    b.ToTable("plots", "farm");
+                    b.ToTable("plots", "public");
                 });
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", b =>
@@ -93,7 +93,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.HasIndex("OwnerId")
                         .HasDatabaseName("ix_properties_owner_id");
 
-                    b.ToTable("properties", "farm");
+                    b.ToTable("properties", "public");
                 });
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.SensorAggregate", b =>
@@ -133,7 +133,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.HasIndex("PlotId")
                         .HasDatabaseName("ix_sensors_plot_id");
 
-                    b.ToTable("sensors", "farm");
+                    b.ToTable("sensors", "public");
                 });
 
             modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.IncomingMessage", b =>
@@ -248,7 +248,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                             b1.HasKey("PlotAggregateId");
 
-                            b1.ToTable("plots", "farm");
+                            b1.ToTable("plots", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("PlotAggregateId")
@@ -269,7 +269,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                             b1.HasKey("PlotAggregateId");
 
-                            b1.ToTable("plots", "farm");
+                            b1.ToTable("plots", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("PlotAggregateId")
@@ -290,7 +290,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                             b1.HasKey("PlotAggregateId");
 
-                            b1.ToTable("plots", "farm");
+                            b1.ToTable("plots", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("PlotAggregateId")
@@ -321,7 +321,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                             b1.HasKey("PropertyAggregateId");
 
-                            b1.ToTable("properties", "farm");
+                            b1.ToTable("properties", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("PropertyAggregateId")
@@ -342,7 +342,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                             b1.HasKey("PropertyAggregateId");
 
-                            b1.ToTable("properties", "farm");
+                            b1.ToTable("properties", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("PropertyAggregateId")
@@ -389,7 +389,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                             b1.HasKey("PropertyAggregateId");
 
-                            b1.ToTable("properties", "farm");
+                            b1.ToTable("properties", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("PropertyAggregateId")
@@ -421,7 +421,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                             b1.HasKey("SensorAggregateId");
 
-                            b1.ToTable("sensors", "farm");
+                            b1.ToTable("sensors", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("SensorAggregateId")
@@ -445,7 +445,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                             b1.HasIndex("Value")
                                 .HasDatabaseName("ix_sensors_status");
 
-                            b1.ToTable("sensors", "farm");
+                            b1.ToTable("sensors", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("SensorAggregateId")
@@ -469,7 +469,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                             b1.HasIndex("Value")
                                 .HasDatabaseName("ix_sensors_type");
 
-                            b1.ToTable("sensors", "farm");
+                            b1.ToTable("sensors", "public");
 
                             b1.WithOwner()
                                 .HasForeignKey("SensorAggregateId")

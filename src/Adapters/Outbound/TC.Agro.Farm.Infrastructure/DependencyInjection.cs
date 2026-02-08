@@ -2,6 +2,9 @@ using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Infrastructure.Messaging;
 using TC.Agro.Farm.Infrastructure.Repositories;
 using TC.Agro.SharedKernel.Infrastructure;
+using TC.Agro.SharedKernel.Infrastructure.Database;
+using TC.Agro.SharedKernel.Infrastructure.Database.EfCore;
+using Wolverine.EntityFrameworkCore;
 
 namespace TC.Agro.Farm.Infrastructure
 {
@@ -34,7 +37,7 @@ namespace TC.Agro.Farm.Infrastructure
 
                 opts.UseNpgsql(dbFactory.ConnectionString, npgsql =>
                 {
-                    npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.Schema);
+                    npgsql.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DefaultSchemas.Default);
                 });
 
                 opts.UseSnakeCaseNamingConvention();
@@ -52,6 +55,9 @@ namespace TC.Agro.Farm.Infrastructure
                 }
 
             });
+
+            // IApplicationDbContext (required for SharedKernel ApplyMigrations)
+            services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
             // Unit of Work (for simple handlers that don't need outbox)
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
