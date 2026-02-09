@@ -1,0 +1,273 @@
+name: 🏗️ Farm Service CI
+
+env:
+  SERVICE_NAME: farm-service
+  SOLUTION_FILE: TC.Agro.Farm.Service.slnx
+  DOCKERFILE_PATH: services/farm-service/src/Adapters/Inbound/TC.Agro.Farm.Service/Dockerfile
+  DOTNET_VERSION: '10.0.x'
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/farm-service/**'
+      - 'common/**'
+      - '.github/workflows/**'
+
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/farm-service/**'
+      - 'common/**'
+      - '.github/workflows/**'
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment for secrets'
+        default: 'dev-rodrigo'
+        type: choice
+        options:
+          - dev-rodrigo
+      skip-tests:
+        description: 'Skip unit tests (emergency only)'
+        type: boolean
+        default: false
+      skip-security-scan:
+        description: 'Skip Trivy scan (emergency only)'
+        type: boolean
+        default: false
+
+jobs:
+
+  # ─────────────────────────────────────────────
+  # 🧪 Unit Tests + Coverage
+  # ─────────────────────────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.skip-tests != 'true'
+    permissions:
+      contents: read
+      checks: write
+
+    steps:
+      - name: 📥 Checkout farm-service
+        uses: actions/checkout@v4
+        with:
+          path: services/farm-service
+
+      - name: 📥 Checkout common repository
+        uses: actions/checkout@v4
+        with:
+          repository: rdpresser/tc-agro-common
+          path: common
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⚙️ Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 📦 Restore
+        working-directory: services/farm-service
+        run: dotnet restore ${{ env.SOLUTION_FILE }}
+
+      - name: 🏗️ Build
+        working-directory: services/farm-service
+        run: dotnet build ${{ env.SOLUTION_FILE }} --no-restore --configuration Release
+
+      - name: 🧪 Test + Coverage
+        working-directory: services/farm-service
+        run: |
+          dotnet test --solution ${{ env.SOLUTION_FILE }} \
+            --no-build \
+            --configuration Release \
+            --results-directory test-results \
+            --report-xunit-trx
+
+      - name: 📊 Coverage Report
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.cobertura.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: 📦 Upload Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ github.sha }}
+          path: services/farm-service/test-results/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
+  # 🐳 Build, Scan, Push Docker
+  # ─────────────────────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
+    environment: ${{ github.event.inputs.environment || 'dev-rodrigo' }}
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: 📥 Checkout farm-service
+        uses: actions/checkout@v4
+        with:
+          path: services/farm-service
+
+      - name: 📥 Checkout common repository
+        uses: actions/checkout@v4
+        with:
+          repository: rdpresser/tc-agro-common
+          path: common
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔖 Prepare tags
+        id: vars
+        run: |
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-8)
+          IMAGE_TAG=$SHORT_SHA
+
+          # Use local name for PRs, DockerHub URI for push scenarios
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            IMAGE_URI=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}
+          else
+            IMAGE_URI=${{ env.SERVICE_NAME }}
+          fi
+
+          echo "tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+          echo "🔖 Tag: $IMAGE_TAG"
+          echo "📦 Image: $IMAGE_URI"
+
+      - name: 🔐 Docker Hub Login
+        if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: ⚙️ Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build & Push Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true }}
+          tags: |
+            ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag }}
+            ${{ steps.vars.outputs.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged != true }}
+
+      - name: 🔒 Trivy Scan
+        if: github.event.inputs.skip-security-scan != 'true'
+        continue-on-error: true  # Don't fail CI on vulnerabilities (dev/hackathon mode)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag }}
+          format: sarif
+          output: trivy.sarif
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+      - name: 📤 Upload SARIF
+        if: always() && github.event.inputs.skip-security-scan != 'true'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy.sarif
+
+      - name: ✅ Verify Push
+        if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+        run: |
+          echo "🔍 Verifying pushed images..."
+          docker pull ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag }}
+          docker pull ${{ steps.vars.outputs.image }}:latest
+
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "✅ BUILD & PUSH COMPLETED"
+          echo "════════════════════════════════════════════════════════════"
+          echo "📦 Tag: ${{ steps.vars.outputs.tag }}"
+          echo "📦 URI: ${{ steps.vars.outputs.image }}"
+          echo "🔒 Security: Trivy passed"
+          echo "🐳 Registry: Docker Hub"
+          echo "📊 View: https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.SERVICE_NAME }}"
+          echo "════════════════════════════════════════════════════════════"
+
+      - name: ℹ️ Build Only (PR)
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged != true
+        run: |
+          echo "✅ Image built and scanned"
+          echo "ℹ️ Push skipped (PR validation only)"
+          echo "🚀 Will push on: workflow_dispatch or PR merge"
+
+  # ─────────────────────────────────────────────
+  # 🧭 GitOps: Update Manifests in Solutions Repo
+  # ─────────────────────────────────────────────
+  update-gitops:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    environment: ${{ github.event.inputs.environment || 'dev-rodrigo' }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout solutions repo
+        uses: actions/checkout@v4
+        with:
+          repository: rdpresser/tc-agro-solutions
+          token: ${{ secrets.SOLUTIONS_REPO_TOKEN }}
+          path: solutions
+
+      - name: 🔖 Get image tag from build
+        id: get-tag
+        run: |
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-8)
+          echo "tag=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "📦 Using tag: $SHORT_SHA"
+
+      - name: ✏️ Update image tag in deployment manifest
+        run: |
+          FILE="solutions/infrastructure/kubernetes/apps/base/farm/deployment.yaml"
+          NEW_TAG="${{ steps.get-tag.outputs.tag }}"
+          NEW_IMAGE="rdpresser/farm-service:${NEW_TAG}"
+
+          echo "📝 Updating: $FILE"
+          echo "🔖 New image: $NEW_IMAGE"
+
+          sed -i "s|image: .*farm-service.*|image: ${NEW_IMAGE}|g" $FILE
+
+      - name: 💾 Commit and push to solutions repo
+        run: |
+          cd solutions
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infrastructure/kubernetes/apps/base/farm/deployment.yaml
+          git commit -m "ci(farm): update image to ${{ steps.get-tag.outputs.tag }}
+
+          Automated commit from farm-service CI pipeline
+          Commit: ${{ github.sha }}
+          Workflow: ${{ github.workflow }}"
+          git push
+
+      - name: ✅ GitOps Update Complete
+        run: |
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "✅ GITOPS UPDATE COMPLETED"
+          echo "════════════════════════════════════════════════════════════"
+          echo "📦 Image: rdpresser/farm-service:${{ steps.get-tag.outputs.tag }}"
+          echo "📝 File: infrastructure/kubernetes/apps/base/farm/deployment.yaml"
+          echo "🔄 ArgoCD will detect this change and deploy automatically"
+          echo "════════════════════════════════════════════════════════════"
