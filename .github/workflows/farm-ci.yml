@@ -29,14 +29,6 @@ on:
         type: choice
         options:
           - dev-rodrigo
-      skip-tests:
-        description: 'Skip unit tests (emergency only)'
-        type: boolean
-        default: false
-      skip-security-scan:
-        description: 'Skip Trivy scan (emergency only)'
-        type: boolean
-        default: false
 
 jobs:
 
@@ -45,7 +37,6 @@ jobs:
   # ─────────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
-    if: github.event.inputs.skip-tests != 'true'
     permissions:
       contents: read
       checks: write
@@ -83,14 +74,20 @@ jobs:
             --no-build \
             --configuration Release \
             --results-directory test-results \
+            --logger "trx;LogFileName=test-results.trx" \
             -p:CollectCoverage=true \
             -p:CoverletOutputFormat=cobertura \
-            -p:CoverletOutput=./test-results/
+            -p:CoverletOutput=./test-results/coverage/
+
+      - name: 🧾 List test-results
+        if: always()
+        working-directory: services/farm-service
+        run: ls -laR test-results
 
       - name: 📊 Coverage Report
         uses: codecov/codecov-action@v3
         with:
-          files: services/farm-service/**/test-results/coverage.cobertura.xml
+          files: services/farm-service/**/test-results/**/coverage.cobertura.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -101,7 +98,7 @@ jobs:
         if: always()
         with:
           name: farm-service-trx-${{ github.sha }}
-          path: services/farm-service/test-results/**/*.trx
+          path: services/farm-service/**/test-results/**/*.trx
           retention-days: 7
 
       - name: 📈 Upload Coverage Report
@@ -109,7 +106,7 @@ jobs:
         if: always()
         with:
           name: farm-service-coverage-${{ github.sha }}
-          path: services/farm-service/**/test-results/coverage.cobertura.xml
+          path: services/farm-service/**/test-results/**/coverage.cobertura.xml
           retention-days: 7
 
   # ─────────────────────────────────────────────
@@ -119,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
-    environment: ${{ github.event.inputs.environment || 'dev-rodrigo' }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev-rodrigo' }}
     permissions:
       contents: read
       security-events: write
@@ -180,7 +177,6 @@ jobs:
           load: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged != true }}
 
       - name: 🔒 Trivy Scan
-        if: github.event.inputs.skip-security-scan != 'true'
         continue-on-error: true  # Don't fail CI on vulnerabilities (dev/hackathon mode)
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -191,7 +187,7 @@ jobs:
           exit-code: 1
 
       - name: 📤 Upload SARIF
-        if: always() && github.event.inputs.skip-security-scan != 'true' && hashFiles('services/farm-service/trivy.sarif') != ''
+        if: always() && hashFiles('services/farm-service/trivy.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ github.workspace }}/services/farm-service/trivy.sarif
@@ -227,8 +223,8 @@ jobs:
   update-gitops:
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
-    environment: ${{ github.event.inputs.environment || 'dev-rodrigo' }}
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'dev-rodrigo' }}
     permissions:
       contents: write
 
