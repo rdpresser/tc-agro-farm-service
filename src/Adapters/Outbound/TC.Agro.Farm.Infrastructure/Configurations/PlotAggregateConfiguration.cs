@@ -15,6 +15,14 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
 
             builder.HasIndex(p => p.PropertyId);
 
+            builder.HasOne(p => p.Property)
+                .WithMany(p => p.Plots)
+                .HasForeignKey(p => p.PropertyId);
+
+            builder.HasMany(p => p.Sensors)
+                .WithOne(s => s.Plot)
+                .HasForeignKey(s => s.PlotId);
+
             // Name value object - single column
             builder.OwnsOne(p => p.Name, name =>
             {

@@ -1,3 +1,5 @@
+using TC.Agro.Farm.Domain.Snapshots;
+
 namespace TC.Agro.Farm.Domain.Aggregates
 {
     /// <summary>
@@ -8,7 +10,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public Name Name { get; private set; } = default!;
         public Location Location { get; private set; } = default!;
         public Area AreaHectares { get; private set; } = default!;
+
         public Guid OwnerId { get; private set; }
+        public OwnerSnapshot Owner { get; private set; } = default!;
+        public ICollection<PlotAggregate> Plots { get; private set; } = [];
 
         // Private constructor for factories and ORM
         private PropertyAggregate(Guid id) : base(id) { }

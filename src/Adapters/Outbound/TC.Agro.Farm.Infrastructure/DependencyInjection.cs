@@ -1,10 +1,6 @@
-using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Infrastructure.Messaging;
 using TC.Agro.Farm.Infrastructure.Repositories;
 using TC.Agro.SharedKernel.Infrastructure;
-using TC.Agro.SharedKernel.Infrastructure.Database;
-using TC.Agro.SharedKernel.Infrastructure.Database.EfCore;
-using Wolverine.EntityFrameworkCore;
 
 namespace TC.Agro.Farm.Infrastructure
 {
@@ -41,9 +37,6 @@ namespace TC.Agro.Farm.Infrastructure
                 });
 
                 opts.UseSnakeCaseNamingConvention();
-
-                // Enable lazy loading proxies
-                ////opts.UseLazyLoadingProxies();
 
                 // Use Serilog for EF Core logging
                 opts.LogTo(Log.Logger.Information, LogLevel.Information);

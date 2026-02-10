@@ -1,4 +1,5 @@
 using TC.Agro.Farm.Domain.Aggregates;
+using TC.Agro.Farm.Domain.Snapshots;
 using TC.Agro.SharedKernel.Infrastructure.Database;
 
 namespace TC.Agro.Farm.Infrastructure
@@ -9,6 +10,7 @@ namespace TC.Agro.Farm.Infrastructure
         public DbSet<PropertyAggregate> Properties { get; set; } = default!;
         public DbSet<PlotAggregate> Plots { get; set; } = default!;
         public DbSet<SensorAggregate> Sensors { get; set; } = default!;
+        public DbSet<OwnerSnapshot> OwnerSnapshots { get; set; } = default!;
 
         /// <inheritdoc />
         public DbContext DbContext => this;
@@ -25,6 +27,12 @@ namespace TC.Agro.Farm.Infrastructure
             modelBuilder.Ignore<BaseDomainEvent>();
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            // Global query filter for soft delete - only return active users
+            modelBuilder.Entity<PropertyAggregate>().HasQueryFilter(u => u.IsActive);
+            modelBuilder.Entity<PlotAggregate>().HasQueryFilter(u => u.IsActive);
+            modelBuilder.Entity<SensorAggregate>().HasQueryFilter(u => u.IsActive);
+            modelBuilder.Entity<OwnerSnapshot>().HasQueryFilter(u => u.IsActive);
         }
 
         /// <inheritdoc />

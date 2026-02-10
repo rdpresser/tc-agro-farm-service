@@ -16,7 +16,6 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             return await DbSet
                 .AsNoTracking()
                 .AnyAsync(p => p.PropertyId == propertyId &&
-                              p.IsActive &&
                               EF.Functions.ILike(p.Name.Value, name), cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -28,7 +27,6 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .AsNoTracking()
                 .AnyAsync(p => p.PropertyId == propertyId &&
                               p.Id != excludeId &&
-                              p.IsActive &&
                               EF.Functions.ILike(p.Name.Value, name), cancellationToken)
                 .ConfigureAwait(false);
         }

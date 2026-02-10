@@ -70,6 +70,10 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
 
             builder.HasIndex(p => p.OwnerId);
 
+            builder.HasMany(p => p.Plots)
+                .WithOne(p => p.Property)
+                .HasForeignKey(p => p.PropertyId);
+
             // Navigation properties are required
             builder.Navigation(p => p.Name).IsRequired();
             builder.Navigation(p => p.Location).IsRequired();

@@ -5,11 +5,13 @@ namespace TC.Agro.Farm.Domain.Aggregates
     /// </summary>
     public sealed class SensorAggregate : BaseAggregateRoot
     {
-        public Guid PlotId { get; private set; }
         public SensorType Type { get; private set; } = default!;
         public SensorStatus Status { get; private set; } = default!;
         public DateTimeOffset InstalledAt { get; private set; }
         public Name? Label { get; private set; }
+
+        public Guid PlotId { get; private set; }
+        public PlotAggregate Plot { get; private set; } = default!;
 
         // Private constructor for factories and ORM
         private SensorAggregate(Guid id) : base(id) { }

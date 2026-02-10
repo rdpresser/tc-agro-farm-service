@@ -19,7 +19,6 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             return await DbSet
                 .AsNoTracking()
                 .AnyAsync(s => s.PlotId == plotId &&
-                              s.IsActive &&
                               s.Label != null &&
                               EF.Functions.ILike(s.Label.Value, label), cancellationToken)
                 .ConfigureAwait(false);
@@ -35,7 +34,6 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .AsNoTracking()
                 .AnyAsync(s => s.PlotId == plotId &&
                               s.Id != excludeId &&
-                              s.IsActive &&
                               s.Label != null &&
                               EF.Functions.ILike(s.Label.Value, label), cancellationToken)
                 .ConfigureAwait(false);

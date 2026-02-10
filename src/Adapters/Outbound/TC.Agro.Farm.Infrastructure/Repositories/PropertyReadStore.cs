@@ -1,8 +1,3 @@
-using TC.Agro.Farm.Application.Abstractions.Ports;
-using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyById;
-using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList;
-using TC.Agro.Farm.Domain.Aggregates;
-
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PropertyReadStore : IPropertyReadStore
@@ -19,50 +14,26 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         {
             var property = await _dbContext.Properties
                 .AsNoTracking()
-                .Where(p => p.Id == id && p.IsActive)
-                .Select(p => new
-                {
+                .Where(p => p.Id == id)
+                .Select(p => new PropertyByIdResponse(
                     p.Id,
-                    Name = p.Name.Value,
-                    Address = p.Location.Address,
-                    City = p.Location.City,
-                    State = p.Location.State,
-                    Country = p.Location.Country,
-                    Latitude = p.Location.Latitude,
-                    Longitude = p.Location.Longitude,
-                    AreaHectares = p.AreaHectares.Hectares,
+                    p.Name.Value,
+                    p.Location.Address,
+                    p.Location.City,
+                    p.Location.State,
+                    p.Location.Country,
+                    p.Location.Latitude,
+                    p.Location.Longitude,
+                    p.AreaHectares.Hectares,
                     p.OwnerId,
                     p.IsActive,
+                    p.Plots.Count,
                     p.CreatedAt,
-                    p.UpdatedAt
-                })
+                    p.UpdatedAt))
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (property is null)
-                return null;
-
-            // Get plot count
-            var plotCount = await _dbContext.Plots
-                .AsNoTracking()
-                .CountAsync(plot => plot.PropertyId == id && plot.IsActive, cancellationToken)
-                .ConfigureAwait(false);
-
-            return new PropertyByIdResponse(
-                property.Id,
-                property.Name,
-                property.Address,
-                property.City,
-                property.State,
-                property.Country,
-                property.Latitude,
-                property.Longitude,
-                property.AreaHectares,
-                property.OwnerId,
-                property.IsActive,
-                plotCount,
-                property.CreatedAt,
-                property.UpdatedAt);
+            return property;
         }
 
         /// <inheritdoc />
@@ -71,8 +42,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             CancellationToken cancellationToken = default)
         {
             var propertiesQuery = _dbContext.Properties
-                .AsNoTracking()
-                .Where(p => p.IsActive);
+                .AsNoTracking();
 
             // Apply owner filter
             if (query.OwnerId.HasValue)
@@ -95,69 +65,54 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             var totalCount = await propertiesQuery.CountAsync(cancellationToken).ConfigureAwait(false);
 
             // Apply sorting
-            propertiesQuery = query.SortBy.ToLowerInvariant() switch
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
             {
-                "name" => query.SortDirection.ToLowerInvariant() == "desc"
-                    ? propertiesQuery.OrderByDescending(p => p.Name.Value)
-                    : propertiesQuery.OrderBy(p => p.Name.Value),
-                "city" => query.SortDirection.ToLowerInvariant() == "desc"
-                    ? propertiesQuery.OrderByDescending(p => p.Location.City)
-                    : propertiesQuery.OrderBy(p => p.Location.City),
-                "state" => query.SortDirection.ToLowerInvariant() == "desc"
-                    ? propertiesQuery.OrderByDescending(p => p.Location.State)
-                    : propertiesQuery.OrderBy(p => p.Location.State),
-                "areahectares" => query.SortDirection.ToLowerInvariant() == "desc"
-                    ? propertiesQuery.OrderByDescending(p => p.AreaHectares.Hectares)
-                    : propertiesQuery.OrderBy(p => p.AreaHectares.Hectares),
-                "createdat" => query.SortDirection.ToLowerInvariant() == "desc"
-                    ? propertiesQuery.OrderByDescending(p => p.CreatedAt)
-                    : propertiesQuery.OrderBy(p => p.CreatedAt),
-                _ => propertiesQuery.OrderBy(p => p.Name.Value)
-            };
+                var isAscending = string.Equals(query.SortDirection, "asc", StringComparison.OrdinalIgnoreCase);
 
-            // Apply pagination
-            var skip = (query.PageNumber - 1) * query.PageSize;
-            var properties = await propertiesQuery
-                .Skip(skip)
-                .Take(query.PageSize)
-                .Select(p => new
+                propertiesQuery = query.SortBy.ToLowerInvariant() switch
                 {
+                    "name" => isAscending
+                        ? propertiesQuery.OrderBy(p => p.Name.Value)
+                        : propertiesQuery.OrderByDescending(p => p.Name.Value),
+                    "city" => isAscending
+                        ? propertiesQuery.OrderBy(p => p.Location.City)
+                        : propertiesQuery.OrderByDescending(p => p.Location.City),
+                    "state" => isAscending
+                        ? propertiesQuery.OrderBy(p => p.Location.State)
+                        : propertiesQuery.OrderByDescending(p => p.Location.State),
+                    "areahectares" => isAscending
+                        ? propertiesQuery.OrderBy(p => p.AreaHectares.Hectares)
+                        : propertiesQuery.OrderByDescending(p => p.AreaHectares.Hectares),
+                    "createdat" => isAscending
+                        ? propertiesQuery.OrderBy(p => p.CreatedAt)
+                        : propertiesQuery.OrderByDescending(p => p.CreatedAt),
+                    _ => propertiesQuery.OrderByDescending(p => p.CreatedAt)
+                };
+            }
+            else
+            {
+                propertiesQuery = propertiesQuery.OrderByDescending(p => p.CreatedAt);
+            }
+
+            // Apply pagination and project directly to response DTO
+            var properties = await propertiesQuery
+                .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(p => new PropertyListResponse(
                     p.Id,
-                    Name = p.Name.Value,
-                    City = p.Location.City,
-                    State = p.Location.State,
-                    Country = p.Location.Country,
-                    AreaHectares = p.AreaHectares.Hectares,
+                    p.Name.Value,
+                    p.Location.City,
+                    p.Location.State,
+                    p.Location.Country,
+                    p.AreaHectares.Hectares,
                     p.OwnerId,
                     p.IsActive,
-                    p.CreatedAt
-                })
+                    p.Plots.Count,
+                    p.CreatedAt))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            // Get plot counts for all properties in a single query
-            var propertyIds = properties.Select(p => p.Id).ToList();
-            var plotCounts = await _dbContext.Plots
-                .AsNoTracking()
-                .Where(plot => propertyIds.Contains(plot.PropertyId) && plot.IsActive)
-                .GroupBy(plot => plot.PropertyId)
-                .Select(g => new { PropertyId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.PropertyId, x => x.Count, cancellationToken)
-                .ConfigureAwait(false);
-
-            var results = properties.Select(p => new PropertyListResponse(
-                p.Id,
-                p.Name,
-                p.City,
-                p.State,
-                p.Country,
-                p.AreaHectares,
-                p.OwnerId,
-                p.IsActive,
-                plotCounts.GetValueOrDefault(p.Id, 0),
-                p.CreatedAt)).ToList();
-
-            return ([.. results], totalCount);
+            return ([.. properties], totalCount);
         }
     }
 }
