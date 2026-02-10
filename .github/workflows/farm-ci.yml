@@ -186,15 +186,15 @@ jobs:
         with:
           image-ref: ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag }}
           format: sarif
-          output: services/farm-service/trivy.sarif
+          output: ${{ github.workspace }}/services/farm-service/trivy.sarif
           severity: HIGH,CRITICAL
           exit-code: 1
 
       - name: 📤 Upload SARIF
-        if: always() && github.event.inputs.skip-security-scan != 'true'
+        if: always() && github.event.inputs.skip-security-scan != 'true' && hashFiles('services/farm-service/trivy.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: services/farm-service/trivy.sarif
+          sarif_file: ${{ github.workspace }}/services/farm-service/trivy.sarif
 
       - name: ✅ Verify Push
         if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
