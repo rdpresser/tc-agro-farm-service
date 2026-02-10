@@ -101,7 +101,8 @@
     <!-- Testing -->
     <!-- ========================= -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="2.1.0" />
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="1.9.1" />
+    <PackageVersion Include="Microsoft.Testing.Platform.MSBuild" Version="1.9.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.Telemetry" Version="1.9.1" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
