@@ -82,8 +82,7 @@ jobs:
           dotnet test ${{ env.SOLUTION_FILE }} \
             --no-build \
             --configuration Release \
-            --results-directory test-results \
-            --report-xunit-trx
+            --results-directory test-results
 
       - name: 📊 Coverage Report
         uses: codecov/codecov-action@v3
