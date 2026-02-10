@@ -208,7 +208,7 @@ namespace TC.Agro.Farm.Service.Extensions
                 opts.ApplicationAssembly = typeof(Program).Assembly;
 
                 // Include Application assembly for handlers
-                opts.Discovery.IncludeAssembly(typeof(Application.DependencyInjection).Assembly);
+                opts.Discovery.IncludeAssembly(typeof(Application.MessageBrokerHandlers.OwnerSnapshotHandler).Assembly);
 
                 // -------------------------------
                 // Durability schema (same database, different schema)
@@ -251,7 +251,7 @@ namespace TC.Agro.Farm.Service.Extensions
                 // -------------------------------
                 // This makes message consumption safe in face of retries/crashes.
                 // It gives "at-least-once safe" processing with deduplication.
-                ////opts.Policies.UseDurableInboxOnAllListeners();
+                opts.Policies.UseDurableInboxOnAllListeners();
 
                 // -------------------------------
                 // Load and configure message broker
@@ -314,6 +314,14 @@ namespace TC.Agro.Farm.Service.Extensions
                 //
                 // Then create a handler class:
                 // public static Task Handle(UserCreatedIntegrationEvent evt) { ... }
+
+                // Declara fila para eventos de Users
+                opts.ListenToRabbitQueue($"farm.identity.events-queue", configure =>
+                {
+                    configure.IsDurable = mqConnectionFactory.Durable;
+                    configure.BindExchange(exchangeName: $"identity.events-exchange");
+                })
+                .UseDurableInbox();
             });
 
             // -------------------------------
