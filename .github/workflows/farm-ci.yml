@@ -82,7 +82,8 @@ jobs:
           dotnet test ${{ env.SOLUTION_FILE }} \
             --no-build \
             --configuration Release \
-            --results-directory test-results
+            --results-directory test-results \
+            -p:TestingPlatformDotnetTestSupport=true
 
       - name: 📊 Coverage Report
         uses: codecov/codecov-action@v3
