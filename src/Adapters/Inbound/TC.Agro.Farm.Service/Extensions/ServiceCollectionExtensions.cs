@@ -275,9 +275,12 @@ namespace TC.Agro.Farm.Service.Extensions
 
                 var exchangeName = $"{mqConnectionFactory.Exchange}-exchange";
 
-                // -------------------------------
-                // Publishing - Property events
-                // -------------------------------
+                // ============================================================
+                // PUBLISHING - Farm Service (Outbound)
+                // Padrão: {service}.events-exchange
+                // Routing Key: {service}.{entity}.{action}
+                // ============================================================
+                // Farm publishes its own events (Property, Plot, Sensor)
                 opts.PublishMessage<EventContext<PropertyCreatedIntegrationEvent>>()
                     .ToRabbitExchange(exchangeName)
                     .BufferedInMemory()
@@ -288,40 +291,43 @@ namespace TC.Agro.Farm.Service.Extensions
                     .BufferedInMemory()
                     .UseDurableOutbox();
 
-                // -------------------------------
-                // Publishing - Plot events
-                // -------------------------------
                 opts.PublishMessage<EventContext<PlotCreatedIntegrationEvent>>()
                     .ToRabbitExchange(exchangeName)
                     .BufferedInMemory()
                     .UseDurableOutbox();
 
-                // -------------------------------
-                // Publishing - Sensor events
-                // -------------------------------
                 opts.PublishMessage<EventContext<SensorRegisteredIntegrationEvent>>()
                     .ToRabbitExchange(exchangeName)
                     .BufferedInMemory()
                     .UseDurableOutbox();
 
-                // -------------------------------
-                // Receiving (Inbox) - FUTURE USE (commented for now)
-                // -------------------------------
-                // When you want to consume events from other services:
-                //
-                // opts.ListenToRabbitQueue("tc-agro.farm.queue")
-                //     .UseDurableInbox(); // ensures deduplication on receive
-                //
-                // Then create a handler class:
-                // public static Task Handle(UserCreatedIntegrationEvent evt) { ... }
-
-                // Declara fila para eventos de Users
-                opts.ListenToRabbitQueue($"farm.identity.events-queue", configure =>
+                // ============================================================
+                // CONSUMING - Farm Service (Inbound)
+                // Listen to Identity Service events
+                // 
+                // Padrão de comunicação inter-serviço:
+                // Exchange: identity.events-exchange (publicado por Identity)
+                // Queue: farm-identity-user-events-queue (consumidor = farm, source = identity, entity = user)
+                // Binding Key: identity.user.* (wildcard para receber todos os user events)
+                // Type: topic (suporta wildcard patterns)
+                // ============================================================
+                var identityExchange = "identity.events-exchange";
+                var farmUserQueueName = "farm-identity-user-events-queue";
+                
+                opts.ListenToRabbitQueue(farmUserQueueName, configure =>
                 {
                     configure.IsDurable = mqConnectionFactory.Durable;
-                    configure.BindExchange(exchangeName: $"identity.events-exchange");
-                })
-                .UseDurableInbox();
+
+                    // ✅ TOPIC Exchange with wildcard binding
+                    // Receives: identity.user.created, identity.user.updated, identity.user.deactivated
+                    configure.BindExchange(
+                        exchangeName: identityExchange,
+                        bindingKey: "identity.user.*",
+                        arguments: new Dictionary<string, object>
+                        {
+                            ["x-exchange-type"] = "topic"  // ✅ Enforce TOPIC exchange type
+                        });
+                }).UseDurableInbox();
             });
 
             // -------------------------------
