@@ -83,13 +83,14 @@ jobs:
             --no-build \
             --configuration Release \
             --results-directory test-results \
-            --collect "XPlat Code Coverage" \
-            -p:TestingPlatformDotnetTestSupport=false
+            -p:CollectCoverage=true \
+            -p:CoverletOutputFormat=cobertura \
+            -p:CoverletOutput=./test-results/
 
       - name: 📊 Coverage Report
         uses: codecov/codecov-action@v3
         with:
-          files: services/farm-service/test-results/**/coverage.cobertura.xml
+          files: services/farm-service/**/test-results/coverage.cobertura.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -108,7 +109,7 @@ jobs:
         if: always()
         with:
           name: farm-service-coverage-${{ github.sha }}
-          path: services/farm-service/test-results/**/coverage.cobertura.xml
+          path: services/farm-service/**/test-results/coverage.cobertura.xml
           retention-days: 7
 
   # ─────────────────────────────────────────────
