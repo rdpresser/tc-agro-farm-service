@@ -1,5 +1,7 @@
 namespace TC.Agro.Farm.Service.Extensions
 {
+    using TC.Agro.Messaging.Extensions;
+    
     internal static class ServiceCollectionExtensions
     {
         public static IServiceCollection AddFarmServices(this IServiceCollection services, WebApplicationBuilder builder)
@@ -276,11 +278,9 @@ namespace TC.Agro.Farm.Service.Extensions
                 var exchangeName = $"{mqConnectionFactory.Exchange}-exchange";
 
                 // ============================================================
-                // PUBLISHING - Farm Service (Outbound)
-                // Padrão: {service}.events-exchange
-                // Routing Key: {service}.{entity}.{action}
-                // ============================================================
+                // PUBLISHING - Farm Service Events (TOPIC Exchange)
                 // Farm publishes its own events (Property, Plot, Sensor)
+                // ============================================================
                 opts.PublishMessage<EventContext<PropertyCreatedIntegrationEvent>>()
                     .ToRabbitExchange(exchangeName)
                     .BufferedInMemory()
@@ -303,31 +303,14 @@ namespace TC.Agro.Farm.Service.Extensions
 
                 // ============================================================
                 // CONSUMING - Farm Service (Inbound)
-                // Listen to Identity Service events
-                // 
-                // Padrão de comunicação inter-serviço:
-                // Exchange: identity.events-exchange (publicado por Identity)
-                // Queue: farm-identity-user-events-queue (consumidor = farm, source = identity, entity = user)
-                // Binding Key: identity.user.* (wildcard para receber todos os user events)
-                // Type: topic (suporta wildcard patterns)
+                // Uses TC.Agro.Messaging extension for Identity Service user events
+                // Exchange: identity.events-exchange (TOPIC)
+                // Binding Key: identity.user.* (wildcard - receives all 3 user events)
                 // ============================================================
-                var identityExchange = "identity.events-exchange";
-                var farmUserQueueName = "farm-identity-user-events-queue";
-                
-                opts.ListenToRabbitQueue(farmUserQueueName, configure =>
-                {
-                    configure.IsDurable = mqConnectionFactory.Durable;
-
-                    // ✅ TOPIC Exchange with wildcard binding
-                    // Receives: identity.user.created, identity.user.updated, identity.user.deactivated
-                    configure.BindExchange(
-                        exchangeName: identityExchange,
-                        bindingKey: "identity.user.*",
-                        arguments: new Dictionary<string, object>
-                        {
-                            ["x-exchange-type"] = "topic"  // ✅ Enforce TOPIC exchange type
-                        });
-                }).UseDurableInbox();
+                opts.ConfigureIdentityUserEventsConsumption(
+                    exchangeName: "identity.events-exchange",
+                    queueName: "farm-identity-user-events-queue"
+                );
             });
 
             // -------------------------------
