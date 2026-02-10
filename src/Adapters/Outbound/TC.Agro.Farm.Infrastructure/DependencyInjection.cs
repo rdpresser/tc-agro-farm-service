@@ -22,6 +22,9 @@ namespace TC.Agro.Farm.Infrastructure
             services.AddScoped<ISensorAggregateRepository, SensorAggregateRepository>();
             services.AddScoped<ISensorReadStore, SensorReadStore>();
 
+            // Owner snapshot store
+            services.AddScoped<IOwnerSnapshotStore, OwnerSnapshotStore>();
+
             // -------------------------------
             // EF Core with Wolverine Integration
             // IMPORTANT: Use AddDbContextWithWolverineIntegration instead of AddDbContext
