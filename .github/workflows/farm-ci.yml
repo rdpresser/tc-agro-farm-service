@@ -79,7 +79,7 @@ jobs:
       - name: 🧪 Test + Coverage
         working-directory: services/farm-service
         run: |
-          dotnet test --solution ${{ env.SOLUTION_FILE }} \
+          dotnet test ${{ env.SOLUTION_FILE }} \
             --no-build \
             --configuration Release \
             --results-directory test-results \
