@@ -10,7 +10,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<SensorAggregate> FilteredDbSet => DbContext.Sensors
+        private IQueryable<SensorAggregate> FilteredDbSet => DbSet
             .Where(x => x.Plot.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
