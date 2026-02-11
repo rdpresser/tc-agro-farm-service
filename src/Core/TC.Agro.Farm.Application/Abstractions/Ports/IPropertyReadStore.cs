@@ -1,5 +1,6 @@
-using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyById;
-using TC.Agro.Farm.Application.UseCases.Properties.GetPropertyList;
+using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
+using TC.Agro.Farm.Application.UseCases.Properties.GetById;
+using TC.Agro.Farm.Application.UseCases.Properties.List;
 
 namespace TC.Agro.Farm.Application.Abstractions.Ports
 {
@@ -11,13 +12,13 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         /// <summary>
         /// Gets a property by its unique identifier.
         /// </summary>
-        Task<PropertyByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<GetPropertyByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a paginated list of properties with optional filtering.
         /// </summary>
-        Task<(IReadOnlyList<PropertyListResponse> Properties, int TotalCount)> GetPropertyListAsync(
-            GetPropertyListQuery query,
+        Task<(IReadOnlyList<ListPropertiesResponse> Properties, int TotalCount)> GetPropertyListAsync(
+            ListPropertiesQuery query,
             CancellationToken cancellationToken = default);
     }
 }

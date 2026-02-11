@@ -1,7 +1,3 @@
-using TC.Agro.Farm.Domain.Aggregates;
-using TC.Agro.Farm.Domain.Snapshots;
-using TC.Agro.SharedKernel.Infrastructure.Database;
-
 namespace TC.Agro.Farm.Infrastructure
 {
     [ExcludeFromCodeCoverage]
@@ -28,11 +24,15 @@ namespace TC.Agro.Farm.Infrastructure
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
-            // Global query filter for soft delete - only return active users
-            modelBuilder.Entity<PropertyAggregate>().HasQueryFilter(u => u.IsActive);
-            modelBuilder.Entity<PlotAggregate>().HasQueryFilter(u => u.IsActive);
-            modelBuilder.Entity<SensorAggregate>().HasQueryFilter(u => u.IsActive);
-            modelBuilder.Entity<OwnerSnapshot>().HasQueryFilter(u => u.IsActive);
+            // -------------------------------
+            // Global Query Filters
+            // -------------------------------
+            modelBuilder.Entity<PropertyAggregate>().HasQueryFilter(p => p.IsActive);
+            modelBuilder.Entity<PlotAggregate>().HasQueryFilter(p => p.IsActive);
+            modelBuilder.Entity<SensorAggregate>().HasQueryFilter(s => s.IsActive);
+
+            // OwnerSnapshot: Only soft delete (no owner filter needed)
+            modelBuilder.Entity<OwnerSnapshot>().HasQueryFilter(o => o.IsActive);
         }
 
         /// <inheritdoc />

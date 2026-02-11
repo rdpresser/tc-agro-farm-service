@@ -1,21 +1,27 @@
 using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorById;
-using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList;
+using TC.Agro.Farm.Application.UseCases.Sensors.ListFromPlot;
+using TC.Agro.Farm.Infrastructure.Extensions;
 
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class SensorReadStore : ISensorReadStore
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly IUserContext _userContext;
 
-        public SensorReadStore(ApplicationDbContext dbContext)
+        public SensorReadStore(ApplicationDbContext dbContext, IUserContext userContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
+
+        private IQueryable<SensorAggregate> FilteredDbSet => _dbContext.Sensors
+            .Where(x => x.Plot.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<SensorByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var sensor = await _dbContext.Sensors
+            var sensor = await FilteredDbSet
                 .AsNoTracking()
                 .Where(s => s.Id == id)
                 .Select(s => new SensorByIdResponse(
@@ -36,32 +42,21 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<(IReadOnlyList<SensorListResponse> Sensors, int TotalCount)> GetSensorListAsync(
-            GetSensorListQuery query,
+        public async Task<(IReadOnlyList<ListSensorsFromPlotResponse> Sensors, int TotalCount)> ListSensorsFromPlotAsync(
+            ListSensorsFromPlotQuery query,
             CancellationToken cancellationToken = default)
         {
-            var sensorsQuery = _dbContext.Sensors
-                .AsNoTracking();
+            var sensorsQuery = FilteredDbSet
+                .AsNoTracking()
+                .Where(s => s.PlotId == query.Id);
 
-            // Apply plot filter
-            if (query.PlotId.HasValue)
-            {
-                sensorsQuery = sensorsQuery.Where(s => s.PlotId == query.PlotId.Value);
-            }
-
-            // Apply property filter using navigation property join
-            if (query.PropertyId.HasValue)
-            {
-                sensorsQuery = sensorsQuery.Where(s => s.Plot.PropertyId == query.PropertyId.Value);
-            }
-
-            // Apply type filter (using index on type)
+            // Apply optional type filter (using index on type)
             if (!string.IsNullOrWhiteSpace(query.Type))
             {
                 sensorsQuery = sensorsQuery.Where(s => EF.Functions.ILike(s.Type.Value, query.Type));
             }
 
-            // Apply status filter (using index on status)
+            // Apply optional status filter (using index on status)
             if (!string.IsNullOrWhiteSpace(query.Status))
             {
                 sensorsQuery = sensorsQuery.Where(s => EF.Functions.ILike(s.Status.Value, query.Status));
@@ -76,40 +71,15 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             }
 
             // Get total count before pagination
-            var totalCount = await sensorsQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+            var totalCount = await sensorsQuery
+                .CountAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            // Apply sorting
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-            {
-                var isAscending = string.Equals(query.SortDirection, "asc", StringComparison.OrdinalIgnoreCase);
-
-                sensorsQuery = query.SortBy.ToLowerInvariant() switch
-                {
-                    "type" => isAscending
-                        ? sensorsQuery.OrderBy(s => s.Type.Value)
-                        : sensorsQuery.OrderByDescending(s => s.Type.Value),
-                    "status" => isAscending
-                        ? sensorsQuery.OrderBy(s => s.Status.Value)
-                        : sensorsQuery.OrderByDescending(s => s.Status.Value),
-                    "label" => isAscending
-                        ? sensorsQuery.OrderBy(s => s.Label != null ? s.Label.Value : "")
-                        : sensorsQuery.OrderByDescending(s => s.Label != null ? s.Label.Value : ""),
-                    "installedat" => isAscending
-                        ? sensorsQuery.OrderBy(s => s.InstalledAt)
-                        : sensorsQuery.OrderByDescending(s => s.InstalledAt),
-                    _ => sensorsQuery.OrderByDescending(s => s.InstalledAt)
-                };
-            }
-            else
-            {
-                sensorsQuery = sensorsQuery.OrderByDescending(s => s.InstalledAt);
-            }
-
-            // Apply pagination and project directly to response DTO
+            // Apply sorting, pagination, and projection
             var sensors = await sensorsQuery
-                .Skip((query.PageNumber - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .Select(s => new SensorListResponse(
+                .ApplySorting(query.SortBy, query.SortDirection)
+                .ApplyPagination(query.PageNumber, query.PageSize)
+                .Select(s => new ListSensorsFromPlotResponse(
                     s.Id,
                     s.PlotId,
                     s.Plot.Name.Value,

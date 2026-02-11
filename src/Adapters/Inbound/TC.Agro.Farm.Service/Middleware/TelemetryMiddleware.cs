@@ -1,7 +1,5 @@
 using System.Diagnostics;
 using System.Security.Claims;
-using TC.Agro.Farm.Service.Telemetry;
-using TC.Agro.SharedKernel.Infrastructure.Middleware;
 using Serilog.Context;
 
 namespace TC.Agro.Farm.Service.Middleware

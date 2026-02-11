@@ -1,5 +1,4 @@
 using System.Diagnostics.Metrics;
-using TC.Agro.SharedKernel;
 
 namespace TC.Agro.Farm.Service.Telemetry
 {

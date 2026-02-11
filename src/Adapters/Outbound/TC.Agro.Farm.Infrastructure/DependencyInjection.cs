@@ -49,7 +49,6 @@ namespace TC.Agro.Farm.Infrastructure
                     opts.EnableSensitiveDataLogging(true);
                     opts.EnableDetailedErrors();
                 }
-
             });
 
             // IApplicationDbContext (required for SharedKernel ApplyMigrations)

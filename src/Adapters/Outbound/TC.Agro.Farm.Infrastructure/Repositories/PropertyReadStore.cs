@@ -1,21 +1,30 @@
+using TC.Agro.Farm.Application.UseCases.Properties.GetById;
+using TC.Agro.Farm.Application.UseCases.Properties.List;
+using TC.Agro.Farm.Infrastructure.Extensions;
+
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PropertyReadStore : IPropertyReadStore
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly IUserContext _userContext;
 
-        public PropertyReadStore(ApplicationDbContext dbContext)
+        public PropertyReadStore(ApplicationDbContext dbContext, IUserContext userContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
+        private IQueryable<PropertyAggregate> FilteredDbSet => _dbContext.Properties
+            .Where(x => x.OwnerId == _userContext.Id);
+
         /// <inheritdoc />
-        public async Task<PropertyByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<GetPropertyByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var property = await _dbContext.Properties
+            var property = await FilteredDbSet
                 .AsNoTracking()
                 .Where(p => p.Id == id)
-                .Select(p => new PropertyByIdResponse(
+                .Select(p => new GetPropertyByIdResponse(
                     p.Id,
                     p.Name.Value,
                     p.Location.Address,
@@ -37,68 +46,26 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<(IReadOnlyList<PropertyListResponse> Properties, int TotalCount)> GetPropertyListAsync(
-            GetPropertyListQuery query,
+        public async Task<(IReadOnlyList<ListPropertiesResponse> Properties, int TotalCount)> GetPropertyListAsync(
+            ListPropertiesQuery query,
             CancellationToken cancellationToken = default)
         {
-            var propertiesQuery = _dbContext.Properties
+            var propertiesQuery = FilteredDbSet
                 .AsNoTracking();
 
-            // Apply owner filter
-            if (query.OwnerId.HasValue)
-            {
-                propertiesQuery = propertiesQuery.Where(p => p.OwnerId == query.OwnerId.Value);
-            }
-
             // Apply text filter
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var pattern = $"%{query.Filter}%";
-                propertiesQuery = propertiesQuery.Where(p =>
-                    EF.Functions.ILike(p.Name.Value, pattern) ||
-                    EF.Functions.ILike(p.Location.City, pattern) ||
-                    EF.Functions.ILike(p.Location.State, pattern) ||
-                    EF.Functions.ILike(p.Location.Country, pattern));
-            }
+            propertiesQuery = propertiesQuery.ApplyTextFilter(query.Filter);
 
             // Get total count before pagination
-            var totalCount = await propertiesQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+            var totalCount = await propertiesQuery
+                .CountAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            // Apply sorting
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-            {
-                var isAscending = string.Equals(query.SortDirection, "asc", StringComparison.OrdinalIgnoreCase);
-
-                propertiesQuery = query.SortBy.ToLowerInvariant() switch
-                {
-                    "name" => isAscending
-                        ? propertiesQuery.OrderBy(p => p.Name.Value)
-                        : propertiesQuery.OrderByDescending(p => p.Name.Value),
-                    "city" => isAscending
-                        ? propertiesQuery.OrderBy(p => p.Location.City)
-                        : propertiesQuery.OrderByDescending(p => p.Location.City),
-                    "state" => isAscending
-                        ? propertiesQuery.OrderBy(p => p.Location.State)
-                        : propertiesQuery.OrderByDescending(p => p.Location.State),
-                    "areahectares" => isAscending
-                        ? propertiesQuery.OrderBy(p => p.AreaHectares.Hectares)
-                        : propertiesQuery.OrderByDescending(p => p.AreaHectares.Hectares),
-                    "createdat" => isAscending
-                        ? propertiesQuery.OrderBy(p => p.CreatedAt)
-                        : propertiesQuery.OrderByDescending(p => p.CreatedAt),
-                    _ => propertiesQuery.OrderByDescending(p => p.CreatedAt)
-                };
-            }
-            else
-            {
-                propertiesQuery = propertiesQuery.OrderByDescending(p => p.CreatedAt);
-            }
-
-            // Apply pagination and project directly to response DTO
+            // Apply sorting, pagination, and projection
             var properties = await propertiesQuery
-                .Skip((query.PageNumber - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .Select(p => new PropertyListResponse(
+                .ApplySorting(query.SortBy, query.SortDirection)
+                .ApplyPagination(query.PageNumber, query.PageSize)
+                .Select(p => new ListPropertiesResponse(
                     p.Id,
                     p.Name.Value,
                     p.Location.City,

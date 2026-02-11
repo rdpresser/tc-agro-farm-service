@@ -1,24 +1,30 @@
-using TC.Agro.Farm.Application.UseCases.Plots.GetPlotById;
-using TC.Agro.Farm.Application.UseCases.Plots.GetPlotList;
+using TC.Agro.Farm.Application.UseCases.Plots.GetById;
+using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
+using TC.Agro.Farm.Infrastructure.Extensions;
 
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PlotReadStore : IPlotReadStore
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly IUserContext _userContext;
 
-        public PlotReadStore(ApplicationDbContext dbContext)
+        public PlotReadStore(ApplicationDbContext dbContext, IUserContext userContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
+        private IQueryable<PlotAggregate> FilteredDbSet => _dbContext.Plots
+            .Where(x => x.Property.OwnerId == _userContext.Id);
+
         /// <inheritdoc />
-        public async Task<PlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<GetPlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var plot = await _dbContext.Plots
+            var plot = await FilteredDbSet
                 .AsNoTracking()
                 .Where(p => p.Id == id)
-                .Select(p => new PlotByIdResponse(
+                .Select(p => new GetPlotByIdResponse(
                     p.Id,
                     p.PropertyId,
                     p.Property.Name.Value,
@@ -36,69 +42,33 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<(IReadOnlyList<PlotListResponse> Plots, int TotalCount)> GetPlotListAsync(
-            GetPlotListQuery query,
+        public async Task<(IReadOnlyList<ListPlotsFromPropertyResponse> Plots, int TotalCount)> ListPlotsFromPropertyAsync(
+            ListPlotsFromPropertyQuery query,
             CancellationToken cancellationToken = default)
         {
-            var plotsQuery = _dbContext.Plots
-                .AsNoTracking();
+            var plotsQuery = FilteredDbSet
+                .AsNoTracking()
+                .Where(p => p.PropertyId == query.Id);
 
-            // Apply property filter
-            if (query.PropertyId.HasValue)
-            {
-                plotsQuery = plotsQuery.Where(p => p.PropertyId == query.PropertyId.Value);
-            }
-
-            // Apply crop type filter (using index on crop_type)
+            // Apply optional crop type filter (using index on crop_type)
             if (!string.IsNullOrWhiteSpace(query.CropType))
             {
                 plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(p.CropType.Value, query.CropType));
             }
 
-            // Apply text filter
-            if (!string.IsNullOrWhiteSpace(query.Filter))
-            {
-                var pattern = $"%{query.Filter}%";
-                plotsQuery = plotsQuery.Where(p =>
-                    EF.Functions.ILike(p.Name.Value, pattern) ||
-                    EF.Functions.ILike(p.CropType.Value, pattern));
-            }
+            // Apply text filter (searches name and crop type)
+            plotsQuery = plotsQuery.ApplyTextFilter(query.Filter);
 
             // Get total count before pagination
-            var totalCount = await plotsQuery.CountAsync(cancellationToken).ConfigureAwait(false);
+            var totalCount = await plotsQuery
+                .CountAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            // Apply sorting
-            if (!string.IsNullOrWhiteSpace(query.SortBy))
-            {
-                var isAscending = string.Equals(query.SortDirection, "asc", StringComparison.OrdinalIgnoreCase);
-
-                plotsQuery = query.SortBy.ToLowerInvariant() switch
-                {
-                    "name" => isAscending
-                        ? plotsQuery.OrderBy(p => p.Name.Value)
-                        : plotsQuery.OrderByDescending(p => p.Name.Value),
-                    "croptype" => isAscending
-                        ? plotsQuery.OrderBy(p => p.CropType.Value)
-                        : plotsQuery.OrderByDescending(p => p.CropType.Value),
-                    "areahectares" => isAscending
-                        ? plotsQuery.OrderBy(p => p.AreaHectares.Hectares)
-                        : plotsQuery.OrderByDescending(p => p.AreaHectares.Hectares),
-                    "createdat" => isAscending
-                        ? plotsQuery.OrderBy(p => p.CreatedAt)
-                        : plotsQuery.OrderByDescending(p => p.CreatedAt),
-                    _ => plotsQuery.OrderByDescending(p => p.CreatedAt)
-                };
-            }
-            else
-            {
-                plotsQuery = plotsQuery.OrderByDescending(p => p.CreatedAt);
-            }
-
-            // Apply pagination and project directly to response DTO with sensor count
+            // Apply sorting, pagination, and projection in one go
             var plots = await plotsQuery
-                .Skip((query.PageNumber - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .Select(p => new PlotListResponse(
+                .ApplySorting(query.SortBy, query.SortDirection)
+                .ApplyPagination(query.PageNumber, query.PageSize)
+                .Select(p => new ListPlotsFromPropertyResponse(
                     p.Id,
                     p.PropertyId,
                     p.Property.Name.Value,

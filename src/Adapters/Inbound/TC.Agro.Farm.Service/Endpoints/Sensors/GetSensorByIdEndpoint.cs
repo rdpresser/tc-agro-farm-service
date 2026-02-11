@@ -1,10 +1,12 @@
+using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorById;
+
 namespace TC.Agro.Farm.Service.Endpoints.Sensors
 {
     public sealed class GetSensorByIdEndpoint : BaseApiEndpoint<GetSensorByIdQuery, SensorByIdResponse>
     {
         public override void Configure()
         {
-            Get("sensor/{id:guid}");
+            Get("sensors/{id:guid}");
 
             // Force FastEndpoints to bind from route params (not JSON body)
             RequestBinder(new RequestBinder<GetSensorByIdQuery>(BindingSource.RouteValues));

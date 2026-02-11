@@ -1,10 +1,12 @@
+using TC.Agro.Farm.Application.UseCases.Properties.Update;
+
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
     public sealed class UpdatePropertyEndpoint : BaseApiEndpoint<UpdatePropertyCommand, UpdatePropertyResponse>
     {
         public override void Configure()
         {
-            Put("property/{id:guid}");
+            Put("properties/{id:guid}");
             PostProcessor<LoggingCommandPostProcessorBehavior<UpdatePropertyCommand, UpdatePropertyResponse>>();
             PostProcessor<CacheInvalidationPostProcessorBehavior<UpdatePropertyCommand, UpdatePropertyResponse>>();
 

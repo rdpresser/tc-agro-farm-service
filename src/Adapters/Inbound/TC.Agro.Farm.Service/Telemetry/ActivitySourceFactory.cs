@@ -92,12 +92,12 @@ namespace TC.Agro.Farm.Service.Telemetry
             activity?.SetTag("farm.operation", operationName);
             activity?.SetTag("farm.entity_type", entityType);
             activity?.SetTag("user.id", userId);
-            
+
             if (!string.IsNullOrWhiteSpace(entityId))
             {
                 activity?.SetTag("farm.entity_id", entityId);
             }
-            
+
             return activity;
         }
 

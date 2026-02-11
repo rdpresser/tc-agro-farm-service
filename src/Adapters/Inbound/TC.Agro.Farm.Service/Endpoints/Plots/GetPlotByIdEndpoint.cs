@@ -1,20 +1,22 @@
+using TC.Agro.Farm.Application.UseCases.Plots.GetById;
+
 namespace TC.Agro.Farm.Service.Endpoints.Plots
 {
-    public sealed class GetPlotByIdEndpoint : BaseApiEndpoint<GetPlotByIdQuery, PlotByIdResponse>
+    public sealed class GetPlotByIdEndpoint : BaseApiEndpoint<GetPlotByIdQuery, GetPlotByIdResponse>
     {
         public override void Configure()
         {
-            Get("plot/{id:guid}");
+            Get("plots/{id:guid}");
 
             // Force FastEndpoints to bind from route params (not JSON body)
             RequestBinder(new RequestBinder<GetPlotByIdQuery>(BindingSource.RouteValues));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<GetPlotByIdQuery, PlotByIdResponse>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<GetPlotByIdQuery, PlotByIdResponse>>();
+            PreProcessor<QueryCachingPreProcessorBehavior<GetPlotByIdQuery, GetPlotByIdResponse>>();
+            PostProcessor<QueryCachingPostProcessorBehavior<GetPlotByIdQuery, GetPlotByIdResponse>>();
 
             Description(
-                x => x.Produces<PlotByIdResponse>(200)
+                x => x.Produces<GetPlotByIdResponse>(200)
                       .ProducesProblemDetails()
                       .Produces((int)HttpStatusCode.NotFound)
                       .Produces((int)HttpStatusCode.Forbidden)
@@ -25,7 +27,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                 s.Summary = "Get plot details by ID.";
                 s.Description = "Retrieves detailed information about a specific plot including crop type, area, and sensor count.";
                 s.ExampleRequest = new GetPlotByIdQuery { Id = Guid.NewGuid() };
-                s.ResponseExamples[200] = new PlotByIdResponse(
+                s.ResponseExamples[200] = new GetPlotByIdResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
                     "Fazenda Boa Vista",

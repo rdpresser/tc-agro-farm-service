@@ -1,5 +1,5 @@
 using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorById;
-using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorList;
+using TC.Agro.Farm.Application.UseCases.Sensors.ListFromPlot;
 
 namespace TC.Agro.Farm.Application.Abstractions.Ports
 {
@@ -16,8 +16,8 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         /// <summary>
         /// Gets a paginated list of sensors with optional filtering.
         /// </summary>
-        Task<(IReadOnlyList<SensorListResponse> Sensors, int TotalCount)> GetSensorListAsync(
-            GetSensorListQuery query,
+        Task<(IReadOnlyList<ListSensorsFromPlotResponse> Sensors, int TotalCount)> ListSensorsFromPlotAsync(
+            ListSensorsFromPlotQuery query,
             CancellationToken cancellationToken = default);
     }
 }

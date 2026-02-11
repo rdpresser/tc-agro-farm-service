@@ -29,12 +29,14 @@ namespace TC.Agro.Farm.Application.Abstractions.Mappers
             where TAggregate : BaseAggregateRoot
             where TIntegrationEvent : BaseIntegrationEvent
         {
-            if (mappings == null) yield break;
+            if (mappings == null)
+                yield break;
 
             foreach (var domainEvent in domainEvents)
             {
                 var type = domainEvent.GetType();
-                if (!mappings.TryGetValue(type, out var mapFunc)) continue;
+                if (!mappings.TryGetValue(type, out var mapFunc))
+                    continue;
 
                 var integrationEvent = mapFunc(domainEvent);
 

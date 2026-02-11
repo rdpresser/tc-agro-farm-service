@@ -1,8 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <PackageReference Include="Ardalis.Result" />
-  </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\common\src\TC.Agro.SharedKernel\TC.Agro.SharedKernel.csproj" />

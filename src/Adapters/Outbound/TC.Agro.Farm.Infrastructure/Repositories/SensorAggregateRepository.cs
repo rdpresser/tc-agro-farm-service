@@ -1,14 +1,17 @@
-using TC.Agro.Farm.Application.Abstractions.Ports;
-using TC.Agro.Farm.Domain.Aggregates;
-
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class SensorAggregateRepository : BaseRepository<SensorAggregate>, ISensorAggregateRepository
     {
-        public SensorAggregateRepository(ApplicationDbContext dbContext)
+        private readonly IUserContext _userContext;
+
+        public SensorAggregateRepository(ApplicationDbContext dbContext, IUserContext userContext)
             : base(dbContext)
         {
+            _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
+
+        private IQueryable<SensorAggregate> FilteredDbSet => DbContext.Sensors
+            .Where(x => x.Plot.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<bool> LabelExistsForPlotAsync(string label, Guid plotId, CancellationToken cancellationToken = default)
@@ -16,7 +19,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(label))
                 return false;
 
-            return await DbSet
+            return await FilteredDbSet
                 .AsNoTracking()
                 .AnyAsync(s => s.PlotId == plotId &&
                               s.Label != null &&
@@ -30,12 +33,12 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             if (string.IsNullOrWhiteSpace(label))
                 return false;
 
-            return await DbSet
+            return await FilteredDbSet
                 .AsNoTracking()
                 .AnyAsync(s => s.PlotId == plotId &&
-                              s.Id != excludeId &&
-                              s.Label != null &&
-                              EF.Functions.ILike(s.Label.Value, label), cancellationToken)
+                    s.Id != excludeId &&
+                    s.Label != null &&
+                    EF.Functions.ILike(s.Label.Value, label), cancellationToken)
                 .ConfigureAwait(false);
         }
     }

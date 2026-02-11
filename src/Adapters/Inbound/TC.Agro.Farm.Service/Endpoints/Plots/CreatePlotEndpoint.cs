@@ -1,10 +1,12 @@
+using TC.Agro.Farm.Application.UseCases.Plots.Create;
+
 namespace TC.Agro.Farm.Service.Endpoints.Plots
 {
     public sealed class CreatePlotEndpoint : BaseApiEndpoint<CreatePlotCommand, CreatePlotResponse>
     {
         public override void Configure()
         {
-            Post("plot");
+            Post("plots");
             PostProcessor<LoggingCommandPostProcessorBehavior<CreatePlotCommand, CreatePlotResponse>>();
             PostProcessor<CacheInvalidationPostProcessorBehavior<CreatePlotCommand, CreatePlotResponse>>();
 

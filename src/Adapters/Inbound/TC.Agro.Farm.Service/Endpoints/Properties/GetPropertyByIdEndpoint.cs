@@ -1,20 +1,22 @@
+using TC.Agro.Farm.Application.UseCases.Properties.GetById;
+
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
-    public sealed class GetPropertyByIdEndpoint : BaseApiEndpoint<GetPropertyByIdQuery, PropertyByIdResponse>
+    public sealed class GetPropertyByIdEndpoint : BaseApiEndpoint<GetPropertyByIdQuery, GetPropertyByIdResponse>
     {
         public override void Configure()
         {
-            Get("property/{id:guid}");
+            Get("properties/{id:guid}");
 
             // Force FastEndpoints to bind from route params (not JSON body)
             RequestBinder(new RequestBinder<GetPropertyByIdQuery>(BindingSource.RouteValues));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<GetPropertyByIdQuery, PropertyByIdResponse>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<GetPropertyByIdQuery, PropertyByIdResponse>>();
+            PreProcessor<QueryCachingPreProcessorBehavior<GetPropertyByIdQuery, GetPropertyByIdResponse>>();
+            PostProcessor<QueryCachingPostProcessorBehavior<GetPropertyByIdQuery, GetPropertyByIdResponse>>();
 
             Description(
-                x => x.Produces<PropertyByIdResponse>(200)
+                x => x.Produces<GetPropertyByIdResponse>(200)
                       .ProducesProblemDetails()
                       .Produces((int)HttpStatusCode.NotFound)
                       .Produces((int)HttpStatusCode.Forbidden)
@@ -25,7 +27,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
                 s.Summary = "Get property details by ID.";
                 s.Description = "Retrieves detailed information about a specific property including location, area, and plot count.";
                 s.ExampleRequest = new GetPropertyByIdQuery { Id = Guid.NewGuid() };
-                s.ResponseExamples[200] = new PropertyByIdResponse(
+                s.ResponseExamples[200] = new GetPropertyByIdResponse(
                     Guid.NewGuid(),
                     "Fazenda Boa Vista",
                     "Estrada Rural Km 15",

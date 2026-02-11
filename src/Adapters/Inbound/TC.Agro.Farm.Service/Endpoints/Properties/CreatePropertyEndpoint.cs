@@ -1,10 +1,12 @@
+using TC.Agro.Farm.Application.UseCases.Properties.Create;
+
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
     public sealed class CreatePropertyEndpoint : BaseApiEndpoint<CreatePropertyCommand, CreatePropertyResponse>
     {
         public override void Configure()
         {
-            Post("property");
+            Post("properties");
             PostProcessor<LoggingCommandPostProcessorBehavior<CreatePropertyCommand, CreatePropertyResponse>>();
             PostProcessor<CacheInvalidationPostProcessorBehavior<CreatePropertyCommand, CreatePropertyResponse>>();
 

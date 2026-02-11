@@ -1,5 +1,5 @@
-using TC.Agro.Farm.Application.UseCases.Plots.GetPlotById;
-using TC.Agro.Farm.Application.UseCases.Plots.GetPlotList;
+using TC.Agro.Farm.Application.UseCases.Plots.GetById;
+using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
 
 namespace TC.Agro.Farm.Application.Abstractions.Ports
 {
@@ -11,13 +11,13 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         /// <summary>
         /// Gets a plot by its unique identifier.
         /// </summary>
-        Task<PlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<GetPlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a paginated list of plots with optional filtering.
         /// </summary>
-        Task<(IReadOnlyList<PlotListResponse> Plots, int TotalCount)> GetPlotListAsync(
-            GetPlotListQuery query,
+        Task<(IReadOnlyList<ListPlotsFromPropertyResponse> Plots, int TotalCount)> ListPlotsFromPropertyAsync(
+            ListPlotsFromPropertyQuery query,
             CancellationToken cancellationToken = default);
     }
 }
