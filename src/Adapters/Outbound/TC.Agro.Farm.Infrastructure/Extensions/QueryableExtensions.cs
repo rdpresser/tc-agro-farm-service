@@ -1,6 +1,3 @@
-using TC.Agro.Farm.Domain.Aggregates;
-using System.Linq.Expressions;
-
 namespace TC.Agro.Farm.Infrastructure.Extensions
 {
     /// <summary>
