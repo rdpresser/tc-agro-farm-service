@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/common/">
     <Project Path="../../common/src/TC.Agro.Contracts/TC.Agro.Contracts.csproj" />
+    <Project Path="../../common/src/TC.Agro.Messaging/TC.Agro.Messaging.csproj" />
     <Project Path="../../common/src/TC.Agro.SharedKernel/TC.Agro.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
