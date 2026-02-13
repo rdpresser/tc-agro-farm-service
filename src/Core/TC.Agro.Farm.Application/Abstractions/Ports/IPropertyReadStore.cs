@@ -1,4 +1,3 @@
-using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
 using TC.Agro.Farm.Application.UseCases.Properties.GetById;
 using TC.Agro.Farm.Application.UseCases.Properties.List;
 

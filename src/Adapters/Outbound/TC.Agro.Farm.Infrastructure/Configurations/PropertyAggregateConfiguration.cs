@@ -1,5 +1,3 @@
-using TC.Agro.Farm.Domain.Aggregates;
-
 namespace TC.Agro.Farm.Infrastructure.Configurations
 {
     internal sealed class PropertyAggregateConfiguration : BaseEntityConfiguration<PropertyAggregate>
