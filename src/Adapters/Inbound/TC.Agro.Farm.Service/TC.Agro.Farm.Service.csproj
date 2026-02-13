@@ -38,15 +38,12 @@
     <PackageReference Include="ZiggyCreatures.FusionCache.OpenTelemetry" />
 
     <!-- Caching (FusionCache) -->
-    <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" />
     <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Logging -->
-    <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Enrichers.Sensitive" />
-    <PackageReference Include="Serilog.Enrichers.Span" />
     <PackageReference Include="Serilog.Formatting.Compact" />
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.Grafana.Loki" />
