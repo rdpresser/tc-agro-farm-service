@@ -1,5 +1,3 @@
-using TC.Agro.Farm.Application.UseCases.Properties.Create;
-
 namespace TC.Agro.Farm.Service.Endpoints.Properties
 {
     public sealed class CreatePropertyEndpoint : BaseApiEndpoint<CreatePropertyCommand, CreatePropertyResponse>

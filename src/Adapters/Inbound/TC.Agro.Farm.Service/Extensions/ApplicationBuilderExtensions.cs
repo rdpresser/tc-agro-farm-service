@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.HttpOverrides;
-
 namespace TC.Agro.Farm.Service.Extensions
 {
     [ExcludeFromCodeCoverage]

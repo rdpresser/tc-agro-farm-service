@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using System.Security.Claims;
-using Serilog.Context;
-
 namespace TC.Agro.Farm.Service.Middleware
 {
     /// <summary>

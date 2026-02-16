@@ -1,5 +1,8 @@
+global using System.Diagnostics;
 global using System.Diagnostics.CodeAnalysis;
+global using System.Diagnostics.Metrics;
 global using System.Net;
+global using System.Security.Claims;
 global using System.Text;
 global using Bogus;
 global using FastEndpoints;
@@ -10,6 +13,7 @@ global using HealthChecks.UI.Client;
 global using JasperFx.Resources;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
 global using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+global using Microsoft.AspNetCore.HttpOverrides;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Caching.StackExchangeRedis;
 global using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -24,12 +28,15 @@ global using OpenTelemetry.Metrics;
 global using OpenTelemetry.Resources;
 global using OpenTelemetry.Trace;
 global using Serilog;
+global using Serilog.Context;
 global using TC.Agro.Contracts.Events.Farm;
 global using TC.Agro.Farm.Application;
 global using TC.Agro.Farm.Application.Abstractions;
+global using TC.Agro.Farm.Application.UseCases.Properties.Create;
 global using TC.Agro.Farm.Infrastructure;
 global using TC.Agro.Farm.Service.Extensions;
 global using TC.Agro.Farm.Service.Telemetry;
+global using TC.Agro.Messaging.Extensions;
 global using TC.Agro.SharedKernel.Api.Endpoints;
 global using TC.Agro.SharedKernel.Api.Extensions;
 global using TC.Agro.SharedKernel.Application.Behaviors;
@@ -46,10 +53,12 @@ global using TC.Agro.SharedKernel.Infrastructure.Telemetry;
 global using Wolverine;
 global using Wolverine.EntityFrameworkCore;
 global using Wolverine.ErrorHandling;
+global using Wolverine.Postgresql;
 global using Wolverine.RabbitMQ;
 // ZiggyCreatures.Caching.Fusion
 global using ZiggyCreatures.Caching.Fusion;
 global using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
+global using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 //**//
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("TC.Agro.Farm.Unit.Tests")]

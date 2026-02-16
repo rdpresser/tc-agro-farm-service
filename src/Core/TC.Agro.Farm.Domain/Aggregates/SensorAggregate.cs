@@ -22,11 +22,15 @@ namespace TC.Agro.Farm.Domain.Aggregates
         #region Factories
 
         public static Result<SensorAggregate> Create(
+            Guid ownerId,
+            Guid propertyId,
             Guid plotId,
-            string type,
-            string? label = null)
+            string? label,
+            string propertyName,
+            string plotName,
+            string type)
         {
-            var typeResult = ValueObjects.SensorType.Create(type);
+            var typeResult = SensorType.Create(type);
 
             var errors = new List<ValidationError>();
             errors.AddRange(ValidatePlotId(plotId));
@@ -36,7 +40,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Result<Name>? labelResult = null;
             if (!string.IsNullOrWhiteSpace(label))
             {
-                labelResult = ValueObjects.Name.Create(label);
+                labelResult = Name.Create(label);
                 errors.AddErrorsIfFailure(labelResult);
             }
 
@@ -45,18 +49,28 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 return Result.Invalid(errors.ToArray());
             }
 
-            return CreateAggregate(plotId, typeResult.Value, labelResult?.Value);
+            return CreateAggregate(ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: labelResult?.Value,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: typeResult.Value);
         }
 
-        private static Result<SensorAggregate> CreateAggregate(Guid plotId, SensorType type, Name? label)
+        private static Result<SensorAggregate> CreateAggregate(Guid ownerId, Guid propertyId, Guid plotId, Name? label, string propertyName, string plotName, SensorType type)
         {
             var aggregate = new SensorAggregate(Guid.NewGuid());
             var @event = new SensorRegisteredDomainEvent(
-                aggregate.Id,
-                plotId,
+                AggregateId: aggregate.Id,
+                OwnerId: ownerId,
+                PropertyId: propertyId,
+                PlotId: plotId,
+                Label: label?.Value ?? string.Empty,
+                PropertyName: propertyName,
+                PlotName: plotName,
                 type.Value,
                 SensorStatus.Active,
-                label?.Value,
                 DateTimeOffset.UtcNow);
 
             aggregate.ApplyEvent(@event);
@@ -187,13 +201,13 @@ namespace TC.Agro.Farm.Domain.Aggregates
         {
             SetId(@event.AggregateId);
             PlotId = @event.PlotId;
-            Type = ValueObjects.SensorType.FromDb(@event.Type).Value;
-            Status = ValueObjects.SensorStatus.FromDb(@event.Status).Value;
+            Type = SensorType.FromDb(@event.Type).Value;
+            Status = SensorStatus.FromDb(@event.Status).Value;
             InstalledAt = @event.OccurredOn;
 
             if (!string.IsNullOrWhiteSpace(@event.Label))
             {
-                Label = ValueObjects.Name.FromDb(@event.Label).Value;
+                Label = Name.FromDb(@event.Label).Value;
             }
 
             SetCreatedAt(@event.OccurredOn);
@@ -204,7 +218,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         {
             Label = string.IsNullOrWhiteSpace(@event.Label)
                 ? null
-                : ValueObjects.Name.FromDb(@event.Label).Value;
+                : Name.FromDb(@event.Label).Value;
             SetUpdatedAt(@event.OccurredOn);
         }
 
@@ -267,10 +281,14 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public record SensorRegisteredDomainEvent(
             Guid AggregateId,
+            Guid OwnerId,
+            Guid PropertyId,
             Guid PlotId,
+            string? Label,
+            string PropertyName,
+            string PlotName,
             string Type,
             string Status,
-            string? Label,
             DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record SensorLabelUpdatedDomainEvent(

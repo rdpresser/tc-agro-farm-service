@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace TC.Agro.Farm.Service.Telemetry
 {
     /// <summary>
