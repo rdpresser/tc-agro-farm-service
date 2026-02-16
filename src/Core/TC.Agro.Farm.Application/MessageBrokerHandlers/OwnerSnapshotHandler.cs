@@ -21,6 +21,7 @@ namespace TC.Agro.Farm.Application.MessageBrokerHandlers
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         }
 
+
         // -------------------------
         // User Created
         // -------------------------
@@ -59,7 +60,7 @@ namespace TC.Agro.Farm.Application.MessageBrokerHandlers
             ArgumentNullException.ThrowIfNull(@event);
 
             // Load existing snapshot
-            var snapshot = await _store.GetByIdAsync(@event.EventData.Id, cancellationToken).ConfigureAwait(false);
+            var snapshot = await _store.GetByIdAsync(@event.EventData.OwnerId, cancellationToken).ConfigureAwait(false);
             if (snapshot == null)
                 return;
 
@@ -85,7 +86,7 @@ namespace TC.Agro.Farm.Application.MessageBrokerHandlers
             ArgumentNullException.ThrowIfNull(@event);
 
             // Load existing snapshot
-            var snapshot = await _store.GetByIdAsync(@event.EventData.Id, cancellationToken).ConfigureAwait(false);
+            var snapshot = await _store.GetByIdAsync(@event.EventData.OwnerId, cancellationToken).ConfigureAwait(false);
             if (snapshot == null)
                 return;
 

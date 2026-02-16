@@ -21,9 +21,11 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                 InstalledAt: aggregate.InstalledAt);
         }
 
-        public static SensorRegisteredIntegrationEvent ToIntegrationEvent(SensorRegisteredDomainEvent domainEvent)
+        public static SensorRegisteredIntegrationEvent ToIntegrationEvent(SensorRegisteredDomainEvent domainEvent, Guid ownerId, Guid propertyId)
             => new(
                 domainEvent.AggregateId,
+                ownerId,
+                propertyId,
                 domainEvent.PlotId,
                 domainEvent.Type,
                 domainEvent.Status,

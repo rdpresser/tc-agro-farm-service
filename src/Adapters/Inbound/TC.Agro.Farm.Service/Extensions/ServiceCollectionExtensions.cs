@@ -281,8 +281,14 @@ namespace TC.Agro.Farm.Service.Extensions
                 var exchangeName = $"{mqConnectionFactory.Exchange}-exchange";
 
                 // ============================================================
-                // PUBLISHING - Farm Service Events (TOPIC Exchange)
-                // Farm publishes its own events (Property, Plot, Sensor)
+                // CONFIGURE PUBLISHING - Farm Service Events
+                // Register all farm events (Property, Plot, Sensor) with explicit routing keys
+                // ============================================================
+                opts.ConfigureFarmEventPublishing();
+
+                // ============================================================
+                // PUBLISHING ENDPOINTS - Farm Service Events (TOPIC Exchange)
+                // Messages are routed with specific routing keys via the extension above
                 // ============================================================
                 opts.PublishMessage<EventContext<PropertyCreatedIntegrationEvent>>()
                     .ToRabbitExchange(exchangeName)

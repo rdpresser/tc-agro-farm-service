@@ -18,7 +18,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("public")
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
                 .HasAnnotation("WolverineEnabled", "true");
 
@@ -305,27 +305,6 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasConstraintName("fk_plots_plots_id");
                         });
 
-                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Name", "Name", b1 =>
-                        {
-                            b1.Property<Guid>("PlotAggregateId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("name");
-
-                            b1.HasKey("PlotAggregateId");
-
-                            b1.ToTable("plots", "public");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PlotAggregateId")
-                                .HasConstraintName("fk_plots_plots_id");
-                        });
-
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.CropType", "CropType", b1 =>
                         {
                             b1.Property<Guid>("PlotAggregateId")
@@ -337,6 +316,27 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)")
                                 .HasColumnName("crop_type");
+
+                            b1.HasKey("PlotAggregateId");
+
+                            b1.ToTable("plots", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlotAggregateId")
+                                .HasConstraintName("fk_plots_plots_id");
+                        });
+
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Name", "Name", b1 =>
+                        {
+                            b1.Property<Guid>("PlotAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("name");
 
                             b1.HasKey("PlotAggregateId");
 
@@ -387,27 +387,6 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasConstraintName("fk_properties_properties_id");
                         });
 
-                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Name", "Name", b1 =>
-                        {
-                            b1.Property<Guid>("PropertyAggregateId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("name");
-
-                            b1.HasKey("PropertyAggregateId");
-
-                            b1.ToTable("properties", "public");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PropertyAggregateId")
-                                .HasConstraintName("fk_properties_properties_id");
-                        });
-
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Location", "Location", b1 =>
                         {
                             b1.Property<Guid>("PropertyAggregateId")
@@ -445,6 +424,27 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)")
                                 .HasColumnName("location_state");
+
+                            b1.HasKey("PropertyAggregateId");
+
+                            b1.ToTable("properties", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PropertyAggregateId")
+                                .HasConstraintName("fk_properties_properties_id");
+                        });
+
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Name", "Name", b1 =>
+                        {
+                            b1.Property<Guid>("PropertyAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("name");
 
                             b1.HasKey("PropertyAggregateId");
 

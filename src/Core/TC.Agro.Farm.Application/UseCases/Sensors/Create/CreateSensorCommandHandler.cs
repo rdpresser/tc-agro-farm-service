@@ -63,7 +63,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                     handlerName: nameof(CreateSensorCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorRegisteredIntegrationEvent>>
                     {
-                        { typeof(SensorRegisteredDomainEvent), e => CreateSensorMapper.ToIntegrationEvent((SensorRegisteredDomainEvent)e) }
+                        { typeof(SensorRegisteredDomainEvent), e => CreateSensorMapper.ToIntegrationEvent((SensorRegisteredDomainEvent)e, UserContext.Id, aggregate.Plot.PropertyId) }
                     });
 
             foreach (var evt in integrationEvents)

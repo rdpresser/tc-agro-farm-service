@@ -2,7 +2,7 @@ using TC.Agro.Farm.Domain.Aggregates;
 
 namespace TC.Agro.Farm.Domain.Snapshots
 {
-    public class OwnerSnapshot
+    public sealed class OwnerSnapshot
     {
         public Guid Id { get; private set; }      // Identity user id
         public string Name { get; private set; } = default!;
