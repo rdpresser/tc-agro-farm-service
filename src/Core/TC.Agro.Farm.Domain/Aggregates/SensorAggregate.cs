@@ -224,7 +224,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public void Apply(SensorStatusChangedDomainEvent @event)
         {
-            Status = ValueObjects.SensorStatus.FromDb(@event.Status).Value;
+            Status = SensorStatus.FromDb(@event.Status).Value;
             SetUpdatedAt(@event.OccurredOn);
         }
 

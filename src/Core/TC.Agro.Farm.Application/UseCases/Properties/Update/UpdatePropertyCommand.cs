@@ -12,5 +12,13 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
         string Country,
         double AreaHectares,
         double? Latitude = null,
-        double? Longitude = null) : IBaseCommand<UpdatePropertyResponse>;
+        double? Longitude = null) : IBaseCommand<UpdatePropertyResponse>, IInvalidateCache
+    {
+        public IReadOnlyCollection<string> CacheTags =>
+        [
+            CacheTagCatalog.Properties,
+            CacheTagCatalog.PropertyList,
+            CacheTagCatalog.PropertyById
+        ];
+    }
 }
