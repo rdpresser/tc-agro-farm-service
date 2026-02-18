@@ -10,11 +10,22 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithValidParameters_ShouldSucceed()
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.NewGuid();
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
             var type = "Temperature";
 
             // Act
-            var result = SensorAggregate.Create(plotId, type);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: null,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -31,12 +42,23 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithLabel_ShouldSucceed()
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.NewGuid();
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
             var type = "Humidity";
             var label = "Sensor Norte";
 
             // Act
-            var result = SensorAggregate.Create(plotId, type, label);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: label,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -55,10 +77,21 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithVariousSensorTypes_ShouldSucceed(string type)
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.NewGuid();
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
 
             // Act
-            var result = SensorAggregate.Create(plotId, type);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: null,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -73,11 +106,22 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithEmptyPlotId_ShouldReturnValidationErrors()
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.Empty;
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
             var type = "Temperature";
 
             // Act
-            var result = SensorAggregate.Create(plotId, type);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: null,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -88,11 +132,22 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithEmptyType_ShouldReturnValidationErrors()
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.NewGuid();
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
             var type = "";
 
             // Act
-            var result = SensorAggregate.Create(plotId, type);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: null,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -103,11 +158,22 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithInvalidType_ShouldReturnValidationErrors()
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.NewGuid();
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
             var type = "InvalidSensorType";
 
             // Act
-            var result = SensorAggregate.Create(plotId, type);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: null,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -118,12 +184,23 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithInvalidLabel_ShouldReturnValidationErrors()
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.NewGuid();
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
             var type = "Temperature";
             var label = "A"; // Too short (minimum 2 characters)
 
             // Act
-            var result = SensorAggregate.Create(plotId, type, label);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: label,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -134,11 +211,22 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         public void Create_WithMultipleInvalidFields_ShouldReturnAllValidationErrors()
         {
             // Arrange
+            var ownerId = Guid.NewGuid();
+            var propertyId = Guid.NewGuid();
             var plotId = Guid.Empty;
+            var propertyName = "Test Property";
+            var plotName = "Test Plot";
             var type = "";
 
             // Act
-            var result = SensorAggregate.Create(plotId, type);
+            var result = SensorAggregate.Create(
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: plotId,
+                label: null,
+                propertyName: propertyName,
+                plotName: plotName,
+                type: type);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -389,8 +477,13 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         private static SensorAggregate CreateValidSensor()
         {
             var result = SensorAggregate.Create(
-                Guid.NewGuid(),
-                "Temperature");
+                ownerId: Guid.NewGuid(),
+                propertyId: Guid.NewGuid(),
+                plotId: Guid.NewGuid(),
+                label: null,
+                propertyName: "Test Property",
+                plotName: "Test Plot",
+                type: "Temperature");
 
             return result.Value;
         }
@@ -398,9 +491,13 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         private static SensorAggregate CreateValidSensorWithLabel()
         {
             var result = SensorAggregate.Create(
-                Guid.NewGuid(),
-                "Temperature",
-                "Sensor Norte");
+                ownerId: Guid.NewGuid(),
+                propertyId: Guid.NewGuid(),
+                plotId: Guid.NewGuid(),
+                label: "Sensor Norte",
+                propertyName: "Test Property",
+                plotName: "Test Plot",
+                type: "Temperature");
 
             return result.Value;
         }
