@@ -2,15 +2,15 @@ using TC.Agro.SharedKernel.Infrastructure.Pagination;
 
 namespace TC.Agro.Farm.Application.UseCases.Properties.List
 {
-    internal sealed class ListPropertiesHandler : BaseQueryHandler<ListPropertiesQuery, PaginatedResponse<ListPropertiesResponse>>
+    internal sealed class ListPropertiesQueryHandler : BaseQueryHandler<ListPropertiesQuery, PaginatedResponse<ListPropertiesResponse>>
     {
         private readonly IPropertyReadStore _propertyReadStore;
-        private readonly ILogger<ListPropertiesHandler> _logger;
+        private readonly ILogger<ListPropertiesQueryHandler> _logger;
 
-        public ListPropertiesHandler(
+        public ListPropertiesQueryHandler(
             IPropertyReadStore propertyReadStore,
             IUserContext userContext,
-            ILogger<ListPropertiesHandler> logger)
+            ILogger<ListPropertiesQueryHandler> logger)
         {
             _propertyReadStore = propertyReadStore ?? throw new ArgumentNullException(nameof(propertyReadStore));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

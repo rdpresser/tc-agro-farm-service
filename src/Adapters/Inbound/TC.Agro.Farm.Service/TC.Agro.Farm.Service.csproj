@@ -9,6 +9,9 @@
     <!-- API / Endpoints -->
     <PackageReference Include="FastEndpoints.Swagger" />
 
+    <!-- Misc -->
+    <PackageReference Include="Bogus" />
+
     <!-- Health Check -->
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />

@@ -4,7 +4,6 @@ global using System.Diagnostics.Metrics;
 global using System.Net;
 global using System.Security.Claims;
 global using System.Text;
-global using Bogus;
 global using FastEndpoints;
 global using FastEndpoints.Swagger;
 global using FluentValidation;
