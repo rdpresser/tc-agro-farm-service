@@ -54,7 +54,7 @@
     <!-- ========================= -->
     <PackageVersion Include="Weasel.Core" Version="8.5.0" />
     <PackageVersion Include="WolverineFx" Version="5.15.0" />
-    <PackageVersion Include="WolverineFx.Postgresql" Version="5.15.0" />
+    <PackageVersion Include="WolverineFx.Postgresql" Version="5.16.2" />
     <PackageVersion Include="WolverineFx.RabbitMQ" Version="5.15.0" />
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="5.15.0" />
     <PackageVersion Include="JasperFx.RuntimeCompiler" Version="4.3.2" />
@@ -76,8 +76,8 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.StackExchangeRedis" Version="1.14.0-beta.1" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.14.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.StackExchangeRedis" Version="1.15.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.0-beta.1" />
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.1" />
     <PackageVersion Include="ZiggyCreatures.FusionCache.OpenTelemetry" Version="2.5.0" />
     <!-- ========================= -->
@@ -119,6 +119,6 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="FakeItEasy" Version="9.0.1" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="coverlet.collector" Version="8.0.0" />
   </ItemGroup>
 </Project>

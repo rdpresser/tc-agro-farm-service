@@ -11,6 +11,10 @@
     <File Path="Directory.Packages.props" />
     <File Path="global.json" />
   </Folder>
+  <Folder Name="/Solution Items/.github/" />
+  <Folder Name="/Solution Items/.github/workflows/">
+    <File Path=".github/workflows/farm-ci.yml" />
+  </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Adapters/" />
   <Folder Name="/src/Adapters/Driven (Outbound)/">

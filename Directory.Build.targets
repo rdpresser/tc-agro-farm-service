@@ -9,11 +9,11 @@
       <PackageRefsWithVersion Include="@(PackageReference)" Condition="'%(PackageReference.Version)' != ''" />
     </ItemGroup>
 
-    <Error Condition="'@(PackageRefsWithVersion)' != ''" Text="❌ Central Package Management (CPM) is enabled. Do not specify Version attribute in .csproj files. Move the version to Directory.Packages.props. Violations: @(PackageRefsWithVersion->'%(Identity)=%(Version)', ' | ')" />
+    <Error Condition="'@(PackageRefsWithVersion)' != ''" Text="Central Package Management (CPM) is enabled. Do not specify Version attribute in .csproj files. Move the version to Directory.Packages.props. Violations: @(PackageRefsWithVersion->'%(Identity)=%(Version)', ' | ')" />
   </Target>
 
   <Target Name="FailIfTargetFrameworkIsNotNet10" BeforeTargets="Build">
-    <Error Condition="'$(TargetFramework)' != '' AND '$(TargetFramework)' != 'net10.0'" Text="❌ Invalid TargetFramework: $(TargetFramework). Required standard: net10.0" />
+    <Error Condition="'$(TargetFramework)' != '' AND '$(TargetFramework)' != 'net10.0'" Text="Invalid TargetFramework: $(TargetFramework). Required standard: net10.0" />
   </Target>
 
   <!-- Suppress NU1608 warnings for CodeAnalysis transitive version conflicts -->

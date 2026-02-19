@@ -4,13 +4,19 @@ builder.Services.AddFarmServices(builder);
 builder.Services.AddApplication();
 builder.Services.AddFarmInfrastructure(builder.Configuration);
 
+// ========================================
 // Configure Serilog as logging provider (using SharedKernel extension)
-builder.Host.UseCustomSerilog(builder.Configuration, TelemetryConstants.ServiceName, TelemetryConstants.ServiceNamespace, TelemetryConstants.Version);
+// ========================================
+builder.Host.UseCustomSerilog(builder.Configuration,
+    TelemetryConstants.ServiceName,
+    TelemetryConstants.ServiceNamespace,
+    TelemetryConstants.Version);
 
 var app = builder.Build();
 
 if (!builder.Environment.IsEnvironment("Testing"))
 {
+    // Apply EF Core migrations automatically (same pattern as Identity-Service)
     await app.ApplyMigrations().ConfigureAwait(false);
 }
 
@@ -23,10 +29,10 @@ TelemetryConstants.LogTelemetryConfiguration(logger, app.Configuration);
 var exporterInfo = app.Services.GetService<TelemetryExporterInfo>();
 TelemetryConstants.LogApmExporterConfiguration(logger, exporterInfo);
 
-// Configure the HTTP request pipeline.
+// 1. Ingress PathBase handling (nginx rewrite-target support)
 app.UseIngressPathBase(app.Configuration);
 
-// Cross-Origin Resource Sharing (CORS)
+// 2. CORS (must be early in pipeline)
 app.UseCors("DefaultCorsPolicy");
 
 // CRITICAL: Middleware execution order for correlation ID propagation
@@ -38,11 +44,13 @@ app.UseCors("DefaultCorsPolicy");
 // 6. Authentication and Authorization (JWT validation)
 // 7. FastEndpoints (route handlers)
 
+// 3. Early-stage middlewares (exception handling, correlation, health checks)
 app.UseCustomMiddlewares();
 
 // CRITICAL: TelemetryMiddleware MUST come AFTER CorrelationMiddleware to access correlationIdGenerator.CorrelationId
 app.UseMiddleware<TC.Agro.Farm.Service.Middleware.TelemetryMiddleware>();
 
+// 6. FastEndpoints with Swagger (handles routing + OpenAPI generation)
 app.UseAuthentication()
   .UseAuthorization()
   .UseCustomFastEndpoints(app.Configuration);

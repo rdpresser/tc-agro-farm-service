@@ -13,9 +13,6 @@
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
 
-    <!-- Misc -->
-    <PackageReference Include="Bogus" />
-
     <!-- EntityFramework Core (Design Tools) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>

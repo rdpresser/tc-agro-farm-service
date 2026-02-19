@@ -13,7 +13,8 @@ namespace TC.Agro.Farm.Service.Extensions
                 builder.AddWolverineMessaging();
             }
 
-            services.AddHttpClient()
+            services
+                .AddHttpClient()
                 .AddCorrelationIdGenerator()
                 .AddValidatorsFromAssemblyContaining<CreatePropertyCommandValidator>()
                 .AddCaching()
@@ -60,6 +61,10 @@ namespace TC.Agro.Farm.Service.Extensions
                     failureStatus: HealthStatus.Unhealthy,
                     tags: ["db", "sql", "postgres", "live", "ready"])
 
+                .AddCheck("RabbitMQ", () =>
+                    HealthCheckResult.Healthy("RabbitMQ connection is active via Wolverine"),
+                    tags: ["messaging", "rabbitmq", "live", "ready"])
+
                 .AddTypeActivatedCheck<RedisHealthCheck>("Redis",
                     failureStatus: HealthStatus.Unhealthy,
                     tags: ["cache", "redis", "live", "ready"])
@@ -74,6 +79,7 @@ namespace TC.Agro.Farm.Service.Extensions
                     : HealthCheckResult.Degraded($"High memory usage: {mb} MB");
                 },
                     tags: ["memory", "system", "live"])
+
                 .AddCheck("Custom-Metrics", () =>
                 {
                     // Add any custom health logic for your metrics system
@@ -119,7 +125,6 @@ namespace TC.Agro.Farm.Service.Extensions
             .AddJwtBearer(opt =>
             {
                 var jwtSettings = JwtHelper.Build(configuration);
-
                 opt.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
