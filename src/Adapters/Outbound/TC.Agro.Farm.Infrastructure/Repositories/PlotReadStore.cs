@@ -1,7 +1,3 @@
-using TC.Agro.Farm.Application.UseCases.Plots.GetById;
-using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
-using TC.Agro.Farm.Infrastructure.Extensions;
-
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PlotReadStore : IPlotReadStore
@@ -15,8 +11,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<PlotAggregate> FilteredDbSet => _dbContext.Plots
-            .Where(x => x.Property.OwnerId == _userContext.Id);
+        private IQueryable<PlotAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+            ? _dbContext.Plots
+            : _dbContext.Plots.Where(x => x.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<GetPlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

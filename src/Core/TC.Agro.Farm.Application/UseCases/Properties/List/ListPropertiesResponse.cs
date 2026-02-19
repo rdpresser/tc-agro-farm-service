@@ -11,6 +11,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.List
         string Country,
         double AreaHectares,
         Guid OwnerId,
+        string OwnerName,
         bool IsActive,
         int PlotCount,
         DateTimeOffset CreatedAt);

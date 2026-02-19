@@ -34,6 +34,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
                     "Brazil",
                     faker.Random.Double(50, 500),
                     Guid.NewGuid(),
+                    faker.Name.FullName(),
                     true,
                     faker.Random.Int(1, 10),
                     DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365))));

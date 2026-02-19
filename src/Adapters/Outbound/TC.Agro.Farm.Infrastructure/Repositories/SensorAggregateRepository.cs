@@ -10,8 +10,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<SensorAggregate> FilteredDbSet => DbSet
-            .Where(x => x.Plot.Property.OwnerId == _userContext.Id);
+        private IQueryable<SensorAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+            ? DbSet
+            : DbSet.Where(x => x.Plot.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<bool> LabelExistsForPlotAsync(string label, Guid plotId, CancellationToken cancellationToken = default)

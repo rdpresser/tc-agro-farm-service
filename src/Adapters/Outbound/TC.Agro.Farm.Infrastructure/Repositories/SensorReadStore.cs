@@ -1,7 +1,3 @@
-using TC.Agro.Farm.Application.UseCases.Sensors.GetSensorById;
-using TC.Agro.Farm.Application.UseCases.Sensors.ListFromPlot;
-using TC.Agro.Farm.Infrastructure.Extensions;
-
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class SensorReadStore : ISensorReadStore
@@ -15,8 +11,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<SensorAggregate> FilteredDbSet => _dbContext.Sensors
-            .Where(x => x.Plot.Property.OwnerId == _userContext.Id);
+        private IQueryable<SensorAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+            ? _dbContext.Sensors
+            : _dbContext.Sensors.Where(x => x.Plot.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<SensorByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

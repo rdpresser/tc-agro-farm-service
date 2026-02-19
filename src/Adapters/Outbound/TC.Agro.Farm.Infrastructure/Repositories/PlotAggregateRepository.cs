@@ -1,3 +1,5 @@
+using TC.Agro.Farm.Application.Abstractions;
+
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PlotAggregateRepository : BaseRepository<PlotAggregate>, IPlotAggregateRepository
@@ -10,8 +12,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<PlotAggregate> FilteredDbSet => DbSet
-            .Where(x => x.Property.OwnerId == _userContext.Id);
+        private IQueryable<PlotAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+            ? DbSet
+            : DbSet.Where(x => x.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<bool> NameExistsForPropertyAsync(string name, Guid propertyId, CancellationToken cancellationToken = default)

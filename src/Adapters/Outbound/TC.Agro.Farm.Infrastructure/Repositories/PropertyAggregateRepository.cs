@@ -10,8 +10,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<PropertyAggregate> FilteredDbSet => DbSet
-            .Where(x => x.OwnerId == _userContext.Id);
+        private IQueryable<PropertyAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+            ? DbSet
+            : DbSet.Where(x => x.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<bool> NameExistsForOwnerAsync(string name, Guid ownerId, CancellationToken cancellationToken = default)

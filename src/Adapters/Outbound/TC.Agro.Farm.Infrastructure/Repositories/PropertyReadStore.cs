@@ -15,8 +15,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<PropertyAggregate> FilteredDbSet => _dbContext.Properties
-            .Where(x => x.OwnerId == _userContext.Id);
+        private IQueryable<PropertyAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+            ? _dbContext.Properties
+            : _dbContext.Properties.Where(x => x.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<GetPropertyByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -73,6 +74,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.Location.Country,
                     p.AreaHectares.Hectares,
                     p.OwnerId,
+                    p.Owner.Name,
                     p.IsActive,
                     p.Plots.Count,
                     p.CreatedAt))
