@@ -29,6 +29,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         : BaseCommandHandler<ChangeSensorStatusCommand, ChangeSensorStatusResponse, SensorAggregate, ISensorAggregateRepository>
     {
         private readonly ILogger<ChangeSensorStatusCommandHandler> _logger;
+        private string? _reason;
 
         public ChangeSensorStatusCommandHandler(
             ISensorAggregateRepository repository,
@@ -46,6 +47,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// </summary>
         protected override async Task<Result<SensorAggregate>> MapAsync(ChangeSensorStatusCommand command, CancellationToken ct)
         {
+            _reason = command.Reason;
             var sensor = await Repository.GetByIdAsync(command.SensorId, ct);
 
             if (sensor is null)
@@ -130,7 +132,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                             ChangeSensorStatusMapper.ToIntegrationEvent(
                                 (SensorAggregate.SensorStatusChangedDomainEvent)e, 
                                 aggregate, 
-                                UserContext.Id) }
+                                UserContext.Id,
+                                _reason) }
                     });
 
             foreach (var evt in integrationEvents)
