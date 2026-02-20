@@ -93,7 +93,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public Result ChangeCropType(string cropType)
         {
-            var cropTypeResult = ValueObjects.CropType.Create(cropType);
+            var cropTypeResult = CropType.Create(cropType);
 
             if (!cropTypeResult.IsSuccess)
             {
