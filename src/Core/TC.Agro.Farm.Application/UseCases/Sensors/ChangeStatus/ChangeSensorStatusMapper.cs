@@ -11,28 +11,25 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// </summary>
         public static SensorOperationalStatusChangedIntegrationEvent ToIntegrationEvent(
             SensorAggregate.SensorStatusChangedDomainEvent domainEvent,
-            Guid sensorId,
-            Guid plotId,
-            Guid propertyId,
-            string? reason,
-            Guid changedByUserId)
+            SensorAggregate aggregate,
+            Guid userId)
         {
             return new SensorOperationalStatusChangedIntegrationEvent(
                 EventId: Guid.NewGuid(),
-                AggregateId: sensorId,
+                AggregateId: aggregate.Id,
                 OccurredOn: domainEvent.OccurredOn,
-                SensorId: sensorId,
-                PlotId: plotId,
-                PropertyId: propertyId,
+                SensorId: aggregate.Id,
+                PlotId: aggregate.PlotId,
+                PropertyId: Guid.Empty,  // Would need to load Plot navigation property
                 PreviousStatus: domainEvent.PreviousStatus,
                 NewStatus: domainEvent.NewStatus,
-                Reason: reason,
-                ChangedByUserId: changedByUserId,
+                Reason: string.Empty,  // Could be added to command if needed
+                ChangedByUserId: userId,
                 RelatedIds: new Dictionary<string, Guid>
                 {
-                    ["PlotId"] = plotId,
-                    ["PropertyId"] = propertyId,
-                    ["ChangedByUserId"] = changedByUserId
+                    ["PlotId"] = aggregate.PlotId,
+                    ["PropertyId"] = Guid.Empty,
+                    ["ChangedByUserId"] = userId
                 }
             );
         }

@@ -119,35 +119,19 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// </summary>
         protected override async Task PublishIntegrationEventsAsync(SensorAggregate aggregate, CancellationToken ct)
         {
-            // Note: The domain event should be in UncommittedEvents
-            // We map it to integration event for cross-service communication
-            var domainEvents = aggregate.UncommittedEvents.ToList();
-
-            var integrationEvents = domainEvents
-                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
-                .Select(@event =>
-                {
-                    return EventContext<SensorOperationalStatusChangedIntegrationEvent>.Create<SensorAggregate>(
-                        data: new SensorOperationalStatusChangedIntegrationEvent(
-                            EventId: Guid.NewGuid(),
-                            AggregateId: aggregate.Id,
-                            OccurredOn: @event.OccurredOn,
-                            SensorId: aggregate.Id,
-                            PlotId: aggregate.PlotId,
-                            PropertyId: Guid.Empty,  // Would need to fetch this
-                            PreviousStatus: @event.PreviousStatus,
-                            NewStatus: @event.NewStatus,
-                            ChangedByUserId: UserContext.Id,
-                            EventName: "SensorOperationalStatusChanged",
-                            Reason: string.Empty  // Would come from command
-                        ),
-                        aggregateId: aggregate.Id,
-                        userId: UserContext.Id.ToString(),
-                        isAuthenticated: UserContext.IsAuthenticated,
-                        correlationId: UserContext.CorrelationId,
-                        source: $"Farm.Service.{nameof(ChangeSensorStatusCommandHandler)}.SensorOperationalStatusChanged"
-                    );
-                });
+            var integrationEvents = aggregate.UncommittedEvents
+                .MapToIntegrationEvents(
+                    aggregate: aggregate,
+                    userContext: UserContext,
+                    handlerName: nameof(ChangeSensorStatusCommandHandler),
+                    mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorOperationalStatusChangedIntegrationEvent>>
+                    {
+                        { typeof(SensorAggregate.SensorStatusChangedDomainEvent), e => 
+                            ChangeSensorStatusMapper.ToIntegrationEvent(
+                                (SensorAggregate.SensorStatusChangedDomainEvent)e, 
+                                aggregate, 
+                                UserContext.Id) }
+                    });
 
             foreach (var evt in integrationEvents)
             {
