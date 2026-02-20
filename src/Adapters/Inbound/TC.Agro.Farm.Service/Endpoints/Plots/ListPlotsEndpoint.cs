@@ -1,35 +1,33 @@
 using Bogus;
-using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
+using TC.Agro.Farm.Application.UseCases.Plots.ListAll;
 using TC.Agro.Farm.Domain.ValueObjects;
 using TC.Agro.SharedKernel.Infrastructure.Pagination;
 
 namespace TC.Agro.Farm.Service.Endpoints.Plots
 {
-    public sealed class ListPlotsFromPropertyEndpoint : BaseApiEndpoint<ListPlotsFromPropertyQuery, PaginatedResponse<ListPlotsFromPropertyResponse>>
+    public sealed class ListPlotsEndpoint : BaseApiEndpoint<ListPlotsQuery, PaginatedResponse<ListPlotsResponse>>
     {
         public override void Configure()
         {
-            Get("properties/{id:guid}/plots");
+            Get("plots");
 
             // Force FastEndpoints to bind from query parameters
-            RequestBinder(new RequestBinder<ListPlotsFromPropertyQuery>(BindingSource.QueryParams));
-            RequestBinder(new RequestBinder<ListPlotsFromPropertyQuery>(BindingSource.RouteValues));
+            RequestBinder(new RequestBinder<ListPlotsQuery>(BindingSource.QueryParams));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<ListPlotsFromPropertyQuery, PaginatedResponse<ListPlotsFromPropertyResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<ListPlotsFromPropertyQuery, PaginatedResponse<ListPlotsFromPropertyResponse>>>();
-
+            PreProcessor<QueryCachingPreProcessorBehavior<ListPlotsQuery, PaginatedResponse<ListPlotsResponse>>>();
+            PostProcessor<QueryCachingPostProcessorBehavior<ListPlotsQuery, PaginatedResponse<ListPlotsResponse>>>();
             Description(
-                x => x.Produces<PaginatedResponse<ListPlotsFromPropertyResponse>>(200)
+                x => x.Produces<PaginatedResponse<ListPlotsResponse>>(200)
                       .ProducesProblemDetails()
                       .Produces((int)HttpStatusCode.Forbidden)
                       .Produces((int)HttpStatusCode.Unauthorized));
 
             var faker = new Faker();
-            List<ListPlotsFromPropertyResponse> plotList = [];
+            List<ListPlotsResponse> plotList = [];
             for (int i = 0; i < 5; i++)
             {
-                plotList.Add(new ListPlotsFromPropertyResponse(
+                plotList.Add(new ListPlotsResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
                     faker.Company.CompanyName() + " Farm",
@@ -41,7 +39,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365))));
             }
 
-            var exampleResponse = new PaginatedResponse<ListPlotsFromPropertyResponse>(
+            var exampleResponse = new PaginatedResponse<ListPlotsResponse>(
                 data: [.. plotList],
                 totalCount: 42,
                 pageNumber: 1,
@@ -52,7 +50,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
             {
                 s.Summary = "Get a paginated list of plots.";
                 s.Description = "Retrieves a paginated list of plots with optional filtering by property or crop type.";
-                s.ExampleRequest = new ListPlotsFromPropertyQuery
+                s.ExampleRequest = new ListPlotsQuery
                 {
                     PageNumber = 1,
                     PageSize = 10,
@@ -69,7 +67,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
             });
         }
 
-        public override async Task HandleAsync(ListPlotsFromPropertyQuery req, CancellationToken ct)
+        public override async Task HandleAsync(ListPlotsQuery req, CancellationToken ct)
         {
             var response = await req.ExecuteAsync(ct: ct).ConfigureAwait(false);
             await MatchResultAsync(response, ct).ConfigureAwait(false);

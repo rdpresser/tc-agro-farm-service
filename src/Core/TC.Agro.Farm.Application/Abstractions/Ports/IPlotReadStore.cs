@@ -1,4 +1,5 @@
 using TC.Agro.Farm.Application.UseCases.Plots.GetById;
+using TC.Agro.Farm.Application.UseCases.Plots.ListAll;
 using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
 
 namespace TC.Agro.Farm.Application.Abstractions.Ports
@@ -18,6 +19,10 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         /// </summary>
         Task<(IReadOnlyList<ListPlotsFromPropertyResponse> Plots, int TotalCount)> ListPlotsFromPropertyAsync(
             ListPlotsFromPropertyQuery query,
+            CancellationToken cancellationToken = default);
+
+        Task<(IReadOnlyList<ListPlotsResponse> Plots, int TotalCount)> ListPlotsAsync(
+            ListPlotsQuery query,
             CancellationToken cancellationToken = default);
     }
 }

@@ -1,14 +1,13 @@
 using TC.Agro.SharedKernel.Infrastructure.Pagination;
 
-namespace TC.Agro.Farm.Application.UseCases.Plots.ListByProperty
+namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
 {
     /// <summary>
-    /// Query to get a paginated list of plots.
+    /// Query to get a paginated list of ALL plots.
     /// </summary>
-    public sealed record ListPlotsFromPropertyQuery : ICachedQuery<PaginatedResponse<ListPlotsFromPropertyResponse>>
+    public sealed record ListPlotsQuery : ICachedQuery<PaginatedResponse<ListPlotsResponse>>
     {
-        public Guid Id { get; init; }
-
+        public Guid? PropertyId { get; init; }
         public int PageNumber { get; init; } = 1;
         public int PageSize { get; init; } = 10;
         public string SortBy { get; init; } = "createdat";
@@ -19,7 +18,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListByProperty
         private string? _cacheKey;
         public string GetCacheKey
         {
-            get => _cacheKey ?? $"ListPlotsFromPropertyQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{Id}";
+            get => _cacheKey ?? $"ListPlotsQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{PropertyId}";
         }
 
         public TimeSpan? Duration => null;
@@ -33,7 +32,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListByProperty
 
         public void SetCacheKey(string cacheKey)
         {
-            _cacheKey = $"ListPlotsFromPropertyQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{Id}-{cacheKey}";
+            _cacheKey = $"ListPlotsQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{PropertyId}-{cacheKey}";
         }
     }
 }

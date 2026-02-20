@@ -1,3 +1,5 @@
+using TC.Agro.Farm.Application.UseCases.Plots.ListAll;
+
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PlotReadStore : IPlotReadStore
@@ -66,6 +68,53 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .ApplySorting(query.SortBy, query.SortDirection)
                 .ApplyPagination(query.PageNumber, query.PageSize)
                 .Select(p => new ListPlotsFromPropertyResponse(
+                    p.Id,
+                    p.PropertyId,
+                    p.Property.Name.Value,
+                    p.Name.Value,
+                    p.CropType.Value,
+                    p.AreaHectares.Hectares,
+                    p.IsActive,
+                    p.Sensors.Count,
+                    p.CreatedAt))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return ([.. plots], totalCount);
+        }
+
+        /// <inheritdoc />
+        public async Task<(IReadOnlyList<ListPlotsResponse> Plots, int TotalCount)> ListPlotsAsync(
+            ListPlotsQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            var plotsQuery = FilteredDbSet
+                .AsNoTracking();
+
+            if (query.PropertyId is not null && query.PropertyId.HasValue && query.PropertyId.Value != Guid.Empty)
+            {
+                plotsQuery = plotsQuery.Where(p => p.PropertyId == query.PropertyId.Value);
+            }
+
+            // Apply optional crop type filter (using index on crop_type)
+            if (!string.IsNullOrWhiteSpace(query.CropType))
+            {
+                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(p.CropType.Value, query.CropType));
+            }
+
+            // Apply text filter (searches name and crop type)
+            plotsQuery = plotsQuery.ApplyTextFilter(query.Filter);
+
+            // Get total count before pagination
+            var totalCount = await plotsQuery
+                .CountAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            // Apply sorting, pagination, and projection in one go
+            var plots = await plotsQuery
+                .ApplySorting(query.SortBy, query.SortDirection)
+                .ApplyPagination(query.PageNumber, query.PageSize)
+                .Select(p => new ListPlotsResponse(
                     p.Id,
                     p.PropertyId,
                     p.Property.Name.Value,
