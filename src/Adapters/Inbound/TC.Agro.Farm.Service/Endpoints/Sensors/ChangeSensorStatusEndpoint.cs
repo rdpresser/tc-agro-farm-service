@@ -55,13 +55,6 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         public override async Task HandleAsync(ChangeSensorStatusCommand req, CancellationToken ct)
         {
             var response = await req.ExecuteAsync(ct: ct).ConfigureAwait(false);
-
-            if (response.IsSuccess)
-            {
-                await Send.OkAsync(response.Value, cancellation: ct).ConfigureAwait(false);
-                return;
-            }
-
             await MatchResultAsync(response, ct).ConfigureAwait(false);
         }
     }
