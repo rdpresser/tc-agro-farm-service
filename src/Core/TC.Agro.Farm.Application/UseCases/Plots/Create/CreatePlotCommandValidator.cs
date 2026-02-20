@@ -1,3 +1,6 @@
+using TC.Agro.Farm.Domain.ValueObjects;
+using TC.Agro.SharedKernel.Extensions;
+
 namespace TC.Agro.Farm.Application.UseCases.Plots.Create
 {
     public sealed class CreatePlotCommandValidator : Validator<CreatePlotCommand>
@@ -34,7 +37,10 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                     .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.MinimumLength")
                 .MaximumLength(100)
                     .WithMessage("Crop type must not exceed 100 characters.")
-                    .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.MaximumLength");
+                    .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.MaximumLength")
+                .Must(cropType => CropType.CommonCropTypes.Contains(cropType))
+                    .WithMessage(cropType => $"Crop type '{cropType}' is not recognized. Valid types are: {CropType.CommonCropTypes.JoinWithQuotes()}.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.InvalidValue");
             #endregion
 
             #region AreaHectares | Validation Rules

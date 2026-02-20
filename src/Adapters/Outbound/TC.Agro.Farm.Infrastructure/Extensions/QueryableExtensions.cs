@@ -136,7 +136,7 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
             var pattern = $"%{filter}%";
             return query.Where(p =>
                 EF.Functions.ILike(p.Name.Value, pattern) ||
-                EF.Functions.ILike(p.CropType.Value, pattern));
+                EF.Functions.ILike(p.Property.Name.Value, pattern));
         }
 
         /// <summary>
