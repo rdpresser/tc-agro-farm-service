@@ -36,6 +36,9 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
                 "createdat" => isAscending
                     ? query.OrderBy(p => p.CreatedAt)
                     : query.OrderByDescending(p => p.CreatedAt),
+                "ownername" => isAscending
+                    ? query.OrderBy(p => p.Owner.Name)
+                    : query.OrderByDescending(p => p.Owner.Name),
                 _ => query.OrderByDescending(p => p.CreatedAt)
             };
         }
@@ -67,6 +70,12 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
                 "createdat" => isAscending
                     ? query.OrderBy(p => p.CreatedAt)
                     : query.OrderByDescending(p => p.CreatedAt),
+                "propertyname" => isAscending
+                    ? query.OrderBy(p => p.Property.Name.Value)
+                    : query.OrderByDescending(p => p.Property.Name.Value),
+                "sensorscount" => isAscending
+                    ? query.OrderBy(p => p.Sensors.Count)
+                    : query.OrderByDescending(p => p.Sensors.Count),
                 _ => query.OrderByDescending(p => p.CreatedAt)
             };
         }
@@ -118,6 +127,7 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
             var pattern = $"%{filter}%";
             return query.Where(p =>
                 EF.Functions.ILike(p.Name.Value, pattern) ||
+                EF.Functions.ILike(p.Owner.Name, pattern) ||
                 EF.Functions.ILike(p.Location.City, pattern) ||
                 EF.Functions.ILike(p.Location.State, pattern) ||
                 EF.Functions.ILike(p.Location.Country, pattern));
