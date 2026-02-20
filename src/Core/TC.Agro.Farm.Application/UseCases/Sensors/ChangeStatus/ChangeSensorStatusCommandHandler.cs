@@ -106,14 +106,13 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
             => Task.CompletedTask;
 
         /// <summary>
-        /// Applies the status change through the appropriate domain method.
+        /// Performs additional business-rule validation after the aggregate is loaded and updated.
+        /// For this handler, all required validation is performed in <see cref="MapAsync" />,
+        /// so this method currently performs no additional checks.
         /// </summary>
-        protected override async Task<Result> ValidateAsync(SensorAggregate aggregate, CancellationToken ct)
+        protected override Task<Result> ValidateAsync(SensorAggregate aggregate, CancellationToken ct)
         {
-            // The command must be passed via the context from the handler's Execute flow
-            // We'll retrieve it via reflection or we need to pass it differently
-            // For now, this validates that sensor is in valid state (done in MapAsync)
-            return await Task.FromResult(Result.Success());
+            return Task.FromResult(Result.Success());
         }
 
         /// <summary>
