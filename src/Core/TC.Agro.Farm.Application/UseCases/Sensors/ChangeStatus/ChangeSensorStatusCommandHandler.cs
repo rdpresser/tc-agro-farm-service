@@ -101,6 +101,14 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         }
 
         /// <summary>
+        /// Override to skip Repository.Add() since the aggregate was already loaded 
+        /// and tracked by EF Core in MapAsync. The change tracker will detect 
+        /// the modifications automatically on SaveChangesAsync.
+        /// </summary>
+        protected override Task PersistAsync(SensorAggregate aggregate, CancellationToken ct)
+            => Task.CompletedTask;
+
+        /// <summary>
         /// Applies the status change through the appropriate domain method.
         /// </summary>
         protected override async Task<Result> ValidateAsync(SensorAggregate aggregate, CancellationToken ct)
