@@ -64,6 +64,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public static readonly ValidationError SensorAlreadyActivated =
             new("Sensor.AlreadyActivated", "Sensor is already activated.");
 
+        public static readonly ValidationError InvalidSensorStatus =
+            new("Sensor.InvalidStatus", "The provided sensor status is invalid.");
+
         #endregion
     }
 }

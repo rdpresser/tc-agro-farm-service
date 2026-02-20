@@ -79,7 +79,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 _logger.LogWarning(
                     "Invalid sensor status requested: {NewStatus}",
                     command.NewStatus);
-                return Result.Invalid(FarmDomainErrors.SensorNotFound);  // Placeholder error
+                return Result.Invalid(FarmDomainErrors.InvalidSensorStatus);
             }
 
             if (!statusChangeResult.IsSuccess)
