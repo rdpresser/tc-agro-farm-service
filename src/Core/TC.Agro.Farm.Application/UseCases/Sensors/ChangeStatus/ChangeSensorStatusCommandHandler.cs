@@ -29,7 +29,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         : BaseCommandHandler<ChangeSensorStatusCommand, ChangeSensorStatusResponse, SensorAggregate, ISensorAggregateRepository>
     {
         private readonly ILogger<ChangeSensorStatusCommandHandler> _logger;
-        private string _previousStatus = string.Empty;
 
         public ChangeSensorStatusCommandHandler(
             ISensorAggregateRepository repository,
@@ -65,9 +64,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyDeactivated);
             }
 
-            // Capture previous status before applying changes
-            _previousStatus = sensor.Status.Value;
-
             // Apply the requested status change via domain method
             Result statusChangeResult;
             if (command.NewStatus.Equals("Active", StringComparison.OrdinalIgnoreCase))
@@ -89,9 +85,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
             if (!statusChangeResult.IsSuccess)
             {
                 _logger.LogWarning(
-                    "Failed to change sensor {SensorId} status from {OldStatus} to {NewStatus}: {Errors}",
+                    "Failed to change sensor {SensorId} status to {NewStatus}: {Errors}",
                     command.SensorId,
-                    _previousStatus,
                     command.NewStatus,
                     statusChangeResult.Errors.Count());
                 return statusChangeResult;
@@ -140,8 +135,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                             SensorId: aggregate.Id,
                             PlotId: aggregate.PlotId,
                             PropertyId: Guid.Empty,  // Would need to fetch this
-                            PreviousStatus: _previousStatus,
-                            NewStatus: aggregate.Status.Value,
+                            PreviousStatus: @event.PreviousStatus,
+                            NewStatus: @event.NewStatus,
                             ChangedByUserId: UserContext.Id,
                             EventName: "SensorOperationalStatusChanged",
                             Reason: string.Empty  // Would come from command
@@ -170,9 +165,16 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// </summary>
         protected override async Task<ChangeSensorStatusResponse> BuildResponseAsync(SensorAggregate aggregate, CancellationToken ct)
         {
+            // Extract the previous status from the domain event
+            var statusChangedEvent = aggregate.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .FirstOrDefault();
+
+            var previousStatus = statusChangedEvent?.PreviousStatus ?? string.Empty;
+
             return await Task.FromResult(new ChangeSensorStatusResponse(
                 SensorId: aggregate.Id,
-                PreviousStatus: _previousStatus,
+                PreviousStatus: previousStatus,
                 NewStatus: aggregate.Status.Value,
                 ChangedAt: aggregate.UpdatedAt ?? DateTimeOffset.UtcNow));
         }

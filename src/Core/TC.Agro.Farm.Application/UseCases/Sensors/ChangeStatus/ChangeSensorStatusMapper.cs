@@ -24,8 +24,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 SensorId: sensorId,
                 PlotId: plotId,
                 PropertyId: propertyId,
-                PreviousStatus: "Unknown",  // Will be captured in handler
-                NewStatus: domainEvent.Status,
+                PreviousStatus: domainEvent.PreviousStatus,
+                NewStatus: domainEvent.NewStatus,
                 Reason: reason,
                 ChangedByUserId: changedByUserId,
                 RelatedIds: new Dictionary<string, Guid>
