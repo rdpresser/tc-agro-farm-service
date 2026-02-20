@@ -16,6 +16,10 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         public override void Configure()
         {
             Put("sensors/{sensorId}/status-change");
+            
+            // Explicit binding: sensorId from route, NewStatus/Reason from body
+            RequestBinder(new ChangeSensorStatusRequestBinder());
+            
             PostProcessor<LoggingCommandPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
             PostProcessor<CacheInvalidationPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
 
@@ -33,11 +37,10 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
             {
                 s.Summary = "Change sensor operational status.";
                 s.Description = "Transitions a sensor between operational states: Active, Maintenance, Faulty, Inactive. " +
-                               "Different from deactivation (soft delete). Status changes are reversible and emit events to other services.";
-                s.ExampleRequest = new ChangeSensorStatusCommand(
-                    Guid.NewGuid(),
-                    "Maintenance",
-                    "Preventive maintenance scheduled");
+                               "Different from deactivation (soft delete). Status changes are reversible and emit events to other services. " +
+                               "The sensorId is provided in the URL path, while NewStatus and Reason are in the request body.";
+                s.Params["sensorId"] = "The unique identifier of the sensor (from route)";
+                s.ExampleRequest = new { NewStatus = "Maintenance", Reason = "Preventive maintenance scheduled" };
                 s.ResponseExamples[200] = new ChangeSensorStatusResponse(
                     Guid.NewGuid(),
                     "Active",
