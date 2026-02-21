@@ -123,10 +123,6 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("plot_id");
 
-                    b.Property<Guid>("PropertyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("property_id");
-
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("updated_at");
@@ -136,9 +132,6 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                     b.HasIndex("PlotId")
                         .HasDatabaseName("ix_sensors_plot_id");
-
-                    b.HasIndex("PropertyId")
-                        .HasDatabaseName("ix_sensors_property_id");
 
                     b.ToTable("sensors", "public");
                 });
