@@ -17,8 +17,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         {
             Put("sensors/{sensorId}/status-change");
             
-            // Explicit binding: sensorId from route, NewStatus/Reason from body
-            RequestBinder(new ChangeSensorStatusRequestBinder());
+            RequestBinder(new RequestBinder<ChangeSensorStatusCommand>(BindingSource.QueryParams));
+            RequestBinder(new RequestBinder<ChangeSensorStatusCommand>(BindingSource.RouteValues));
             
             PostProcessor<LoggingCommandPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
             PostProcessor<CacheInvalidationPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
