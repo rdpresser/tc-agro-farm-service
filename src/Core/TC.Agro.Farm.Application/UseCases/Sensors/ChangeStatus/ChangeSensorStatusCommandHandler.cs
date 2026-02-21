@@ -87,7 +87,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
             if (!statusChangeResult.IsSuccess)
             {
                 _logger.LogWarning(
-                    "Failed to change sensor {SensorId} status to {NewStatus}: {Errors}",
+                    "Failed to change sensor {SensorId} status to {NewStatus}: {ErrorCount} error(s)",
                     command.SensorId,
                     command.NewStatus,
                     statusChangeResult.Errors.Count());
