@@ -149,7 +149,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// <summary>
         /// Builds response with before/after status.
         /// </summary>
-        protected override async Task<ChangeSensorStatusResponse> BuildResponseAsync(SensorAggregate aggregate, CancellationToken ct)
+        protected override Task<ChangeSensorStatusResponse> BuildResponseAsync(SensorAggregate aggregate, CancellationToken ct)
         {
             // Extract the previous status from the domain event
             var statusChangedEvent = aggregate.UncommittedEvents
@@ -158,11 +158,9 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
 
             var previousStatus = statusChangedEvent?.PreviousStatus ?? string.Empty;
 
-            return await Task.FromResult(new ChangeSensorStatusResponse(
-                SensorId: aggregate.Id,
-                PreviousStatus: previousStatus,
-                NewStatus: aggregate.Status.Value,
-                ChangedAt: aggregate.UpdatedAt ?? DateTimeOffset.UtcNow));
+            var updateAt = aggregate.UpdatedAt ?? DateTimeOffset.UtcNow;
+
+            return Task.FromResult(ChangeSensorStatusMapper.FromAggregate(aggregate, previousStatus, updateAt));
         }
     }
 }
