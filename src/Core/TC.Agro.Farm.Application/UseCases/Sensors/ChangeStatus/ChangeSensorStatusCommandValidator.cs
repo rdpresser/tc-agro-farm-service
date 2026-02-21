@@ -1,3 +1,4 @@
+using TC.Agro.Farm.Domain.ValueObjects;
 using TC.Agro.SharedKernel.Extensions;
 
 namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
@@ -8,8 +9,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
     /// </summary>
     public sealed class ChangeSensorStatusCommandValidator : Validator<ChangeSensorStatusCommand>
     {
-        private static readonly string[] ValidStatuses = { "Active", "Inactive", "Maintenance", "Faulty" };
-
         public ChangeSensorStatusCommandValidator()
         {
             RuleFor(x => x.SensorId)
@@ -21,8 +20,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 .NotEmpty()
                 .WithMessage("New status is required.")
                 .WithErrorCode($"{nameof(ChangeSensorStatusCommand.NewStatus)}.Required")
-                .Must(status => ValidStatuses.Contains(status, StringComparer.OrdinalIgnoreCase))
-                .WithMessage($"New status must be one of: {ValidStatuses.JoinWithQuotes()}")
+                .Must(status => SensorStatus.Create(status).IsSuccess)
+                .WithMessage($"New status must be one of: {string.Join(", ", SensorStatus.GetValidStatuses())}")
                 .WithErrorCode($"{nameof(ChangeSensorStatusCommand.NewStatus)}.Invalid");
 
             RuleFor(x => x.Reason)
