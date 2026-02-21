@@ -16,22 +16,14 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
             string? reason = null)
         {
             return new SensorOperationalStatusChangedIntegrationEvent(
-                EventId: Guid.NewGuid(),
-                AggregateId: aggregate.Id,
-                OccurredOn: domainEvent.OccurredOn,
                 SensorId: aggregate.Id,
                 PlotId: aggregate.PlotId,
                 PropertyId: aggregate.PropertyId,
                 PreviousStatus: domainEvent.PreviousStatus,
                 NewStatus: domainEvent.NewStatus,
-                Reason: reason ?? string.Empty,
                 ChangedByUserId: userId,
-                RelatedIds: new Dictionary<string, Guid>
-                {
-                    ["PlotId"] = aggregate.PlotId,
-                    ["PropertyId"] = aggregate.PropertyId,
-                    ["ChangedByUserId"] = userId
-                }
+                Reason: reason,
+                OccurredOn: domainEvent.OccurredOn
             );
         }
 
