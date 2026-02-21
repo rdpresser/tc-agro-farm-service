@@ -221,15 +221,6 @@ namespace TC.Agro.Farm.Service.Extensions
             return app;
         }
 
-        public async static Task<IApplicationBuilder> CreateMessageDatabase(this IApplicationBuilder app)
-        {
-            // Ensure outbox database exists before Wolverine is used
-            var connProvider = app.ApplicationServices.GetRequiredService<DbConnectionFactory>();
-            await PostgresDatabaseHelper.EnsureDatabaseExists(connProvider);
-
-            return app;
-        }
-
         /// <summary>
         /// Normalizes a path base string to ensure it has a leading slash and no trailing slash.
         /// Handles edge cases: "farm", "/farm", "/farm/", "/", "  ", null, empty string.
