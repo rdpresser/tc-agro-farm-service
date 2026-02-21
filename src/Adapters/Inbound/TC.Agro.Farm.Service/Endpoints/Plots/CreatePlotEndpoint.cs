@@ -25,13 +25,13 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                 s.ExampleRequest = new CreatePlotCommand(
                     Guid.NewGuid(),
                     "Talhão Norte",
-                    "Soja",
+                    "Soy",
                     50.0);
                 s.ResponseExamples[201] = new CreatePlotResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
                     "Talhão Norte",
-                    "Soja",
+                    "Soy",
                     50.0,
                     true,
                     DateTimeOffset.UtcNow);
