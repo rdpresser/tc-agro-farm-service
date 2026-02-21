@@ -1,3 +1,5 @@
+using TC.Agro.SharedKernel.Extensions;
+
 namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
 {
     /// <summary>
@@ -20,7 +22,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 .WithMessage("New status is required.")
                 .WithErrorCode($"{nameof(ChangeSensorStatusCommand.NewStatus)}.Required")
                 .Must(status => ValidStatuses.Contains(status, StringComparer.OrdinalIgnoreCase))
-                .WithMessage($"New status must be one of: {string.Join(", ", ValidStatuses)}")
+                .WithMessage($"New status must be one of: {ValidStatuses.JoinWithQuotes()}")
                 .WithErrorCode($"{nameof(ChangeSensorStatusCommand.NewStatus)}.Invalid");
 
             RuleFor(x => x.Reason)
