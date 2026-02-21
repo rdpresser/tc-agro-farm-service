@@ -38,7 +38,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 .MaximumLength(100)
                     .WithMessage("Crop type must not exceed 100 characters.")
                     .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.MaximumLength")
-                .Must(cropType => CropType.CommonCropTypes.Contains(cropType))
+                .Must(cropType => CropType.CommonCropTypes.Contains(cropType, StringComparer.OrdinalIgnoreCase))
                     .WithMessage(cropType => $"Crop type '{cropType.CropType}' is not recognized. Valid types are: {CropType.CommonCropTypes.JoinWithQuotes()}.")
                     .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.InvalidValue");
             #endregion
