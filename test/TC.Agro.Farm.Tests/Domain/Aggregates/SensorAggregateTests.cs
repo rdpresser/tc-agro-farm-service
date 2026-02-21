@@ -1,4 +1,5 @@
 using TC.Agro.Farm.Domain.Aggregates;
+using TC.Agro.Farm.Domain.ValueObjects;
 
 namespace TC.Agro.Farm.Tests.Domain.Aggregates
 {
@@ -468,6 +469,183 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             // Assert
             result.IsSuccess.ShouldBeTrue();
             sensor.Status.IsActive.ShouldBeTrue();
+        }
+
+        #endregion
+
+        #region Status Changed Domain Events
+
+        [Fact]
+        public void SetActive_FromInactive_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.SetInactive();
+            sensor.Status.IsInactive.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetActive();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Inactive);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Active);
+        }
+
+        [Fact]
+        public void SetActive_FromMaintenance_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.SetMaintenance();
+            sensor.Status.IsMaintenance.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetActive();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Maintenance);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Active);
+        }
+
+        [Fact]
+        public void SetActive_FromFaulty_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.SetFaulty();
+            sensor.Status.IsFaulty.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetActive();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Faulty);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Active);
+        }
+
+        [Fact]
+        public void SetInactive_FromActive_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.Status.IsActive.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetInactive();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Active);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Inactive);
+        }
+
+        [Fact]
+        public void SetMaintenance_FromActive_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.Status.IsActive.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetMaintenance();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Active);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Maintenance);
+        }
+
+        [Fact]
+        public void SetMaintenance_FromInactive_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.SetInactive();
+            sensor.Status.IsInactive.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetMaintenance();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Inactive);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Maintenance);
+        }
+
+        [Fact]
+        public void SetFaulty_FromActive_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.Status.IsActive.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetFaulty();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Active);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Faulty);
+        }
+
+        [Fact]
+        public void SetFaulty_FromMaintenance_ShouldEmitEventWithCorrectStatusValues()
+        {
+            // Arrange
+            var sensor = CreateValidSensor();
+            sensor.SetMaintenance();
+            sensor.Status.IsMaintenance.ShouldBeTrue();
+
+            // Act
+            var result = sensor.SetFaulty();
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            var statusChangedEvent = sensor.UncommittedEvents
+                .OfType<SensorAggregate.SensorStatusChangedDomainEvent>()
+                .LastOrDefault();
+
+            statusChangedEvent.ShouldNotBeNull();
+            statusChangedEvent.PreviousStatus.ShouldBe(SensorStatus.Maintenance);
+            statusChangedEvent.NewStatus.ShouldBe(SensorStatus.Faulty);
         }
 
         #endregion
