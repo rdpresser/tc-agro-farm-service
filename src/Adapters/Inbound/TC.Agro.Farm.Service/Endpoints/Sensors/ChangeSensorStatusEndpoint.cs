@@ -6,7 +6,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
     /// Endpoint: PUT /api/sensors/{sensorId}/status-change
     /// 
     /// Changes the operational status of a sensor.
-    /// Valid transitions: Active ↔ Maintenance, Active → Inactive, Active → Faulty
+    /// Allows transitions from any current status to any different target status,
+    /// provided the sensor is not in a deactivated (soft-deleted) state.
     /// 
     /// This is different from Deactivate which permanently removes (soft-delete) the sensor.
     /// Status changes are reversible operational state transitions.
@@ -37,6 +38,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
             {
                 s.Summary = "Change sensor operational status.";
                 s.Description = "Transitions a sensor between operational states: Active, Maintenance, Faulty, Inactive. " +
+                               "Any status can transition to any other status (except to itself). " +
                                "Different from deactivation (soft delete). Status changes are reversible and emit events to other services. " +
                                "The sensorId is provided in the URL path, while NewStatus and Reason are in the request body.";
                 s.Params["sensorId"] = "The unique identifier of the sensor (from route)";
