@@ -1,11 +1,3 @@
-using TC.Agro.Farm.Domain.Aggregates;
-using TC.Agro.Farm.Application.Abstractions.Ports;
-using TC.Agro.SharedKernel.Application;
-using TC.Agro.SharedKernel.Application.Handlers;
-using TC.Agro.SharedKernel.Domain;
-using Microsoft.Extensions.Logging;
-using TC.Agro.Contracts.Events.Farm;
-
 namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
 {
     /// <summary>
