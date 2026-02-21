@@ -17,11 +17,10 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 .WithMany(p => p.Sensors)
                 .HasForeignKey(s => s.PlotId);
 
-            // PropertyId - required foreign key (denormalized for query performance)
-            builder.Property(s => s.PropertyId)
+            builder.Property(s => s.Plot.PropertyId)
                 .IsRequired();
 
-            builder.HasIndex(s => s.PropertyId);
+            builder.HasIndex(s => s.Plot.PropertyId);
 
             // SensorType value object - single column
             builder.OwnsOne(s => s.Type, type =>

@@ -18,7 +18,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
             return new SensorOperationalStatusChangedIntegrationEvent(
                 SensorId: aggregate.Id,
                 PlotId: aggregate.PlotId,
-                PropertyId: aggregate.PropertyId,
+                PropertyId: aggregate.Plot.PropertyId,
                 PreviousStatus: domainEvent.PreviousStatus,
                 NewStatus: domainEvent.NewStatus,
                 ChangedByUserId: userId,

@@ -11,7 +11,6 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public Name? Label { get; private set; }
 
         public Guid PlotId { get; private set; }
-        public Guid PropertyId { get; private set; }
         public PlotAggregate Plot { get; private set; } = default!;
 
         // Private constructor for factories and ORM
@@ -210,7 +209,6 @@ namespace TC.Agro.Farm.Domain.Aggregates
         {
             SetId(@event.AggregateId);
             PlotId = @event.PlotId;
-            PropertyId = @event.PropertyId;
             Type = SensorType.FromDb(@event.Type).Value;
             Status = SensorStatus.FromDb(@event.Status).Value;
             InstalledAt = @event.OccurredOn;
