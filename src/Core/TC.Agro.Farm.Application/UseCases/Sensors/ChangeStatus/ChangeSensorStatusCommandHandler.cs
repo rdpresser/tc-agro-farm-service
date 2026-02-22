@@ -58,28 +58,14 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyDeactivated);
             }
 
-            // Apply the requested status change via domain method
-            Result statusChangeResult;
-            switch (command.NewStatus.ToLowerInvariant())
+            Result statusChangeResult = command.NewStatus.ToLowerInvariant() switch
             {
-                case "active":
-                    statusChangeResult = sensor.SetActive();
-                    break;
-                case "inactive":
-                    statusChangeResult = sensor.SetInactive();
-                    break;
-                case "maintenance":
-                    statusChangeResult = sensor.SetMaintenance();
-                    break;
-                case "faulty":
-                    statusChangeResult = sensor.SetFaulty();
-                    break;
-                default:
-                    _logger.LogWarning(
-                        "Invalid sensor status requested: {NewStatus}",
-                        command.NewStatus);
-                    return Result.Invalid(FarmDomainErrors.InvalidSensorStatus);
-            }
+                "active" => sensor.SetActive(),
+                "inactive" => sensor.SetInactive(),
+                "maintenance" => sensor.SetMaintenance(),
+                "faulty" => sensor.SetFaulty(),
+                _ => Result.Invalid(FarmDomainErrors.InvalidSensorStatus)
+            };
 
             if (!statusChangeResult.IsSuccess)
             {
