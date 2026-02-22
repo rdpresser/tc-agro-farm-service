@@ -17,12 +17,12 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         {
             return new SensorOperationalStatusChangedIntegrationEvent(
                 SensorId: aggregate.Id,
+                OwnerId: aggregate.Plot.Property.OwnerId,
                 PlotId: aggregate.PlotId,
                 PropertyId: aggregate.Plot.PropertyId,
-                PreviousStatus: domainEvent.PreviousStatus,
-                NewStatus: domainEvent.NewStatus,
-                ChangedByUserId: userId,
-                Reason: reason,
+                Label: aggregate.Label?.Value,
+                PropertyName: aggregate.Plot.Property.Name.Value,
+                PlotName: aggregate.Plot.Name.Value,
                 OccurredOn: domainEvent.OccurredOn
             );
         }
