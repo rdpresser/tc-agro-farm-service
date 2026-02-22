@@ -1,3 +1,5 @@
+using TC.Agro.Farm.Application.UseCases.Sensors.ListAll;
+
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class SensorReadStore : ISensorReadStore
@@ -77,6 +79,66 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .ApplySorting(query.SortBy, query.SortDirection)
                 .ApplyPagination(query.PageNumber, query.PageSize)
                 .Select(s => new ListSensorsFromPlotResponse(
+                    s.Id,
+                    s.PlotId,
+                    s.Plot.Name.Value,
+                    s.Plot.PropertyId,
+                    s.Plot.Property.Name.Value,
+                    s.Type.Value,
+                    s.Status.Value,
+                    s.Label != null ? s.Label.Value : null,
+                    s.InstalledAt))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return ([.. sensors], totalCount);
+        }
+
+        /// <inheritdoc />
+        public async Task<(IReadOnlyList<ListSensorsResponse> Sensors, int TotalCount)> ListSensorsAsync(
+            ListSensorsQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            var sensorsQuery = FilteredDbSet
+                .AsNoTracking();
+
+            if (query.PropertyId is not null && query.PropertyId.HasValue && query.PropertyId.Value != Guid.Empty)
+            {
+                sensorsQuery = sensorsQuery.Where(s => s.Plot.PropertyId == query.PropertyId.Value);
+            }
+
+            if (query.PlotId is not null && query.PlotId.HasValue && query.PlotId.Value != Guid.Empty)
+            {
+                sensorsQuery = sensorsQuery.Where(s => s.PlotId == query.PlotId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Type))
+            {
+                sensorsQuery = sensorsQuery.Where(s => EF.Functions.ILike(s.Type.Value, query.Type));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Status))
+            {
+                sensorsQuery = sensorsQuery.Where(s => EF.Functions.ILike(s.Status.Value, query.Status));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Filter))
+            {
+                var pattern = $"%{query.Filter}%";
+                sensorsQuery = sensorsQuery.Where(s =>
+                    (s.Label != null && EF.Functions.ILike(s.Label.Value, pattern)) ||
+                    EF.Functions.ILike(s.Plot.Name.Value, pattern) ||
+                    EF.Functions.ILike(s.Plot.Property.Name.Value, pattern));
+            }
+
+            var totalCount = await sensorsQuery
+                .CountAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var sensors = await sensorsQuery
+                .ApplySorting(query.SortBy, query.SortDirection)
+                .ApplyPagination(query.PageNumber, query.PageSize)
+                .Select(s => new ListSensorsResponse(
                     s.Id,
                     s.PlotId,
                     s.Plot.Name.Value,

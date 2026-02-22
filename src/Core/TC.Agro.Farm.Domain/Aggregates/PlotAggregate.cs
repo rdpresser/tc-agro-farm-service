@@ -11,6 +11,8 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public Guid PropertyId { get; private set; }
         public PropertyAggregate Property { get; private set; } = default!;
+
+
         public ICollection<SensorAggregate> Sensors { get; private set; } = [];
 
         // Private constructor for factories and ORM
