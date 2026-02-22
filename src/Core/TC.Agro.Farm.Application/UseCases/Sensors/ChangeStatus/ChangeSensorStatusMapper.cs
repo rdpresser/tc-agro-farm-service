@@ -24,7 +24,9 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 PropertyName: aggregate.Plot.Property.Name.Value,
                 PlotName: aggregate.Plot.Name.Value,
                 Status: aggregate.Status.Value,
-                OccurredOn: domainEvent.OccurredOn
+                OccurredOn: domainEvent.OccurredOn,
+                ChangedByUserId: userId,
+                Reason: reason
             );
         }
 
