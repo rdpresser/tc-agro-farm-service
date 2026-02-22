@@ -22,6 +22,9 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Deactivate
         private readonly ILogger<DeactivateSensorCommandHandler> _logger;
         private string? _reason;
 
+        /// <summary>
+        /// Command handler for deactivating (soft-deleting) a sensor.
+        /// </summary>
         public DeactivateSensorCommandHandler(
             ISensorAggregateRepository repository,
             IUserContext userContext,
@@ -57,7 +60,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Deactivate
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyDeactivated);
             }
 
-            // Call domain method to deactivate sensor
             var deactivateResult = sensor.Deactivate();
 
             if (!deactivateResult.IsSuccess)
