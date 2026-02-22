@@ -30,9 +30,6 @@ namespace TC.Agro.Farm.Infrastructure
             modelBuilder.Entity<PropertyAggregate>().HasQueryFilter(p => p.IsActive);
             modelBuilder.Entity<PlotAggregate>().HasQueryFilter(p => p.IsActive);
             modelBuilder.Entity<SensorAggregate>().HasQueryFilter(s => s.IsActive);
-
-            // OwnerSnapshot: Only soft delete (no owner filter needed)
-            modelBuilder.Entity<OwnerSnapshot>().HasQueryFilter(o => o.IsActive);
         }
 
         /// <inheritdoc />

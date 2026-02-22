@@ -9,7 +9,7 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             builder.HasKey(o => o.Id);
             builder.Property(x => x.Id)
                 .IsRequired()
-                .ValueGeneratedOnAdd();
+                .ValueGeneratedNever();
 
             builder.Property(o => o.Name)
                 .IsRequired()
