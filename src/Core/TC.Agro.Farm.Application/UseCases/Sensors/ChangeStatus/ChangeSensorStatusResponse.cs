@@ -5,7 +5,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
     /// </summary>
     public sealed record ChangeSensorStatusResponse(
         Guid SensorId,
-        string PreviousStatus,
         string NewStatus,
         DateTimeOffset ChangedAt);
 }

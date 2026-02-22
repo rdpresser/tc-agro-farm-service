@@ -23,6 +23,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 Label: aggregate.Label?.Value,
                 PropertyName: aggregate.Plot.Property.Name.Value,
                 PlotName: aggregate.Plot.Name.Value,
+                Status: aggregate.Status.Value,
                 OccurredOn: domainEvent.OccurredOn
             );
         }
@@ -30,16 +31,12 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// <summary>
         /// Maps sensor aggregate to response DTO.
         /// </summary>
-        public static ChangeSensorStatusResponse FromAggregate(
-            SensorAggregate sensor,
-            string previousStatus,
-            DateTimeOffset changedAt)
+        public static ChangeSensorStatusResponse FromAggregate(SensorAggregate sensor)
         {
             return new ChangeSensorStatusResponse(
                 SensorId: sensor.Id,
-                PreviousStatus: previousStatus,
                 NewStatus: sensor.Status.Value,
-                ChangedAt: changedAt);
+                ChangedAt: sensor.UpdatedAt ?? DateTimeOffset.UtcNow);
         }
     }
 }

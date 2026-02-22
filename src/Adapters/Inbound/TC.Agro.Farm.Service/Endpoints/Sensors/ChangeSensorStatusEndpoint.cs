@@ -43,7 +43,6 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
                 s.ResponseExamples[200] = new ChangeSensorStatusResponse(
                     Guid.NewGuid(),
                     "Active",
-                    "Maintenance",
                     DateTimeOffset.UtcNow);
                 s.Responses[200] = "Returned when the sensor status is successfully changed.";
                 s.Responses[400] = "Returned when status transition is invalid or validation fails.";
