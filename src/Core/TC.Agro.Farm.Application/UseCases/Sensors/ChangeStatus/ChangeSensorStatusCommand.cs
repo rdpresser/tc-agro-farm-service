@@ -8,7 +8,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
     /// </summary>
     public sealed record ChangeSensorStatusCommand(
         Guid SensorId,
-        string NewStatus,                    // "Active", "Inactive", "Maintenance", "Faulty"
+        string NewStatus,
         string? Reason = null) : IBaseCommand<ChangeSensorStatusResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>

@@ -24,13 +24,13 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                 s.Description = "This endpoint allows producers or admins to register a new plot (talhão) within an existing property. Crop type is mandatory.";
                 s.ExampleRequest = new CreatePlotCommand(
                     Guid.NewGuid(),
-                    "Talhão Norte",
+                    "North Plot",
                     "Soy",
                     50.0);
                 s.ResponseExamples[201] = new CreatePlotResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
-                    "Talhão Norte",
+                    "North Plot",
                     "Soy",
                     50.0,
                     true,
