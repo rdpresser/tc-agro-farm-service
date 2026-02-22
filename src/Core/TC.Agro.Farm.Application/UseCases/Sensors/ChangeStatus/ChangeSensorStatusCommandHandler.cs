@@ -60,20 +60,25 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
 
             // Apply the requested status change via domain method
             Result statusChangeResult;
-            if (command.NewStatus.Equals("Active", StringComparison.OrdinalIgnoreCase))
-                statusChangeResult = sensor.SetActive();
-            else if (command.NewStatus.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
-                statusChangeResult = sensor.SetInactive();
-            else if (command.NewStatus.Equals("Maintenance", StringComparison.OrdinalIgnoreCase))
-                statusChangeResult = sensor.SetMaintenance();
-            else if (command.NewStatus.Equals("Faulty", StringComparison.OrdinalIgnoreCase))
-                statusChangeResult = sensor.SetFaulty();
-            else
+            switch (command.NewStatus.ToLowerInvariant())
             {
-                _logger.LogWarning(
-                    "Invalid sensor status requested: {NewStatus}",
-                    command.NewStatus);
-                return Result.Invalid(FarmDomainErrors.InvalidSensorStatus);
+                case "active":
+                    statusChangeResult = sensor.SetActive();
+                    break;
+                case "inactive":
+                    statusChangeResult = sensor.SetInactive();
+                    break;
+                case "maintenance":
+                    statusChangeResult = sensor.SetMaintenance();
+                    break;
+                case "faulty":
+                    statusChangeResult = sensor.SetFaulty();
+                    break;
+                default:
+                    _logger.LogWarning(
+                        "Invalid sensor status requested: {NewStatus}",
+                        command.NewStatus);
+                    return Result.Invalid(FarmDomainErrors.InvalidSensorStatus);
             }
 
             if (!statusChangeResult.IsSuccess)
