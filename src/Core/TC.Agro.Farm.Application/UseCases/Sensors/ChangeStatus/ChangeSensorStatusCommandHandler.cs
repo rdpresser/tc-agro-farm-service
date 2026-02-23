@@ -114,7 +114,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                             ChangeSensorStatusMapper.ToIntegrationEvent(
                                 (SensorAggregate.SensorStatusChangedDomainEvent)e, 
                                 aggregate, 
-                                UserContext.Id,
                                 _reason) }
                     });
 
