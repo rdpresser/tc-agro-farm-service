@@ -8,6 +8,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public Name Name { get; private set; } = default!;
         public CropType CropType { get; private set; } = default!;
         public Area AreaHectares { get; private set; } = default!;
+        public DateTimeOffset PlantingDate { get; private set; }
+        public DateTimeOffset ExpectedHarvestDate { get; private set; }
+        public IrrigationType IrrigationType { get; private set; } = default!;
 
         public Guid PropertyId { get; private set; }
         public PropertyAggregate Property { get; private set; } = default!;
@@ -27,27 +30,47 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Guid propertyId,
             string name,
             string cropType,
-            double areaHectares)
+            double areaHectares,
+            DateTimeOffset plantingDate,
+            DateTimeOffset expectedHarvestDate,
+            string irrigationType)
         {
             var nameResult = ValueObjects.Name.Create(name);
             var cropTypeResult = ValueObjects.CropType.Create(cropType);
             var areaResult = Area.Create(areaHectares);
+            var irrigationTypeResult = ValueObjects.IrrigationType.Create(irrigationType);
 
             var errors = new List<ValidationError>();
             errors.AddRange(ValidatePropertyId(propertyId));
             errors.AddErrorsIfFailure(nameResult);
             errors.AddErrorsIfFailure(cropTypeResult);
             errors.AddErrorsIfFailure(areaResult);
+            errors.AddErrorsIfFailure(irrigationTypeResult);
+            errors.AddRange(ValidateDates(plantingDate, expectedHarvestDate));
 
             if (errors.Count > 0)
             {
                 return Result.Invalid(errors.ToArray());
             }
 
-            return CreateAggregate(propertyId, nameResult.Value, cropTypeResult.Value, areaResult.Value);
+            return CreateAggregate(
+                propertyId,
+                nameResult.Value,
+                cropTypeResult.Value,
+                areaResult.Value,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationTypeResult.Value);
         }
 
-        private static Result<PlotAggregate> CreateAggregate(Guid propertyId, Name name, CropType cropType, Area area)
+        private static Result<PlotAggregate> CreateAggregate(
+            Guid propertyId,
+            Name name,
+            CropType cropType,
+            Area area,
+            DateTimeOffset plantingDate,
+            DateTimeOffset expectedHarvestDate,
+            IrrigationType irrigationType)
         {
             var aggregate = new PlotAggregate(Guid.NewGuid());
             var @event = new PlotCreatedDomainEvent(
@@ -56,6 +79,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 name.Value,
                 cropType.Value,
                 area.Hectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType.Value,
                 DateTimeOffset.UtcNow);
 
             aggregate.ApplyEvent(@event);
@@ -66,16 +92,25 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         #region Commands
 
-        public Result Update(string name, string cropType, double areaHectares)
+        public Result Update(
+            string name,
+            string cropType,
+            double areaHectares,
+            DateTimeOffset plantingDate,
+            DateTimeOffset expectedHarvestDate,
+            string irrigationType)
         {
             var nameResult = ValueObjects.Name.Create(name);
             var cropTypeResult = ValueObjects.CropType.Create(cropType);
             var areaResult = Area.Create(areaHectares);
+            var irrigationTypeResult = ValueObjects.IrrigationType.Create(irrigationType);
 
             var errors = new List<ValidationError>();
             errors.AddErrorsIfFailure(nameResult);
             errors.AddErrorsIfFailure(cropTypeResult);
             errors.AddErrorsIfFailure(areaResult);
+            errors.AddErrorsIfFailure(irrigationTypeResult);
+            errors.AddRange(ValidateDates(plantingDate, expectedHarvestDate));
 
             if (errors.Count > 0)
             {
@@ -87,6 +122,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 nameResult.Value.Value,
                 cropTypeResult.Value.Value,
                 areaResult.Value.Hectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationTypeResult.Value.Value,
                 DateTimeOffset.UtcNow);
 
             ApplyEvent(@event);
@@ -146,6 +184,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Name = ValueObjects.Name.FromDb(@event.Name).Value;
             CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
             AreaHectares = Area.FromDb(@event.AreaHectares).Value;
+            PlantingDate = @event.PlantingDate;
+            ExpectedHarvestDate = @event.ExpectedHarvestDate;
+            IrrigationType = ValueObjects.IrrigationType.FromDb(@event.IrrigationType).Value;
             SetCreatedAt(@event.OccurredOn);
             SetActivate();
         }
@@ -155,6 +196,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Name = ValueObjects.Name.FromDb(@event.Name).Value;
             CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
             AreaHectares = Area.FromDb(@event.AreaHectares).Value;
+            PlantingDate = @event.PlantingDate;
+            ExpectedHarvestDate = @event.ExpectedHarvestDate;
+            IrrigationType = ValueObjects.IrrigationType.FromDb(@event.IrrigationType).Value;
             SetUpdatedAt(@event.OccurredOn);
         }
 
@@ -211,6 +255,21 @@ namespace TC.Agro.Farm.Domain.Aggregates
             }
         }
 
+        private static IEnumerable<ValidationError> ValidateDates(DateTimeOffset plantingDate, DateTimeOffset expectedHarvestDate)
+        {
+            if (plantingDate == default)
+                yield return FarmDomainErrors.PlantingDateRequired;
+
+            if (expectedHarvestDate == default)
+                yield return FarmDomainErrors.ExpectedHarvestRequired;
+
+            if (plantingDate > DateTimeOffset.UtcNow)
+                yield return FarmDomainErrors.PlantingDateFuture;
+
+            if (expectedHarvestDate <= plantingDate)
+                yield return FarmDomainErrors.ExpectedHarvestBeforePlanting;
+        }
+
         #endregion
 
         #region Domain Events
@@ -221,6 +280,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string Name,
             string CropType,
             double AreaHectares,
+            DateTimeOffset PlantingDate,
+            DateTimeOffset ExpectedHarvestDate,
+            string IrrigationType,
             DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record PlotUpdatedDomainEvent(
@@ -228,6 +290,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string Name,
             string CropType,
             double AreaHectares,
+            DateTimeOffset PlantingDate,
+            DateTimeOffset ExpectedHarvestDate,
+            string IrrigationType,
             DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record PlotCropTypeChangedDomainEvent(

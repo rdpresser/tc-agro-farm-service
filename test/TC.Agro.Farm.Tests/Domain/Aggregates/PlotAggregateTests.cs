@@ -14,9 +14,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var name = "Talhão A1";
             var cropType = "Soy";
             var areaHectares = 25.5;
+            var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
+            var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
+            var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares);
+            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -41,9 +44,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var propertyId = Guid.NewGuid();
             var name = "Talhão Test";
             var areaHectares = 10.0;
+            var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
+            var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
+            var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares);
+            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -62,9 +68,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var name = "Talhão A1";
             var cropType = "Soy";
             var areaHectares = 25.5;
+            var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
+            var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
+            var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares);
+            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -79,9 +88,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var name = "";
             var cropType = "Soy";
             var areaHectares = 25.5;
+            var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
+            var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
+            var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares);
+            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -96,9 +108,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var name = "Talhão A1";
             var cropType = "";
             var areaHectares = 25.5;
+            var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
+            var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
+            var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares);
+            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -113,9 +128,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var name = "Talhão A1";
             var cropType = "Soy";
             var areaHectares = 0.0;
+            var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
+            var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
+            var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares);
+            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -130,9 +148,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var name = "";
             var cropType = "";
             var areaHectares = -10.0;
+            var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
+            var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
+            var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares);
+            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -151,9 +172,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var newName = "Talhão Atualizado";
             var newCropType = "Corn";
             var newArea = 30.0;
+            var newPlantingDate = DateTimeOffset.UtcNow.AddMonths(-1);
+            var newExpectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(7);
+            var newIrrigationType = "Sprinkler";
 
             // Act
-            var result = plot.Update(newName, newCropType, newArea);
+            var result = plot.Update(newName, newCropType, newArea, newPlantingDate, newExpectedHarvestDate, newIrrigationType);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -173,7 +197,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plot = CreateValidPlot();
 
             // Act
-            var result = plot.Update("", "Corn", 30.0);
+            var result = plot.Update("", "Corn", 30.0, DateTimeOffset.UtcNow.AddMonths(-2), DateTimeOffset.UtcNow.AddMonths(6), "Center Pivot");
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -187,7 +211,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plot = CreateValidPlot();
 
             // Act
-            var result = plot.Update("Valid Name", "", 30.0);
+            var result = plot.Update("Valid Name", "", 30.0, DateTimeOffset.UtcNow.AddMonths(-2), DateTimeOffset.UtcNow.AddMonths(6), "Center Pivot");
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -201,7 +225,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plot = CreateValidPlot();
 
             // Act
-            var result = plot.Update("Valid Name", "Corn", -100.0);
+            var result = plot.Update("Valid Name", "Corn", -100.0, DateTimeOffset.UtcNow.AddMonths(-2), DateTimeOffset.UtcNow.AddMonths(6), "Center Pivot");
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -319,7 +343,10 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 Guid.NewGuid(),
                 "Talhão A1",
                 "Soy",
-                25.5);
+                25.5,
+                DateTimeOffset.UtcNow.AddMonths(-2),
+                DateTimeOffset.UtcNow.AddMonths(6),
+                "Center Pivot");
 
             return result.Value;
         }

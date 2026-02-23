@@ -36,7 +36,10 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     faker.Random.Double(10, 100),
                     true,
                     faker.Random.Int(0, 5),
-                    DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365))));
+                    DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365)),
+                    DateTimeOffset.UtcNow.AddMonths(-2),
+                    DateTimeOffset.UtcNow.AddMonths(6),
+                    IrrigationType.CenterPivot));
             }
 
             var exampleResponse = new PaginatedResponse<ListPlotsResponse>(

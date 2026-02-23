@@ -37,11 +37,19 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<DateTimeOffset>("ExpectedHarvestDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expected_harvest_date");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset>("PlantingDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("planting_date");
 
                     b.Property<Guid>("PropertyId")
                         .HasColumnType("uuid")
@@ -139,7 +147,6 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
             modelBuilder.Entity("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -343,10 +350,34 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasConstraintName("fk_plots_plots_id");
                         });
 
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.IrrigationType", "IrrigationType", b1 =>
+                        {
+                            b1.Property<Guid>("PlotAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("irrigation_type");
+
+                            b1.HasKey("PlotAggregateId");
+
+                            b1.ToTable("plots", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlotAggregateId")
+                                .HasConstraintName("fk_plots_plots_id");
+                        });
+
                     b.Navigation("AreaHectares")
                         .IsRequired();
 
                     b.Navigation("CropType")
+                        .IsRequired();
+
+                    b.Navigation("IrrigationType")
                         .IsRequired();
 
                     b.Navigation("Name")

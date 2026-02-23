@@ -9,5 +9,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
         double AreaHectares,
         bool IsActive,
         int SensorCount,
-        DateTimeOffset CreatedAt);
+        DateTimeOffset CreatedAt,
+        DateTimeOffset PlantingDate,
+        DateTimeOffset ExpectedHarvestDate,
+        string IrrigationType);
 }

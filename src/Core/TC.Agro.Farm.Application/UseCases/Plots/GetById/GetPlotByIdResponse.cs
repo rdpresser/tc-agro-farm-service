@@ -13,5 +13,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.GetById
         bool IsActive,
         int SensorCount,
         DateTimeOffset CreatedAt,
-        DateTimeOffset? UpdatedAt);
+        DateTimeOffset? UpdatedAt,
+        DateTimeOffset PlantingDate,
+        DateTimeOffset ExpectedHarvestDate,
+        string IrrigationType);
 }

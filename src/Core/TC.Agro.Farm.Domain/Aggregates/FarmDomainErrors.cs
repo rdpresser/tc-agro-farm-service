@@ -36,6 +36,18 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public static readonly ValidationError PlotAlreadyActivated =
             new("Plot.AlreadyActivated", "Plot is already activated.");
 
+        public static readonly ValidationError PlantingDateRequired =
+            new("Plot.PlantingDateRequired", "Planting date is required.");
+
+        public static readonly ValidationError PlantingDateFuture =
+            new("Plot.PlantingDateFuture", "Planting date cannot be in the future.");
+
+        public static readonly ValidationError ExpectedHarvestRequired =
+            new("Plot.ExpectedHarvestRequired", "Expected harvest date is required.");
+
+        public static readonly ValidationError ExpectedHarvestBeforePlanting =
+            new("Plot.ExpectedHarvestBeforePlanting", "Expected harvest must be after planting date.");
+
         #endregion
 
         #region Sensor Errors

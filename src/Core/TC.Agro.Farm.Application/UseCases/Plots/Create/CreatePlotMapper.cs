@@ -8,7 +8,10 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 command.PropertyId,
                 command.Name,
                 command.CropType,
-                command.AreaHectares);
+                command.AreaHectares,
+                command.PlantingDate,
+                command.ExpectedHarvestDate,
+                command.IrrigationType);
         }
 
         public static CreatePlotResponse FromAggregate(PlotAggregate aggregate)
@@ -19,6 +22,9 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 Name: aggregate.Name.Value,
                 CropType: aggregate.CropType.Value,
                 AreaHectares: aggregate.AreaHectares.Hectares,
+                PlantingDate: aggregate.PlantingDate,
+                ExpectedHarvestDate: aggregate.ExpectedHarvestDate,
+                IrrigationType: aggregate.IrrigationType.Value,
                 IsActive: aggregate.IsActive,
                 CreatedAt: aggregate.CreatedAt);
         }

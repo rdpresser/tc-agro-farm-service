@@ -53,10 +53,30 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 area.WithOwner();
             });
 
+            // Agronomy fields
+            builder.Property(p => p.PlantingDate)
+                .HasColumnName("planting_date")
+                .IsRequired();
+
+            builder.Property(p => p.ExpectedHarvestDate)
+                .HasColumnName("expected_harvest_date")
+                .IsRequired();
+
+            builder.OwnsOne(p => p.IrrigationType, irrigation =>
+            {
+                irrigation.Property(i => i.Value)
+                    .HasColumnName("irrigation_type")
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                irrigation.WithOwner();
+            });
+
             // Navigation properties are required
             builder.Navigation(p => p.Name).IsRequired();
             builder.Navigation(p => p.CropType).IsRequired();
             builder.Navigation(p => p.AreaHectares).IsRequired();
+            builder.Navigation(p => p.IrrigationType).IsRequired();
         }
     }
 }
