@@ -12,8 +12,8 @@ using TC.Agro.Farm.Infrastructure;
 namespace TC.Agro.Farm.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260207232051_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260221180951_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,7 +21,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("public")
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
                 .HasAnnotation("WolverineEnabled", "true");
 
@@ -139,6 +139,49 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.ToTable("sensors", "public");
                 });
 
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_owner_snapshots");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("ix_owner_snapshots_email");
+
+                    b.ToTable("owner_snapshots", "public");
+                });
+
             modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.IncomingMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -147,9 +190,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<int>("Attempts")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(0)
                         .HasColumnName("attempts");
 
                     b.Property<byte[]>("Body")
@@ -200,9 +241,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasColumnName("id");
 
                     b.Property<int>("Attempts")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(0)
                         .HasColumnName("attempts");
 
                     b.Property<byte[]>("Body")
@@ -239,6 +278,13 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", b =>
                 {
+                    b.HasOne("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", "Property")
+                        .WithMany("Plots")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_plots_properties_property_id");
+
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Area", "AreaHectares", b1 =>
                         {
                             b1.Property<Guid>("PlotAggregateId")
@@ -308,10 +354,19 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                     b.Navigation("Name")
                         .IsRequired();
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", b =>
                 {
+                    b.HasOne("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", "Owner")
+                        .WithMany("Properties")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_properties_owner_snapshots_owner_id");
+
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Area", "AreaHectares", b1 =>
                         {
                             b1.Property<Guid>("PropertyAggregateId")
@@ -407,10 +462,19 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                     b.Navigation("Name")
                         .IsRequired();
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.SensorAggregate", b =>
                 {
+                    b.HasOne("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", "Plot")
+                        .WithMany("Sensors")
+                        .HasForeignKey("PlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sensors_plots_plot_id");
+
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Name", "Label", b1 =>
                         {
                             b1.Property<Guid>("SensorAggregateId")
@@ -481,11 +545,28 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                     b.Navigation("Label");
 
+                    b.Navigation("Plot");
+
                     b.Navigation("Status")
                         .IsRequired();
 
                     b.Navigation("Type")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", b =>
+                {
+                    b.Navigation("Sensors");
+                });
+
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", b =>
+                {
+                    b.Navigation("Plots");
+                });
+
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", b =>
+                {
+                    b.Navigation("Properties");
                 });
 #pragma warning restore 612, 618
         }

@@ -310,6 +310,16 @@ namespace TC.Agro.Farm.Service.Extensions
                     .BufferedInMemory()
                     .UseDurableOutbox();
 
+                opts.PublishMessage<EventContext<SensorOperationalStatusChangedIntegrationEvent>>()
+                    .ToRabbitExchange(exchangeName)
+                    .BufferedInMemory()
+                    .UseDurableOutbox();
+
+                opts.PublishMessage<EventContext<SensorDeactivatedIntegrationEvent>>()
+                    .ToRabbitExchange(exchangeName)
+                    .BufferedInMemory()
+                    .UseDurableOutbox();
+
                 // ============================================================
                 // CONSUMING - Farm Service (Inbound)
                 // Uses TC.Agro.Messaging extension for Identity Service user events

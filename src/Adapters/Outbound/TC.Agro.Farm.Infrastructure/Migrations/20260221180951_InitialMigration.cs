@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TC.Agro.Farm.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,22 +15,20 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 name: "public");
 
             migrationBuilder.CreateTable(
-                name: "plots",
+                name: "owner_snapshots",
                 schema: "public",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    property_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    crop_type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    area_hectares = table.Column<double>(type: "double precision", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    updated_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
-                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                    email = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_plots", x => x.id);
+                    table.PrimaryKey("pk_owner_snapshots", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -55,6 +53,39 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_properties", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_properties_owner_snapshots_owner_id",
+                        column: x => x.owner_id,
+                        principalSchema: "public",
+                        principalTable: "owner_snapshots",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "plots",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    crop_type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    area_hectares = table.Column<double>(type: "double precision", nullable: false),
+                    property_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_plots", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_plots_properties_property_id",
+                        column: x => x.property_id,
+                        principalSchema: "public",
+                        principalTable: "properties",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -63,11 +94,11 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    plot_id = table.Column<Guid>(type: "uuid", nullable: false),
                     type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     installed_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     label = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    plot_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
@@ -75,7 +106,21 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_sensors", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_sensors_plots_plot_id",
+                        column: x => x.plot_id,
+                        principalSchema: "public",
+                        principalTable: "plots",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_owner_snapshots_email",
+                schema: "public",
+                table: "owner_snapshots",
+                column: "email",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_plots_property_id",
@@ -112,6 +157,10 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "sensors",
+                schema: "public");
+
+            migrationBuilder.DropTable(
                 name: "plots",
                 schema: "public");
 
@@ -120,7 +169,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 schema: "public");
 
             migrationBuilder.DropTable(
-                name: "sensors",
+                name: "owner_snapshots",
                 schema: "public");
         }
     }

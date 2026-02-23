@@ -15,6 +15,16 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             : DbSet.Where(x => x.Plot.Property.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
+        public override async Task<SensorAggregate?> GetByIdAsync(Guid aggregateId, CancellationToken cancellationToken = default)
+        {
+            return await FilteredDbSet
+                .Include(s => s.Plot)
+                    .ThenInclude(p => p.Property)
+                .FirstOrDefaultAsync(s => s.Id == aggregateId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
         public async Task<bool> LabelExistsForPlotAsync(string label, Guid plotId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(label))

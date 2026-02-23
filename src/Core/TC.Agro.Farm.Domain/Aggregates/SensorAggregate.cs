@@ -112,8 +112,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyActive);
             }
 
+            var previousStatus = Status.Value;
             var @event = new SensorStatusChangedDomainEvent(
                 Id,
+                previousStatus,
                 SensorStatus.Active,
                 DateTimeOffset.UtcNow);
 
@@ -128,8 +130,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyInactive);
             }
 
+            var previousStatus = Status.Value;
             var @event = new SensorStatusChangedDomainEvent(
                 Id,
+                previousStatus,
                 SensorStatus.Inactive,
                 DateTimeOffset.UtcNow);
 
@@ -144,8 +148,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyInMaintenance);
             }
 
+            var previousStatus = Status.Value;
             var @event = new SensorStatusChangedDomainEvent(
                 Id,
+                previousStatus,
                 SensorStatus.Maintenance,
                 DateTimeOffset.UtcNow);
 
@@ -160,8 +166,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyFaulty);
             }
 
+            var previousStatus = Status.Value;
             var @event = new SensorStatusChangedDomainEvent(
                 Id,
+                previousStatus,
                 SensorStatus.Faulty,
                 DateTimeOffset.UtcNow);
 
@@ -224,7 +232,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public void Apply(SensorStatusChangedDomainEvent @event)
         {
-            Status = SensorStatus.FromDb(@event.Status).Value;
+            Status = SensorStatus.FromDb(@event.NewStatus).Value;
             SetUpdatedAt(@event.OccurredOn);
         }
 
@@ -298,7 +306,8 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public record SensorStatusChangedDomainEvent(
             Guid AggregateId,
-            string Status,
+            string PreviousStatus,
+            string NewStatus,
             DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record SensorDeactivatedDomainEvent(
