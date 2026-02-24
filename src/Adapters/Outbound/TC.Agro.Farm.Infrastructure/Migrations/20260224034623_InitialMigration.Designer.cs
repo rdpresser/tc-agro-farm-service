@@ -12,7 +12,7 @@ using TC.Agro.Farm.Infrastructure;
 namespace TC.Agro.Farm.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260224012147_InitialMigration")]
+    [Migration("20260224034623_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -332,6 +332,26 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasConstraintName("fk_plots_plots_id");
                         });
 
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.AdditionalNotes", "AdditionalNotes", b1 =>
+                        {
+                            b1.Property<Guid>("PlotAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .HasMaxLength(1000)
+                                .HasColumnType("character varying(1000)")
+                                .HasColumnName("additional_notes");
+
+                            b1.HasKey("PlotAggregateId");
+
+                            b1.ToTable("plots", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlotAggregateId")
+                                .HasConstraintName("fk_plots_plots_id");
+                        });
+
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.CropType", "CropType", b1 =>
                         {
                             b1.Property<Guid>("PlotAggregateId")
@@ -373,6 +393,8 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasForeignKey("PlotAggregateId")
                                 .HasConstraintName("fk_plots_plots_id");
                         });
+
+                    b.Navigation("AdditionalNotes");
 
                     b.Navigation("AreaHectares")
                         .IsRequired();

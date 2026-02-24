@@ -16,5 +16,6 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.GetById
         DateTimeOffset? UpdatedAt,
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
-        string IrrigationType);
+        string IrrigationType,
+        string? AdditionalNotes);
 }

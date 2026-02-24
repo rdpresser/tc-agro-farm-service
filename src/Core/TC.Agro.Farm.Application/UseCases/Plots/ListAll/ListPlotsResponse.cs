@@ -12,5 +12,6 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
         DateTimeOffset CreatedAt,
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
-        string IrrigationType);
+        string IrrigationType,
+        string? AdditionalNotes);
 }
