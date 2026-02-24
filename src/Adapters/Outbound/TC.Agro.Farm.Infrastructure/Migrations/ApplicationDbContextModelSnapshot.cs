@@ -38,7 +38,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<DateTimeOffset>("ExpectedHarvestDate")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamptz")
                         .HasColumnName("expected_harvest_date");
 
                     b.Property<bool>("IsActive")
@@ -48,7 +48,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasColumnName("is_active");
 
                     b.Property<DateTimeOffset>("PlantingDate")
-                        .HasColumnType("timestamp with time zone")
+                        .HasColumnType("timestamptz")
                         .HasColumnName("planting_date");
 
                     b.Property<Guid>("PropertyId")
@@ -285,7 +285,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.HasOne("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", "Property")
                         .WithMany("Plots")
                         .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_plots_properties_property_id");
 

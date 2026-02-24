@@ -70,7 +70,8 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
 
             builder.HasMany(p => p.Plots)
                 .WithOne(p => p.Property)
-                .HasForeignKey(p => p.PropertyId);
+                .HasForeignKey(p => p.PropertyId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Navigation properties are required
             builder.Navigation(p => p.Name).IsRequired();

@@ -71,8 +71,8 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     crop_type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     area_hectares = table.Column<double>(type: "double precision", nullable: false),
-                    planting_date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    expected_harvest_date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    planting_date = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    expected_harvest_date = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     irrigation_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     property_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
@@ -88,7 +88,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         principalSchema: "public",
                         principalTable: "properties",
                         principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(

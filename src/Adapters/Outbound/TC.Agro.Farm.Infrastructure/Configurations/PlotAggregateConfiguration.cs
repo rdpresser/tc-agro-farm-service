@@ -56,10 +56,12 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             // Agronomy fields
             builder.Property(p => p.PlantingDate)
                 .HasColumnName("planting_date")
+                .HasColumnType("timestamptz")
                 .IsRequired();
 
             builder.Property(p => p.ExpectedHarvestDate)
                 .HasColumnName("expected_harvest_date")
+                .HasColumnType("timestamptz")
                 .IsRequired();
 
             builder.OwnsOne(p => p.IrrigationType, irrigation =>
