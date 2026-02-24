@@ -259,25 +259,44 @@ jobs:
           sed -i "s|image: .*farm-service.*|image: ${NEW_IMAGE}|g" $FILE
 
       - name: 💾 Commit and push to solutions repo
+        id: commit_push
         run: |
           cd solutions
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add infrastructure/kubernetes/apps/base/farm/deployment.yaml
+
+          TARGET_FILE="infrastructure/kubernetes/apps/base/farm/deployment.yaml"
+          git add "$TARGET_FILE"
+
+          if git diff --cached --quiet -- "$TARGET_FILE"; then
+            echo "ℹ️ No manifest changes detected. Skipping commit/push."
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           git commit -m "ci(farm): update image to ${{ needs.build.outputs.image_tag }}
 
           Automated commit from farm-service CI pipeline
           Commit: ${{ github.sha }}
           Workflow: ${{ github.workflow }}"
           git push
+          echo "committed=true" >> "$GITHUB_OUTPUT"
 
       - name: ✅ GitOps Update Complete
         run: |
           echo ""
           echo "════════════════════════════════════════════════════════════"
-          echo "✅ GITOPS UPDATE COMPLETED"
+          if [[ "${{ steps.commit_push.outputs.committed }}" == "true" ]]; then
+            echo "✅ GITOPS UPDATE COMPLETED"
+          else
+            echo "ℹ️ GITOPS ALREADY UP-TO-DATE (NO COMMIT NEEDED)"
+          fi
           echo "════════════════════════════════════════════════════════════"
           echo "📦 Image: rdpresser/farm-service:${{ needs.build.outputs.image_tag }}"
           echo "📝 File: infrastructure/kubernetes/apps/base/farm/deployment.yaml"
-          echo "🔄 ArgoCD will detect this change and deploy automatically"
+          if [[ "${{ steps.commit_push.outputs.committed }}" == "true" ]]; then
+            echo "🔄 ArgoCD will detect this change and deploy automatically"
+          else
+            echo "✅ Manifest already had this image tag; nothing to deploy"
+          fi
           echo "════════════════════════════════════════════════════════════"
