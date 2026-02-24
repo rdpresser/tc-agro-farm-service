@@ -39,6 +39,13 @@ namespace TC.Agro.Farm.Application.MessageBrokerHandlers
                 return;
             }
 
+            var existingSnapshot = await _store
+                .GetByIdAsync(@event.EventData.AggregateId, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (existingSnapshot is not null)
+                return;
+
             // Map integration event to snapshot
             var snapshot = OwnerSnapshot.Create(
                 @event.EventData.AggregateId,
