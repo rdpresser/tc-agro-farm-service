@@ -36,7 +36,8 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.UpdatedAt,
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
-                    p.IrrigationType.Value))
+                    p.IrrigationType.Value,
+                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null))
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -82,7 +83,8 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.CreatedAt,
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
-                    p.IrrigationType.Value))
+                    p.IrrigationType.Value,
+                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -132,7 +134,8 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.CreatedAt,
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
-                    p.IrrigationType.Value))
+                    p.IrrigationType.Value,
+                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 

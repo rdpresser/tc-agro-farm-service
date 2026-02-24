@@ -74,7 +74,17 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 irrigation.WithOwner();
             });
 
-            // Navigation properties are required
+            // AdditionalNotes value object - optional, single column
+            builder.OwnsOne(p => p.AdditionalNotes, notes =>
+            {
+                notes.Property(n => n.Value)
+                    .HasColumnName("additional_notes")
+                    .HasMaxLength(1000);
+
+                notes.WithOwner();
+            });
+
+            // Navigation properties are required (except optional AdditionalNotes)
             builder.Navigation(p => p.Name).IsRequired();
             builder.Navigation(p => p.CropType).IsRequired();
             builder.Navigation(p => p.AreaHectares).IsRequired();

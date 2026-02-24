@@ -41,7 +41,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365)),
                     DateTimeOffset.UtcNow.AddMonths(-2),
                     DateTimeOffset.UtcNow.AddMonths(6),
-                    IrrigationType.CenterPivot));
+                    IrrigationType.CenterPivot,
+                    null));
             }
 
             var exampleResponse = new PaginatedResponse<ListPlotsFromPropertyResponse>(
