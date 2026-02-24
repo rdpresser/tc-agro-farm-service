@@ -78,14 +78,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 .NotEmpty()
                     .WithMessage("Irrigation type is required.")
                     .WithErrorCode($"{nameof(CreatePlotCommand.IrrigationType)}.Required")
-                .Must(type => new[] {
-                        IrrigationType.DripIrrigation,
-                        IrrigationType.Sprinkler,
-                        IrrigationType.CenterPivot,
-                        IrrigationType.FloodFurrow,
-                        IrrigationType.Rainfed
-                    }.Contains(type, StringComparer.OrdinalIgnoreCase))
-                    .WithMessage($"Irrigation type must be one of: {IrrigationType.DripIrrigation}, {IrrigationType.Sprinkler}, {IrrigationType.CenterPivot}, {IrrigationType.FloodFurrow}, {IrrigationType.Rainfed}.")
+                .Must(type => IrrigationType.ValidTypes.Contains(type, StringComparer.OrdinalIgnoreCase))
+                    .WithMessage(irrigationType => $"Irrigation type '{irrigationType.IrrigationType}' is not recognized. Valid types are: {IrrigationType.ValidTypes.JoinWithQuotes()}.")
                     .WithErrorCode($"{nameof(CreatePlotCommand.IrrigationType)}.InvalidType");
             #endregion
         }

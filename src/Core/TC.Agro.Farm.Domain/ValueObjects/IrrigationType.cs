@@ -11,14 +11,14 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         public const string FloodFurrow = "Flood/Furrow";
         public const string Rainfed = "Rainfed (No Irrigation)";
 
-        private static readonly HashSet<string> ValidTypes = new(StringComparer.OrdinalIgnoreCase)
-        {
+        public static readonly string[] ValidTypes =
+        [
             DripIrrigation,
             Sprinkler,
             CenterPivot,
             FloodFurrow,
             Rainfed
-        };
+        ];
 
         public string Value { get; }
 
