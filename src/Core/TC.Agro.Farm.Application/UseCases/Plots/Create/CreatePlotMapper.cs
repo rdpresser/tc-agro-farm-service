@@ -38,6 +38,10 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 domainEvent.Name,
                 domainEvent.CropType,
                 domainEvent.AreaHectares,
+                domainEvent.PlantingDate,
+                domainEvent.ExpectedHarvestDate,
+                domainEvent.IrrigationType,
+                domainEvent.AdditionalNotes ?? string.Empty,
                 domainEvent.OccurredOn);
     }
 }
