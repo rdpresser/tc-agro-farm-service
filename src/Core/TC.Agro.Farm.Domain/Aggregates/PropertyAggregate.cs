@@ -1,11 +1,12 @@
 using TC.Agro.Farm.Domain.Snapshots;
+using TC.Agro.Farm.Domain.Abstractions;
 
 namespace TC.Agro.Farm.Domain.Aggregates
 {
     /// <summary>
     /// Property aggregate root - represents a farm property owned by a producer.
     /// </summary>
-    public sealed class PropertyAggregate : BaseAggregateRoot
+    public sealed class PropertyAggregate : BaseAggregateRoot, ITenantAware
     {
         public Name Name { get; private set; } = default!;
         public Location Location { get; private set; } = default!;

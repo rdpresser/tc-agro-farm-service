@@ -2,10 +2,11 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
 {
     public static class CreatePlotMapper
     {
-        public static Result<PlotAggregate> ToAggregate(CreatePlotCommand command)
+        public static Result<PlotAggregate> ToAggregate(CreatePlotCommand command, Guid ownerId)
         {
             return PlotAggregate.Create(
                 command.PropertyId,
+                ownerId,
                 command.Name,
                 command.CropType,
                 command.AreaHectares,

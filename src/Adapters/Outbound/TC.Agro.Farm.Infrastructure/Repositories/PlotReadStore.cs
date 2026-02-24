@@ -13,9 +13,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<PlotAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+        private IQueryable<PlotAggregate> FilteredDbSet => _userContext.IsAdmin
             ? _dbContext.Plots
-            : _dbContext.Plots.Where(x => x.Property.OwnerId == _userContext.Id);
+            : _dbContext.Plots.Where(x => x.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public async Task<GetPlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

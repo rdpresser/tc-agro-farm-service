@@ -11,7 +11,12 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             builder.Property(p => p.PropertyId)
                 .IsRequired();
 
+            builder.Property(p => p.OwnerId)
+                .HasColumnName("owner_id")
+                .IsRequired();
+
             builder.HasIndex(p => p.PropertyId);
+            builder.HasIndex(p => p.OwnerId);
 
             builder.HasOne(p => p.Property)
                 .WithMany(p => p.Plots)
@@ -84,7 +89,7 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 notes.WithOwner();
             });
 
-            // Navigation properties are required (except optional AdditionalNotes)
+            // Navigation properties are required
             builder.Navigation(p => p.Name).IsRequired();
             builder.Navigation(p => p.CropType).IsRequired();
             builder.Navigation(p => p.AreaHectares).IsRequired();

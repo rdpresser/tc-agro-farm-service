@@ -1,9 +1,12 @@
+using TC.Agro.Farm.Domain.Abstractions;
+using TC.Agro.Farm.Domain.Snapshots;
+
 namespace TC.Agro.Farm.Domain.Aggregates
 {
     /// <summary>
     /// Sensor aggregate root - represents a sensor installed in a plot.
     /// </summary>
-    public sealed class SensorAggregate : BaseAggregateRoot
+    public sealed class SensorAggregate : BaseAggregateRoot, ITenantAware
     {
         public SensorType Type { get; private set; } = default!;
         public SensorStatus Status { get; private set; } = default!;
@@ -11,7 +14,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public Name? Label { get; private set; }
 
         public Guid PlotId { get; private set; }
+        public Guid OwnerId { get; private set; }
         public PlotAggregate Plot { get; private set; } = default!;
+        public OwnerSnapshot Owner { get; private set; } = default!;
 
         // Private constructor for factories and ORM
         private SensorAggregate(Guid id) : base(id) { }
@@ -209,6 +214,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         {
             SetId(@event.AggregateId);
             PlotId = @event.PlotId;
+            OwnerId = @event.OwnerId;
             Type = SensorType.FromDb(@event.Type).Value;
             Status = SensorStatus.FromDb(@event.Status).Value;
             InstalledAt = @event.OccurredOn;

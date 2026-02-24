@@ -11,7 +11,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
         string IrrigationType,
-        string? AdditionalNotes) : IBaseCommand<CreatePlotResponse>, IInvalidateCache
+        string? AdditionalNotes,
+        Guid? OwnerId = null) : IBaseCommand<CreatePlotResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>
         [

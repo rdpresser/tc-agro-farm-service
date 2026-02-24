@@ -47,6 +47,10 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
                     b.Property<DateTimeOffset>("PlantingDate")
                         .HasColumnType("timestamptz")
                         .HasColumnName("planting_date");
@@ -61,6 +65,9 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_plots");
+
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_plots_owner_id");
 
                     b.HasIndex("PropertyId")
                         .HasDatabaseName("ix_plots_property_id");
@@ -127,6 +134,10 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
                     b.Property<Guid>("PlotId")
                         .HasColumnType("uuid")
                         .HasColumnName("plot_id");
@@ -137,6 +148,9 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_sensors");
+
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_sensors_owner_id");
 
                     b.HasIndex("PlotId")
                         .HasDatabaseName("ix_sensors_plot_id");
@@ -282,6 +296,13 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", b =>
                 {
+                    b.HasOne("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_plots_owner_snapshots_owner_id");
+
                     b.HasOne("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", "Property")
                         .WithMany("Plots")
                         .HasForeignKey("PropertyId")
@@ -405,6 +426,8 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.Navigation("Name")
                         .IsRequired();
 
+                    b.Navigation("Owner");
+
                     b.Navigation("Property");
                 });
 
@@ -518,6 +541,13 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.SensorAggregate", b =>
                 {
+                    b.HasOne("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_sensors_owner_snapshots_owner_id");
+
                     b.HasOne("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", "Plot")
                         .WithMany("Sensors")
                         .HasForeignKey("PlotId")
@@ -594,6 +624,8 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         });
 
                     b.Navigation("Label");
+
+                    b.Navigation("Owner");
 
                     b.Navigation("Plot");
 

@@ -1,4 +1,5 @@
 using TC.Agro.Contracts.Events.Identity;
+using TC.Agro.Farm.Application.Abstractions;
 using TC.Agro.Farm.Domain.Snapshots;
 using Wolverine;
 
@@ -32,6 +33,11 @@ namespace TC.Agro.Farm.Application.MessageBrokerHandlers
         public async Task HandleAsync(EventContext<UserCreatedIntegrationEvent> @event, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(@event);
+
+            if (!string.Equals(@event.EventData.Role, AppConstants.ProducerRole, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
 
             // Map integration event to snapshot
             var snapshot = OwnerSnapshot.Create(

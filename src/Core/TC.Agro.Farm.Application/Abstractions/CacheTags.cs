@@ -11,5 +11,8 @@ namespace TC.Agro.Farm.Application.Abstractions
         public const string Sensors = "sensors";
         public const string SensorList = "sensors:list";
         public const string SensorById = "sensors:by-id";
+        public const string Owners = "owners";
+        public const string OwnerList = "owners:list";
+        public const string OwnerById = "owners:by-id";
     }
 }

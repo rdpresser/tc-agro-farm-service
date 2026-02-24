@@ -21,12 +21,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="FakeItEasy" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Core\TC.Agro.Farm.Domain\TC.Agro.Farm.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Core\TC.Agro.Farm.Application\TC.Agro.Farm.Application.csproj" />
+    <ProjectReference Include="..\..\src\Adapters\Outbound\TC.Agro.Farm.Infrastructure\TC.Agro.Farm.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

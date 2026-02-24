@@ -15,7 +15,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<PropertyAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+        private IQueryable<PropertyAggregate> FilteredDbSet => _userContext.IsAdmin
             ? _dbContext.Properties
             : _dbContext.Properties.Where(x => x.OwnerId == _userContext.Id);
 

@@ -11,6 +11,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         {
             // Arrange
             var propertyId = Guid.NewGuid();
+            var ownerId = Guid.NewGuid();
             var name = "Talhão A1";
             var cropType = "Soy";
             var areaHectares = 25.5;
@@ -19,13 +20,14 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
             result.Value.ShouldNotBeNull();
             result.Value.Id.ShouldNotBe(Guid.Empty);
             result.Value.PropertyId.ShouldBe(propertyId);
+            result.Value.OwnerId.ShouldBe(ownerId);
             result.Value.Name.Value.ShouldBe(name);
             result.Value.CropType.Value.ShouldBe(cropType);
             result.Value.AreaHectares.Hectares.ShouldBe(areaHectares);
@@ -42,6 +44,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         {
             // Arrange
             var propertyId = Guid.NewGuid();
+            var ownerId = Guid.NewGuid();
             var name = "Talhão Test";
             var areaHectares = 10.0;
             var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
@@ -49,7 +52,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -65,6 +68,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         {
             // Arrange
             var propertyId = Guid.Empty;
+            var ownerId = Guid.NewGuid();
             var name = "Talhão A1";
             var cropType = "Soy";
             var areaHectares = 25.5;
@@ -73,7 +77,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -85,6 +89,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         {
             // Arrange
             var propertyId = Guid.NewGuid();
+            var ownerId = Guid.NewGuid();
             var name = "";
             var cropType = "Soy";
             var areaHectares = 25.5;
@@ -93,7 +98,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -105,6 +110,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         {
             // Arrange
             var propertyId = Guid.NewGuid();
+            var ownerId = Guid.NewGuid();
             var name = "Talhão A1";
             var cropType = "";
             var areaHectares = 25.5;
@@ -113,7 +119,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -125,6 +131,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         {
             // Arrange
             var propertyId = Guid.NewGuid();
+            var ownerId = Guid.NewGuid();
             var name = "Talhão A1";
             var cropType = "Soy";
             var areaHectares = 0.0;
@@ -133,7 +140,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -145,6 +152,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         {
             // Arrange
             var propertyId = Guid.Empty;
+            var ownerId = Guid.NewGuid();
             var name = "";
             var cropType = "";
             var areaHectares = -10.0;
@@ -153,7 +161,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -340,6 +348,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         private static PlotAggregate CreateValidPlot()
         {
             var result = PlotAggregate.Create(
+                Guid.NewGuid(),
                 Guid.NewGuid(),
                 "Talhão A1",
                 "Soy",

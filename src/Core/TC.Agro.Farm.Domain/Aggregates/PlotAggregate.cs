@@ -1,9 +1,12 @@
+using TC.Agro.Farm.Domain.Abstractions;
+using TC.Agro.Farm.Domain.Snapshots;
+
 namespace TC.Agro.Farm.Domain.Aggregates
 {
     /// <summary>
     /// Plot aggregate root - represents a plot within a property.
     /// </summary>
-    public sealed class PlotAggregate : BaseAggregateRoot
+    public sealed class PlotAggregate : BaseAggregateRoot, ITenantAware
     {
         public Name Name { get; private set; } = default!;
         public CropType CropType { get; private set; } = default!;
@@ -14,8 +17,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public AdditionalNotes? AdditionalNotes { get; private set; }
 
         public Guid PropertyId { get; private set; }
+        public Guid OwnerId { get; private set; }
         public PropertyAggregate Property { get; private set; } = default!;
-
+        public OwnerSnapshot Owner { get; private set; } = default!;
 
         public ICollection<SensorAggregate> Sensors { get; private set; } = [];
 
@@ -29,6 +33,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public static Result<PlotAggregate> Create(
             Guid propertyId,
+            Guid ownerId,
             string name,
             string cropType,
             double areaHectares,
@@ -45,6 +50,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
             var errors = new List<ValidationError>();
             errors.AddRange(ValidatePropertyId(propertyId));
+            errors.AddRange(ValidateOwnerId(ownerId));
             errors.AddErrorsIfFailure(nameResult);
             errors.AddErrorsIfFailure(cropTypeResult);
             errors.AddErrorsIfFailure(areaResult);
@@ -60,6 +66,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
             return CreateAggregate(
                 propertyId,
+                ownerId,
                 nameResult.Value,
                 cropTypeResult.Value,
                 areaResult.Value,
@@ -71,6 +78,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         private static Result<PlotAggregate> CreateAggregate(
             Guid propertyId,
+            Guid ownerId,
             Name name,
             CropType cropType,
             Area area,
@@ -83,6 +91,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
             var @event = new PlotCreatedDomainEvent(
                 aggregate.Id,
                 propertyId,
+                ownerId,
                 name.Value,
                 cropType.Value,
                 area.Hectares,
@@ -194,6 +203,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         {
             SetId(@event.AggregateId);
             PropertyId = @event.PropertyId;
+            OwnerId = @event.OwnerId;
             Name = ValueObjects.Name.FromDb(@event.Name).Value;
             CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
             AreaHectares = Area.FromDb(@event.AreaHectares).Value;
@@ -270,6 +280,14 @@ namespace TC.Agro.Farm.Domain.Aggregates
             }
         }
 
+        private static IEnumerable<ValidationError> ValidateOwnerId(Guid ownerId)
+        {
+            if (ownerId == Guid.Empty)
+            {
+                yield return FarmDomainErrors.OwnerIdRequired;
+            }
+        }
+
         private static IEnumerable<ValidationError> ValidateDates(DateTimeOffset plantingDate, DateTimeOffset expectedHarvestDate)
         {
             if (plantingDate == default)
@@ -292,6 +310,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public record PlotCreatedDomainEvent(
             Guid AggregateId,
             Guid PropertyId,
+            Guid OwnerId,
             string Name,
             string CropType,
             double AreaHectares,

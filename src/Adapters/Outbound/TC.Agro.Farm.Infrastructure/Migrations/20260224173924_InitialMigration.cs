@@ -76,6 +76,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     irrigation_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     additional_notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     property_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    owner_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
@@ -83,6 +84,13 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_plots", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_plots_owner_snapshots_owner_id",
+                        column: x => x.owner_id,
+                        principalSchema: "public",
+                        principalTable: "owner_snapshots",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "fk_plots_properties_property_id",
                         column: x => x.property_id,
@@ -103,6 +111,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     installed_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     label = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     plot_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    owner_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
@@ -110,6 +119,13 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_sensors", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_sensors_owner_snapshots_owner_id",
+                        column: x => x.owner_id,
+                        principalSchema: "public",
+                        principalTable: "owner_snapshots",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "fk_sensors_plots_plot_id",
                         column: x => x.plot_id,
@@ -127,6 +143,12 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ix_plots_owner_id",
+                schema: "public",
+                table: "plots",
+                column: "owner_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_plots_property_id",
                 schema: "public",
                 table: "plots",
@@ -136,6 +158,12 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                 name: "ix_properties_owner_id",
                 schema: "public",
                 table: "properties",
+                column: "owner_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_sensors_owner_id",
+                schema: "public",
+                table: "sensors",
                 column: "owner_id");
 
             migrationBuilder.CreateIndex(

@@ -33,9 +33,8 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.GetById
                 return BuildNotFoundResult();
             }
 
-            // Authorization: User can only see their own properties unless they're Admin
-            if (_userContext.Role == AppConstants.UserRole
-                && propertyResponse.OwnerId != _userContext.Id)
+            // Authorization: non-admin users can only see their own properties
+            if (!_userContext.IsAdmin && propertyResponse.OwnerId != _userContext.Id)
             {
                 _logger.LogWarning(
                     "User {UserId} attempted to access property {PropertyId} owned by {OwnerId}",

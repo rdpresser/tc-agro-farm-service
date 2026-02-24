@@ -10,9 +10,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        private IQueryable<SensorAggregate> FilteredDbSet => _userContext.Role == AppConstants.AdminRole
+        private IQueryable<SensorAggregate> FilteredDbSet => _userContext.IsAdmin
             ? DbSet
-            : DbSet.Where(x => x.Plot.Property.OwnerId == _userContext.Id);
+            : DbSet.Where(x => x.OwnerId == _userContext.Id);
 
         /// <inheritdoc />
         public override async Task<SensorAggregate?> GetByIdAsync(Guid aggregateId, CancellationToken cancellationToken = default)

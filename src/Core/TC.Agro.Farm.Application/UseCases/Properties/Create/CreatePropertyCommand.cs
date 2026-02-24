@@ -11,7 +11,8 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Create
         string Country,
         double AreaHectares,
         double? Latitude = null,
-        double? Longitude = null) : IBaseCommand<CreatePropertyResponse>, IInvalidateCache
+        double? Longitude = null,
+        Guid? OwnerId = null) : IBaseCommand<CreatePropertyResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>
         [

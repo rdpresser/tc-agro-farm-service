@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace TC.Agro.Farm.Infrastructure.Extensions
 {
     /// <summary>
@@ -115,6 +117,40 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
         }
 
         /// <summary>
+        /// Applies dynamic sorting to OwnerSnapshot queries.
+        /// </summary>
+        public static IQueryable<OwnerSnapshot> ApplySorting(
+            this IQueryable<OwnerSnapshot> query,
+            string? sortBy,
+            string? sortDirection)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return query.OrderByDescending(o => o.CreatedAt);
+
+            var isAscending = string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+
+            return sortBy.ToLowerInvariant() switch
+            {
+                "name" => isAscending
+                    ? query.OrderBy(o => o.Name)
+                    : query.OrderByDescending(o => o.Name),
+                "email" => isAscending
+                    ? query.OrderBy(o => o.Email)
+                    : query.OrderByDescending(o => o.Email),
+                "isactive" => isAscending
+                    ? query.OrderBy(o => o.IsActive)
+                    : query.OrderByDescending(o => o.IsActive),
+                "updatedat" => isAscending
+                    ? query.OrderBy(o => o.UpdatedAt)
+                    : query.OrderByDescending(o => o.UpdatedAt),
+                "createdat" => isAscending
+                    ? query.OrderBy(o => o.CreatedAt)
+                    : query.OrderByDescending(o => o.CreatedAt),
+                _ => query.OrderByDescending(o => o.CreatedAt)
+            };
+        }
+
+        /// <summary>
         /// Applies text search filter to PropertyAggregate queries.
         /// </summary>
         public static IQueryable<PropertyAggregate> ApplyTextFilter(
@@ -147,6 +183,40 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
             return query.Where(p =>
                 EF.Functions.ILike(p.Name.Value, pattern) ||
                 EF.Functions.ILike(p.Property.Name.Value, pattern));
+        }
+
+        /// <summary>
+        /// Applies text search filter to OwnerSnapshot queries.
+        /// Supports search by name, email, id, active status, and created/updated dates.
+        /// </summary>
+        public static IQueryable<OwnerSnapshot> ApplyTextFilter(
+            this IQueryable<OwnerSnapshot> query,
+            string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            var trimmedFilter = filter.Trim();
+            var pattern = $"%{trimmedFilter}%";
+
+            var hasGuid = Guid.TryParse(trimmedFilter, out var guidFilter);
+            var hasBool = bool.TryParse(trimmedFilter, out var boolFilter);
+            var hasDate = DateTimeOffset.TryParse(
+                trimmedFilter,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var dateFilter);
+
+            var dayStart = hasDate ? dateFilter.Date : default;
+            var dayEnd = hasDate ? dateFilter.Date.AddDays(1) : default;
+
+            return query.Where(o =>
+                EF.Functions.ILike(o.Name, pattern) ||
+                EF.Functions.ILike(o.Email, pattern) ||
+                (hasGuid && o.Id == guidFilter) ||
+                (hasBool && o.IsActive == boolFilter) ||
+                (hasDate && o.CreatedAt >= dayStart && o.CreatedAt < dayEnd) ||
+                (hasDate && o.UpdatedAt.HasValue && o.UpdatedAt.Value >= dayStart && o.UpdatedAt.Value < dayEnd));
         }
 
         /// <summary>

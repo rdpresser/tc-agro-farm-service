@@ -68,6 +68,11 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
 
             builder.HasIndex(p => p.OwnerId);
 
+            builder.HasOne(p => p.Owner)
+                .WithMany(o => o.Properties)
+                .HasForeignKey(p => p.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasMany(p => p.Plots)
                 .WithOne(p => p.Property)
                 .HasForeignKey(p => p.PropertyId)
@@ -77,6 +82,7 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             builder.Navigation(p => p.Name).IsRequired();
             builder.Navigation(p => p.Location).IsRequired();
             builder.Navigation(p => p.AreaHectares).IsRequired();
+            builder.Navigation(p => p.Owner).IsRequired();
         }
     }
 }

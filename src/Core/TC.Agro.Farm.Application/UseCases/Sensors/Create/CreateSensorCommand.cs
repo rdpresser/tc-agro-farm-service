@@ -6,7 +6,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
     public sealed record CreateSensorCommand(
         Guid PlotId,
         string Type,
-        string? Label = null) : IBaseCommand<CreateSensorResponse>, IInvalidateCache
+        string? Label = null,
+        Guid? OwnerId = null) : IBaseCommand<CreateSensorResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>
         [

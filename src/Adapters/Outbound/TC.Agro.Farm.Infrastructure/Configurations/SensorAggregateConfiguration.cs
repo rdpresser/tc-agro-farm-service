@@ -11,7 +11,12 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             builder.Property(s => s.PlotId)
                 .IsRequired();
 
+            builder.Property(s => s.OwnerId)
+                .HasColumnName("owner_id")
+                .IsRequired();
+
             builder.HasIndex(s => s.PlotId);
+            builder.HasIndex(s => s.OwnerId);
 
             builder.HasOne(s => s.Plot)
                 .WithMany(p => p.Sensors)

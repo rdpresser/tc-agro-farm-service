@@ -39,7 +39,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
             }
 
             // 2. Authorization check - only owner or admin can update
-            if (aggregate.OwnerId != _userContext.Id && _userContext.Role != AppConstants.AdminRole)
+            if (aggregate.OwnerId != _userContext.Id && !_userContext.IsAdmin)
             {
                 _logger.LogWarning(
                     "User {UserId} attempted to update property {PropertyId} owned by {OwnerId}",

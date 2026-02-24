@@ -17,8 +17,33 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Create
 
         protected override Task<Result<PropertyAggregate>> MapAsync(CreatePropertyCommand command, CancellationToken ct)
         {
-            var aggregateResult = CreatePropertyMapper.ToAggregate(command, UserContext.Id);
+            var ownerIdResult = ResolveEffectiveOwnerId(command.OwnerId);
+            if (!ownerIdResult.IsSuccess)
+            {
+                return Task.FromResult(Result<PropertyAggregate>.Invalid(ownerIdResult.ValidationErrors));
+            }
+
+            var aggregateResult = CreatePropertyMapper.ToAggregate(command, ownerIdResult.Value);
             return Task.FromResult(aggregateResult);
+        }
+
+        private Result<Guid> ResolveEffectiveOwnerId(Guid? requestedOwnerId)
+        {
+            var isAdmin = UserContext.IsAdmin;
+
+            if (isAdmin)
+            {
+                if (!requestedOwnerId.HasValue || requestedOwnerId.Value == Guid.Empty)
+                {
+                    return Result<Guid>.Invalid(new ValidationError(
+                        nameof(CreatePropertyCommand.OwnerId),
+                        "OwnerId is required when creating property on behalf as Admin."));
+                }
+
+                return Result.Success(requestedOwnerId.Value);
+            }
+
+            return Result.Success(UserContext.Id);
         }
 
         protected override async Task<Result> ValidateAsync(PropertyAggregate aggregate, CancellationToken ct)

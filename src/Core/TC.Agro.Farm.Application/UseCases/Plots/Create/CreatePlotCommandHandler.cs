@@ -20,7 +20,13 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
 
         protected override Task<Result<PlotAggregate>> MapAsync(CreatePlotCommand command, CancellationToken ct)
         {
-            var aggregateResult = CreatePlotMapper.ToAggregate(command);
+            var ownerIdResult = ResolveEffectiveOwnerId(command.OwnerId);
+            if (!ownerIdResult.IsSuccess)
+            {
+                return Task.FromResult(Result<PlotAggregate>.Invalid(ownerIdResult.ValidationErrors));
+            }
+
+            var aggregateResult = CreatePlotMapper.ToAggregate(command, ownerIdResult.Value);
             return Task.FromResult(aggregateResult);
         }
 
@@ -36,8 +42,15 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 return Result.Invalid(FarmDomainErrors.PropertyNotFound);
             }
 
+            if (property.OwnerId != aggregate.OwnerId)
+            {
+                return Result.Invalid(new ValidationError(
+                    nameof(CreatePlotCommand.OwnerId),
+                    "Selected OwnerId does not match the property owner."));
+            }
+
             // 2. Authorization: only property owner or admin can create plots
-            if (property.OwnerId != UserContext.Id && UserContext.Role != AppConstants.AdminRole)
+            if (property.OwnerId != UserContext.Id && !UserContext.IsAdmin)
             {
                 _logger.LogWarning(
                     "User {UserId} attempted to create plot in property {PropertyId} owned by {OwnerId}",
@@ -60,6 +73,25 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
             }
 
             return Result.Success();
+        }
+
+        private Result<Guid> ResolveEffectiveOwnerId(Guid? requestedOwnerId)
+        {
+            var isAdmin = UserContext.IsAdmin;
+
+            if (isAdmin)
+            {
+                if (!requestedOwnerId.HasValue || requestedOwnerId.Value == Guid.Empty)
+                {
+                    return Result<Guid>.Invalid(new ValidationError(
+                        nameof(CreatePlotCommand.OwnerId),
+                        "OwnerId is required when creating plot on behalf as Admin."));
+                }
+
+                return Result.Success(requestedOwnerId.Value);
+            }
+
+            return Result.Success(UserContext.Id);
         }
 
         protected override async Task PublishIntegrationEventsAsync(PlotAggregate aggregate, CancellationToken ct)

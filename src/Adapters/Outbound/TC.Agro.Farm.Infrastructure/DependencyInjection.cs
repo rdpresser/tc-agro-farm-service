@@ -24,6 +24,7 @@ namespace TC.Agro.Farm.Infrastructure
 
             // Owner snapshot store
             services.AddScoped<IOwnerSnapshotStore, OwnerSnapshotStore>();
+            services.AddScoped<IOwnerReadStore, OwnerReadStore>();
 
             // -------------------------------
             // EF Core with Wolverine Integration
