@@ -12,6 +12,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
         string IrrigationType,
+        string? AdditionalNotes,
         bool IsActive,
         DateTimeOffset CreatedAt);
 }

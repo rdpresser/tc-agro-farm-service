@@ -88,6 +88,13 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                     .WithMessage($"Irrigation type must be one of: {IrrigationType.DripIrrigation}, {IrrigationType.Sprinkler}, {IrrigationType.CenterPivot}, {IrrigationType.FloodFurrow}, {IrrigationType.Rainfed}.")
                     .WithErrorCode($"{nameof(CreatePlotCommand.IrrigationType)}.InvalidType");
             #endregion
+
+            #region AdditionalNotes | Validation Rules (optional, max 1000)
+            RuleFor(x => x.AdditionalNotes)
+                .MaximumLength(1000)
+                    .WithMessage("Additional notes must not exceed 1000 characters.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.AdditionalNotes)}.MaximumLength");
+            #endregion
         }
     }
 }

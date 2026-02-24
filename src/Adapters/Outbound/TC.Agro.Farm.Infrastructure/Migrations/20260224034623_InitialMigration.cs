@@ -74,6 +74,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     planting_date = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     expected_harvest_date = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     irrigation_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    additional_notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     property_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),

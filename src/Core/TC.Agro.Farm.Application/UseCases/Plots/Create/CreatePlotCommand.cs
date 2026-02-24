@@ -10,7 +10,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         double AreaHectares,
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
-        string IrrigationType) : IBaseCommand<CreatePlotResponse>, IInvalidateCache
+        string IrrigationType,
+        string? AdditionalNotes) : IBaseCommand<CreatePlotResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>
         [

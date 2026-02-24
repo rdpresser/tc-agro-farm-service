@@ -29,7 +29,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     50.0,
                     DateTimeOffset.UtcNow.AddMonths(-2),
                     DateTimeOffset.UtcNow.AddMonths(6),
-                    Domain.ValueObjects.IrrigationType.CenterPivot);
+                    Domain.ValueObjects.IrrigationType.CenterPivot,
+                    "Optional notes about soil or irrigation.");
                 s.ResponseExamples[201] = new CreatePlotResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
@@ -39,6 +40,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddMonths(-2),
                     DateTimeOffset.UtcNow.AddMonths(6),
                     Domain.ValueObjects.IrrigationType.CenterPivot,
+                    "Optional notes about soil or irrigation.",
                     true,
                     DateTimeOffset.UtcNow);
                 s.Responses[201] = "Returned when the plot is successfully created.";
