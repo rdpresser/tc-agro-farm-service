@@ -52,6 +52,42 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                     .WithMessage("Area must not exceed 100,000 hectares for a single plot.")
                     .WithErrorCode($"{nameof(CreatePlotCommand.AreaHectares)}.MaximumValue");
             #endregion
+
+            #region PlantingDate | Validation Rules
+            RuleFor(x => x.PlantingDate)
+                .NotEqual(default(DateTimeOffset))
+                    .WithMessage("Planting date is required.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.PlantingDate)}.Required")
+                .LessThanOrEqualTo(DateTimeOffset.UtcNow)
+                    .WithMessage("Planting date cannot be in the future.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.PlantingDate)}.Future");
+            #endregion
+
+            #region ExpectedHarvestDate | Validation Rules
+            RuleFor(x => x.ExpectedHarvestDate)
+                .NotEqual(default(DateTimeOffset))
+                    .WithMessage("Expected harvest date is required.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.ExpectedHarvestDate)}.Required")
+                .GreaterThan(x => x.PlantingDate)
+                    .WithMessage("Expected harvest must be after planting date.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.ExpectedHarvestDate)}.BeforePlanting");
+            #endregion
+
+            #region IrrigationType | Validation Rules
+            RuleFor(x => x.IrrigationType)
+                .NotEmpty()
+                    .WithMessage("Irrigation type is required.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.IrrigationType)}.Required")
+                .Must(type => new[] {
+                        IrrigationType.DripIrrigation,
+                        IrrigationType.Sprinkler,
+                        IrrigationType.CenterPivot,
+                        IrrigationType.FloodFurrow,
+                        IrrigationType.Rainfed
+                    }.Contains(type, StringComparer.OrdinalIgnoreCase))
+                    .WithMessage($"Irrigation type must be one of: {IrrigationType.DripIrrigation}, {IrrigationType.Sprinkler}, {IrrigationType.CenterPivot}, {IrrigationType.FloodFurrow}, {IrrigationType.Rainfed}.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.IrrigationType)}.InvalidType");
+            #endregion
         }
     }
 }

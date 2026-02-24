@@ -37,7 +37,10 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     true,
                     3,
                     DateTimeOffset.UtcNow.AddDays(-30),
-                    DateTimeOffset.UtcNow);
+                    DateTimeOffset.UtcNow,
+                    DateTimeOffset.UtcNow.AddMonths(-2),
+                    DateTimeOffset.UtcNow.AddMonths(6),
+                    Domain.ValueObjects.IrrigationType.CenterPivot);
                 s.Responses[200] = "Returned when the plot is found.";
                 s.Responses[400] = "Returned when the request is invalid.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";

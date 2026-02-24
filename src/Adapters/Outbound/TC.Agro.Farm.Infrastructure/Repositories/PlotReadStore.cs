@@ -33,7 +33,10 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.IsActive,
                     p.Sensors.Count,
                     p.CreatedAt,
-                    p.UpdatedAt))
+                    p.UpdatedAt,
+                    p.PlantingDate,
+                    p.ExpectedHarvestDate,
+                    p.IrrigationType.Value))
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -76,7 +79,10 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.AreaHectares.Hectares,
                     p.IsActive,
                     p.Sensors.Count,
-                    p.CreatedAt))
+                    p.CreatedAt,
+                    p.PlantingDate,
+                    p.ExpectedHarvestDate,
+                    p.IrrigationType.Value))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -123,7 +129,10 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.AreaHectares.Hectares,
                     p.IsActive,
                     p.Sensors.Count,
-                    p.CreatedAt))
+                    p.CreatedAt,
+                    p.PlantingDate,
+                    p.ExpectedHarvestDate,
+                    p.IrrigationType.Value))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 

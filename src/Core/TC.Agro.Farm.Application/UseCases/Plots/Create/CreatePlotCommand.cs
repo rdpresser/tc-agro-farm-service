@@ -7,7 +7,10 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         Guid PropertyId,
         string Name,
         string CropType,
-        double AreaHectares) : IBaseCommand<CreatePlotResponse>, IInvalidateCache
+        double AreaHectares,
+        DateTimeOffset PlantingDate,
+        DateTimeOffset ExpectedHarvestDate,
+        string IrrigationType) : IBaseCommand<CreatePlotResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>
         [

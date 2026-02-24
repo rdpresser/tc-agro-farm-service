@@ -26,13 +26,19 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     Guid.NewGuid(),
                     "North Plot",
                     "Soy",
-                    50.0);
+                    50.0,
+                    DateTimeOffset.UtcNow.AddMonths(-2),
+                    DateTimeOffset.UtcNow.AddMonths(6),
+                    Domain.ValueObjects.IrrigationType.CenterPivot);
                 s.ResponseExamples[201] = new CreatePlotResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
                     "North Plot",
                     "Soy",
                     50.0,
+                    DateTimeOffset.UtcNow.AddMonths(-2),
+                    DateTimeOffset.UtcNow.AddMonths(6),
+                    Domain.ValueObjects.IrrigationType.CenterPivot,
                     true,
                     DateTimeOffset.UtcNow);
                 s.Responses[201] = "Returned when the plot is successfully created.";
