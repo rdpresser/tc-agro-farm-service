@@ -209,7 +209,7 @@ namespace TC.Agro.Farm.Service.Extensions
             builder.Host.UseWolverine(opts =>
             {
                 opts.UseSystemTextJsonForSerialization();
-                opts.ServiceName = "tc-agro-farm";
+                opts.ServiceName = TelemetryConstants.ServiceName;
                 opts.ApplicationAssembly = typeof(Program).Assembly;
 
                 // Include Application assembly for handlers
