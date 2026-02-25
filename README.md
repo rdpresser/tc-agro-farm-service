@@ -98,32 +98,46 @@ Access the interactive API documentation at:
 
 ## API Endpoints
 
+All endpoints are served under the `/api` prefix (for example, `/api/properties`).
+
 ### Properties
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/property` | Create a new property |
-| `GET` | `/api/property/{id}` | Get property by ID |
-| `GET` | `/api/property` | List all properties |
-| `PUT` | `/api/property/{id}` | Update property |
+| Method | Endpoint                     | Description                                                                                 |
+|--------|------------------------------|---------------------------------------------------------------------------------------------|
+| `POST` | `/api/properties`            | Create a new property (farm).                                                              |
+| `GET`  | `/api/properties/{id}`       | Get detailed information about a property by ID.                                           |
+| `GET`  | `/api/properties`            | Get a paginated list of properties. Supports filtering and sorting via query parameters.   |
+| `PUT`  | `/api/properties/{id}`       | Update an existing property by ID.                                                         |
+| `GET`  | `/api/properties/{id}/plots` | Get a paginated list of plots for a given property.                                       |
 
 ### Plots
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/plot` | Create a new plot |
-| `GET` | `/api/plot/{id}` | Get plot by ID |
-| `GET` | `/api/plot` | List all plots |
-| `PUT` | `/api/plot/{id}` | Update plot |
+| Method | Endpoint              | Description                                                                               |
+|--------|------------------------|-------------------------------------------------------------------------------------------|
+| `POST` | `/api/plots`          | Create a new plot within an existing property.                                           |
+| `GET`  | `/api/plots/{id}`     | Get detailed information about a plot by ID.                                             |
+| `GET`  | `/api/plots`          | Get a paginated list of plots. Supports filtering and sorting via query parameters.      |
+
+> Note: There is currently no generic `PUT /api/plots/{id}` update endpoint implemented.
 
 ### Sensors
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/sensor` | Register a new sensor |
-| `GET` | `/api/sensor/{id}` | Get sensor by ID |
-| `GET` | `/api/sensor` | List all sensors |
-| `PUT` | `/api/sensor/{id}` | Update sensor |
+| Method   | Endpoint                                | Description                                                                                                      |
+|----------|-----------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `POST`   | `/api/sensors`                          | Register a new IoT sensor within a plot.                                                                        |
+| `GET`    | `/api/sensors/{id}`                     | Get detailed information about a sensor by ID.                                                                  |
+| `GET`    | `/api/sensors`                          | Get a paginated list of sensors. Supports filtering by property, plot, type, and status.                        |
+| `GET`    | `/api/plots/{id}/sensors`               | Get a paginated list of sensors installed in a specific plot.                                                   |
+| `PUT`    | `/api/sensors/{sensorId}/status-change` | Change the operational status of a sensor (for example: Active, Maintenance, Faulty, Inactive).                 |
+| `DELETE` | `/api/sensors/{sensorId}`               | Deactivate (soft-delete) a sensor, marking it as inactive and removing it from active queries.                  |
+
+> Note: There is no generic `PUT /api/sensors/{id}` update endpoint; status changes and deactivation use the dedicated endpoints above.
+
+### Owners
+
+| Method | Endpoint       | Description                                                                 |
+|--------|----------------|-----------------------------------------------------------------------------|
+| `GET`  | `/api/owners`  | Get a paginated list of active owners synchronized from the Identity service. |
 
 ## Project Structure
 
