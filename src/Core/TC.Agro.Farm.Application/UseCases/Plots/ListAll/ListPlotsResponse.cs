@@ -3,6 +3,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
     public sealed record ListPlotsResponse(
         Guid Id,
         Guid PropertyId,
+        Guid OwnerId,
         string PropertyName,
         string Name,
         string CropType,

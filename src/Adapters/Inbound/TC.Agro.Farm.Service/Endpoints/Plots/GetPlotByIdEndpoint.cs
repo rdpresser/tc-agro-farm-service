@@ -30,6 +30,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                 s.ResponseExamples[200] = new GetPlotByIdResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
+                    Guid.NewGuid(),
                     "Fazenda Boa Vista",
                     "Talhão Norte",
                     "Soja",

@@ -32,6 +32,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                 plotList.Add(new ListPlotsFromPropertyResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
+                    Guid.NewGuid(),
                     faker.Company.CompanyName() + " Farm",
                     $"Talhão {faker.Random.AlphaNumeric(2).ToUpper()}",
                     faker.PickRandom(CropType.CommonCropTypes),

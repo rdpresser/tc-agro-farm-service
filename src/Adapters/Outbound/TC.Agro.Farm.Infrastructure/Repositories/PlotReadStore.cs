@@ -26,6 +26,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .Select(p => new GetPlotByIdResponse(
                     p.Id,
                     p.PropertyId,
+                    p.OwnerId,
                     p.Property.Name.Value,
                     p.Name.Value,
                     p.CropType.Value,
@@ -74,6 +75,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .Select(p => new ListPlotsFromPropertyResponse(
                     p.Id,
                     p.PropertyId,
+                    p.OwnerId,
                     p.Property.Name.Value,
                     p.Name.Value,
                     p.CropType.Value,
@@ -125,6 +127,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .Select(p => new ListPlotsResponse(
                     p.Id,
                     p.PropertyId,
+                    p.OwnerId,
                     p.Property.Name.Value,
                     p.Name.Value,
                     p.CropType.Value,

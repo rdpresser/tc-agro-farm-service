@@ -6,6 +6,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.GetById
     public sealed record GetPlotByIdResponse(
         Guid Id,
         Guid PropertyId,
+        Guid OwnerId,
         string PropertyName,
         string Name,
         string CropType,
