@@ -38,6 +38,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
                     $"Talhão {faker.Random.AlphaNumeric(2).ToUpper()}",
                     propertyId,
                     faker.Company.CompanyName() + " Farm",
+                    Guid.NewGuid(),
                     faker.PickRandom(SensorTypes),
                     faker.PickRandom(SensorStatuses),
                     $"Sensor #{faker.Random.Int(1, 100)}",

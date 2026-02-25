@@ -33,6 +33,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
                     "Talhão Norte",
                     Guid.NewGuid(),
                     "Fazenda Boa Vista",
+                    Guid.NewGuid(),
                     "Temperature",
                     "Active",
                     "Sensor Norte 1",
