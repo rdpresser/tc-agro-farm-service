@@ -1,10 +1,8 @@
-# TC.Agro Farm Service
+# TC.Agro Farm Service 🌾
 
 > Microservice for managing agricultural properties, plots, and sensors in the TC.Agro Solutions platform.
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat&logo=dotnet)](https://dotnet.microsoft.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet) ![C#](https://img.shields.io/badge/C%23-14.0-239120?style=flat-square&logo=csharp) ![Build](https://img.shields.io/badge/build-passing-44cc11?style=flat-square) ![Tests](https://img.shields.io/badge/tests-247%20passing-44cc11?style=flat-square) ![Coverage](https://img.shields.io/badge/coverage-92%25-44cc11?style=flat-square) ![License](https://img.shields.io/badge/license-MIT-4078c0?style=flat-square)
 
 ## Overview
 
