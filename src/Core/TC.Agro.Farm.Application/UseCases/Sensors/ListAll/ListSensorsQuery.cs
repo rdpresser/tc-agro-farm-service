@@ -7,6 +7,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ListAll
     /// </summary>
     public sealed record ListSensorsQuery : ICachedQuery<PaginatedResponse<ListSensorsResponse>>
     {
+        public Guid? OwnerId { get; init; }
         public Guid? PropertyId { get; init; }
         public Guid? PlotId { get; init; }
 
@@ -21,7 +22,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ListAll
         private string? _cacheKey;
         public string GetCacheKey
         {
-            get => _cacheKey ?? $"ListSensorsQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{PropertyId}-{PlotId}-{Type}-{Status}";
+            get => _cacheKey ?? $"ListSensorsQuery-{OwnerId}-{PropertyId}-{PlotId}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{Type}-{Status}";
         }
 
         public TimeSpan? Duration => null;
@@ -34,7 +35,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ListAll
 
         public void SetCacheKey(string cacheKey)
         {
-            _cacheKey = $"ListSensorsQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{PropertyId}-{PlotId}-{Type}-{Status}-{cacheKey}";
+            _cacheKey = $"ListSensorsQuery-{OwnerId}-{PropertyId}-{PlotId}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{Type}-{Status}-{cacheKey}";
         }
     }
 }

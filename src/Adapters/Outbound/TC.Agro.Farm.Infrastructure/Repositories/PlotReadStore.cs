@@ -101,6 +101,12 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             var plotsQuery = FilteredDbSet
                 .AsNoTracking();
 
+            if (_userContext.IsAdmin && query.OwnerId is not null && query.OwnerId.HasValue && query.OwnerId.Value != Guid.Empty)
+            {
+                //when loggedin as admin on frontend
+                plotsQuery = plotsQuery.Where(x => x.OwnerId == query.OwnerId);
+            }
+
             if (query.PropertyId is not null && query.PropertyId.HasValue && query.PropertyId.Value != Guid.Empty)
             {
                 plotsQuery = plotsQuery.Where(p => p.PropertyId == query.PropertyId.Value);

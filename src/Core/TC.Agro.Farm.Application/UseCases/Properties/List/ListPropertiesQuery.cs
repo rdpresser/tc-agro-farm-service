@@ -7,6 +7,8 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.List
     /// </summary>
     public sealed record ListPropertiesQuery : ICachedQuery<PaginatedResponse<ListPropertiesResponse>>
     {
+        public Guid? OwnerId { get; init; }
+
         public int PageNumber { get; init; } = 1;
         public int PageSize { get; init; } = 10;
         public string SortBy { get; init; } = "name";
@@ -16,7 +18,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.List
         private string? _cacheKey;
         public string GetCacheKey
         {
-            get => _cacheKey ?? $"GetPropertyListQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}";
+            get => _cacheKey ?? $"GetPropertyListQuery-{OwnerId}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}";
         }
 
         public TimeSpan? Duration => null;
@@ -30,7 +32,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.List
 
         public void SetCacheKey(string cacheKey)
         {
-            _cacheKey = $"GetPropertyListQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{cacheKey}";
+            _cacheKey = $"GetPropertyListQuery-{OwnerId}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{cacheKey}";
         }
     }
 }

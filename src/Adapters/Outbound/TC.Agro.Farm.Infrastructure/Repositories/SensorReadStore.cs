@@ -104,6 +104,11 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             var sensorsQuery = FilteredDbSet
                 .AsNoTracking();
 
+            if (_userContext.IsAdmin && query.OwnerId is not null && query.OwnerId.HasValue && query.OwnerId.Value != Guid.Empty)
+            {
+                sensorsQuery = sensorsQuery.Where(s => s.OwnerId == query.OwnerId.Value);
+            }
+
             if (query.PropertyId is not null && query.PropertyId.HasValue && query.PropertyId.Value != Guid.Empty)
             {
                 sensorsQuery = sensorsQuery.Where(s => s.Plot.PropertyId == query.PropertyId.Value);

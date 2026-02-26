@@ -7,6 +7,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
     /// </summary>
     public sealed record ListPlotsQuery : ICachedQuery<PaginatedResponse<ListPlotsResponse>>
     {
+        public Guid? OwnerId { get; init; }
         public Guid? PropertyId { get; init; }
         public int PageNumber { get; init; } = 1;
         public int PageSize { get; init; } = 10;
@@ -18,7 +19,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
         private string? _cacheKey;
         public string GetCacheKey
         {
-            get => _cacheKey ?? $"ListPlotsQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{PropertyId}";
+            get => _cacheKey ?? $"ListPlotsQuery-{OwnerId}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{PropertyId}";
         }
 
         public TimeSpan? Duration => null;
@@ -32,7 +33,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
 
         public void SetCacheKey(string cacheKey)
         {
-            _cacheKey = $"ListPlotsQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{PropertyId}-{cacheKey}";
+            _cacheKey = $"ListPlotsQuery-{OwnerId}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{PropertyId}-{cacheKey}";
         }
     }
 }

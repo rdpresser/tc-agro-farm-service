@@ -1,10 +1,10 @@
 using TC.Agro.Farm.Application.UseCases.Properties.GetById;
 using TC.Agro.Farm.Application.UseCases.Properties.List;
-using TC.Agro.Farm.Infrastructure.Extensions;
 
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PropertyReadStore : IPropertyReadStore
+
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly IUserContext _userContext;
@@ -53,6 +53,12 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         {
             var propertiesQuery = FilteredDbSet
                 .AsNoTracking();
+
+            if (_userContext.IsAdmin && query.OwnerId is not null && query.OwnerId.HasValue && query.OwnerId.Value != Guid.Empty)
+            {
+                //when loggedin as admin on frontend
+                propertiesQuery = propertiesQuery.Where(x => x.OwnerId == query.OwnerId);
+            }
 
             // Apply text filter
             propertiesQuery = propertiesQuery.ApplyTextFilter(query.Filter);
