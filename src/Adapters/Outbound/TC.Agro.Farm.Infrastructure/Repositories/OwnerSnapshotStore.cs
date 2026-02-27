@@ -23,21 +23,6 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task UpdateAsync(OwnerSnapshot snapshot, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(snapshot);
-
-            var existingSnapshot = await _dbContext.OwnerSnapshots
-                .FirstOrDefaultAsync(o => o.Id == snapshot.Id, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (existingSnapshot == null)
-                return;
-
-            _dbContext.OwnerSnapshots.Update(snapshot);
-        }
-
-        /// <inheritdoc />
         public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var snapshot = await _dbContext.OwnerSnapshots

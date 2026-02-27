@@ -16,13 +16,6 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         Task AddAsync(OwnerSnapshot snapshot, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Updates an existing owner snapshot in the store.
-        /// </summary>
-        /// <param name="snapshot">The owner snapshot to update</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        Task UpdateAsync(OwnerSnapshot snapshot, CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Deletes an owner snapshot from the store by marking it as inactive.
         /// </summary>
         /// <param name="id">The owner snapshot identifier</param>

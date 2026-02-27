@@ -11,8 +11,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// </summary>
         public static SensorOperationalStatusChangedIntegrationEvent ToIntegrationEvent(
             SensorAggregate.SensorStatusChangedDomainEvent domainEvent,
-            SensorAggregate aggregate,
-            string? reason = null)
+            SensorAggregate aggregate)
         {
             return new SensorOperationalStatusChangedIntegrationEvent(
                 SensorId: aggregate.Id,
@@ -24,7 +23,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 PlotName: aggregate.Plot.Name.Value,
                 Status: aggregate.Status.Value,
                 OccurredOn: domainEvent.OccurredOn,
-                Reason: reason
+                Reason: aggregate.StatusChangeReason
             );
         }
 

@@ -51,6 +51,12 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                     .HasDatabaseName("ix_sensors_status");
             });
 
+            // StatusChangeReason - optional explanation for status changes
+            builder.Property(s => s.StatusChangeReason)
+                .HasColumnName("status_change_reason")
+                .IsRequired(false)
+                .HasMaxLength(500);
+
             // InstalledAt - required timestamp
             builder.Property(s => s.InstalledAt)
                 .IsRequired()

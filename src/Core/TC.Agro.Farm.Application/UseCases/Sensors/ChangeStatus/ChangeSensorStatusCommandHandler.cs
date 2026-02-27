@@ -21,7 +21,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         : BaseCommandHandler<ChangeSensorStatusCommand, ChangeSensorStatusResponse, SensorAggregate, ISensorAggregateRepository>
     {
         private readonly ILogger<ChangeSensorStatusCommandHandler> _logger;
-        private string? _reason;
 
         public ChangeSensorStatusCommandHandler(
             ISensorAggregateRepository repository,
@@ -39,7 +38,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         /// </summary>
         protected override async Task<Result<SensorAggregate>> MapAsync(ChangeSensorStatusCommand command, CancellationToken ct)
         {
-            _reason = command.Reason;
             var sensor = await Repository.GetByIdAsync(command.SensorId, ct);
 
             if (sensor is null)
@@ -58,15 +56,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 return Result.Invalid(FarmDomainErrors.SensorAlreadyDeactivated);
             }
 
-            Result statusChangeResult = command.NewStatus.ToLowerInvariant() switch
-            {
-                "active" => sensor.SetActive(),
-                "inactive" => sensor.SetInactive(),
-                "maintenance" => sensor.SetMaintenance(),
-                "faulty" => sensor.SetFaulty(),
-                _ => Result.Invalid(FarmDomainErrors.InvalidSensorStatus)
-            };
-
+            // Delegate status change logic to aggregate (domain responsibility)
+            var statusChangeResult = sensor.UpdateStatus(command.NewStatus, command.Reason);
             if (!statusChangeResult.IsSuccess)
             {
                 _logger.LogWarning(
@@ -113,8 +104,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                         { typeof(SensorAggregate.SensorStatusChangedDomainEvent), e => 
                             ChangeSensorStatusMapper.ToIntegrationEvent(
                                 (SensorAggregate.SensorStatusChangedDomainEvent)e, 
-                                aggregate, 
-                                _reason) }
+                                aggregate) }
                     });
 
             foreach (var evt in integrationEvents)

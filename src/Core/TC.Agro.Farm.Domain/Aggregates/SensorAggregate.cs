@@ -10,6 +10,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
     {
         public SensorType Type { get; private set; } = default!;
         public SensorStatus Status { get; private set; } = default!;
+        public string? StatusChangeReason { get; private set; } = default!;
         public DateTimeOffset InstalledAt { get; private set; }
         public Name? Label { get; private set; }
 
@@ -110,7 +111,38 @@ namespace TC.Agro.Farm.Domain.Aggregates
             return Result.Success();
         }
 
-        public Result SetActive()
+        /// <summary>
+        /// Updates sensor operational status based on string value.
+        /// Validates status and delegates to appropriate Set* method.
+        /// </summary>
+        public Result UpdateStatus(string newStatus, string? reason = null)
+        {
+            if (string.IsNullOrWhiteSpace(newStatus))
+            {
+                return Result.Invalid(FarmDomainErrors.InvalidSensorStatus);
+            }
+
+            // Validate that the new status is a valid SensorStatus value
+            var statusResult = SensorStatus.Create(newStatus);
+            if (!statusResult.IsSuccess)
+            {
+                return Result.Invalid(statusResult.ValidationErrors);
+            }
+
+            // Delegate to appropriate method based on normalized status
+            Result changeResult = newStatus.Trim().ToLowerInvariant() switch
+            {
+                "active" => SetActive(reason),
+                "inactive" => SetInactive(reason),
+                "maintenance" => SetMaintenance(reason),
+                "faulty" => SetFaulty(reason),
+                _ => Result.Invalid(FarmDomainErrors.InvalidSensorStatus)
+            };
+
+            return changeResult;
+        }
+
+        public Result SetActive(string? reason = null)
         {
             if (Status.IsActive)
             {
@@ -122,13 +154,14 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 Id,
                 previousStatus,
                 SensorStatus.Active,
+                reason,
                 DateTimeOffset.UtcNow);
 
             ApplyEvent(@event);
             return Result.Success();
         }
 
-        public Result SetInactive()
+        public Result SetInactive(string? reason = null)
         {
             if (Status.IsInactive)
             {
@@ -140,13 +173,14 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 Id,
                 previousStatus,
                 SensorStatus.Inactive,
+                reason,
                 DateTimeOffset.UtcNow);
 
             ApplyEvent(@event);
             return Result.Success();
         }
 
-        public Result SetMaintenance()
+        public Result SetMaintenance(string? reason = null)
         {
             if (Status.IsMaintenance)
             {
@@ -158,13 +192,14 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 Id,
                 previousStatus,
                 SensorStatus.Maintenance,
+                reason,
                 DateTimeOffset.UtcNow);
 
             ApplyEvent(@event);
             return Result.Success();
         }
 
-        public Result SetFaulty()
+        public Result SetFaulty(string? reason = null)
         {
             if (Status.IsFaulty)
             {
@@ -176,6 +211,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 Id,
                 previousStatus,
                 SensorStatus.Faulty,
+                reason,
                 DateTimeOffset.UtcNow);
 
             ApplyEvent(@event);
@@ -239,6 +275,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public void Apply(SensorStatusChangedDomainEvent @event)
         {
             Status = SensorStatus.FromDb(@event.NewStatus).Value;
+            StatusChangeReason = @event.Reason;
             SetUpdatedAt(@event.OccurredOn);
         }
 
@@ -314,6 +351,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Guid AggregateId,
             string PreviousStatus,
             string NewStatus,
+            string? Reason,
             DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record SensorDeactivatedDomainEvent(
