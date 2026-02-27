@@ -31,6 +31,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     Guid.NewGuid(),
                     Guid.NewGuid(),
                     Guid.NewGuid(),
+                    "João Silva",
                     "Fazenda Boa Vista",
                     "Talhão Norte",
                     "Soja",

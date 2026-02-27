@@ -4,6 +4,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
         Guid Id,
         Guid PropertyId,
         Guid OwnerId,
+        string OwnerName,
         string PropertyName,
         string Name,
         string CropType,

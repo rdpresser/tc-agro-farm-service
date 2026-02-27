@@ -39,6 +39,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
                     propertyId,
                     faker.Company.CompanyName() + " Farm",
                     Guid.NewGuid(),
+                    faker.Name.FullName(),
                     faker.PickRandom(SensorTypes),
                     faker.PickRandom(SensorStatuses),
                     $"Sensor #{faker.Random.Int(1, 100)}",

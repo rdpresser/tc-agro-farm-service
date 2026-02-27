@@ -10,6 +10,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ListAll
         Guid PropertyId,
         string PropertyName,
         Guid OwnerId,
+        string OwnerName,
         string Type,
         string Status,
         string? Label,

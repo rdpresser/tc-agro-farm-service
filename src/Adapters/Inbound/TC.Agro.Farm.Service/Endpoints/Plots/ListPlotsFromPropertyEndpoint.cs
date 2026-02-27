@@ -33,6 +33,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     Guid.NewGuid(),
                     Guid.NewGuid(),
                     Guid.NewGuid(),
+                    faker.Name.FullName(),
                     faker.Company.CompanyName() + " Farm",
                     $"Talhão {faker.Random.AlphaNumeric(2).ToUpper()}",
                     faker.PickRandom(CropType.CommonCropTypes),
