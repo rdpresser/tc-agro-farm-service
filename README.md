@@ -21,548 +21,317 @@
 - [Docker](#-docker)
 - [Health Checks](#-health-checks)
 - [Observability](#-observability)
-- [Contributing](#-contributing)
 - [License](#-license)
 
 ---
 
 ## 🎯 Overview
 
-The **Farm Service** is responsible for managing the core farm resources:
+The **Farm Service** manages the core agricultural resources across the platform:
 
-- **Properties** - Farm properties owned by producers
-- **Plots** - Agricultural plots (talhões) within properties
-- **Sensors** - IoT sensors installed in plots for monitoring
+- **Properties** — farm properties owned by producers
+- **Plots** — agricultural plots (talhões) within properties, each with a crop type
+- **Sensors** — IoT sensors installed in plots, with full operational lifecycle
+- **Owners** — denormalized snapshot of users from Identity Service for fast lookups
+
+It:
+- ✅ **Provides REST API** for resource management with pagination and filtering
+- ✅ **Enforces domain rules** via rich DDD aggregates (PropertyAggregate, PlotAggregate, SensorAggregate)
+- ✅ **Publishes integration events** when resources change, consumed by Sensor Ingest and Analytics services
+- ✅ **Consumes user events** from Identity Service to maintain OwnerSnapshot cache
+- ✅ **Caches read queries** with FusionCache (L1 in-memory + L2 Redis)
+- ✅ **Ensures event reliability** with Wolverine Transactional Outbox Pattern
+
+---
 
 ## 🏗️ Architecture
 
-This service follows **Hexagonal Architecture** (Clean Architecture) principles:
+Hexagonal Architecture (Ports & Adapters) with Clean Architecture layers:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  Inbound Adapters (API)                                │
+│  Inbound Adapters                                      │
 │  └── FastEndpoints (REST API)                          │
+│  └── Wolverine Message Handlers (event consumers)      │
 ├────────────────────────────────────────────────────────┤
 │  Core                                                  │
-│  ├── Application (Use Cases, Commands, Queries)        │
+│  ├── Application (Commands, Queries, Handlers)         │
 │  └── Domain (Aggregates, Value Objects, Events)        │
 ├────────────────────────────────────────────────────────┤
-│  Outbound Adapters (Infrastructure)                    │
-│  └── EF Core, PostgreSQL, Wolverine, Redis             │
+│  Outbound Adapters                                     │
+│  └── EF Core + PostgreSQL (persistence)                │
+│  └── Wolverine + RabbitMQ (messaging)                  │
+│  └── FusionCache + Redis (caching)                     │
 └────────────────────────────────────────────────────────┘
 ```
 
-📖 See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed information.
+**Patterns:** Hexagonal Architecture · DDD · CQRS · Outbox Pattern · Snapshot Pattern · Repository Pattern · Result Pattern
+
+---
 
 ## 🛠️ Technology Stack
 
 | Category | Technology |
-|----------|------------|
-| Runtime | .NET 10 |
-| API | FastEndpoints |
-| Database | PostgreSQL + EF Core |
-| Caching | Redis + FusionCache |
-| Messaging | Wolverine |
-| Observability | OpenTelemetry, Serilog |
+|---|---|
+| Runtime | .NET 10 / C# 14 |
+| API | FastEndpoints 7.2 |
+| ORM | Entity Framework Core 10 |
+| Database | PostgreSQL 16 |
+| Cache | FusionCache 2.0 + Redis 7 |
+| Messaging | WolverineFx 5.15 + RabbitMQ 4 |
+| Observability | OpenTelemetry · Serilog · Prometheus |
+| Validation | FluentValidation 12 · Ardalis.Result |
+| Testing | xUnit v3 · FakeItEasy · FastEndpoints.Testing |
+
+---
 
 ## 📦 Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [PostgreSQL 16+](https://www.postgresql.org/download/)
-- [Redis](https://redis.io/) (optional, for distributed caching)
-- [Docker](https://www.docker.com/) (optional, for containerized deployment)
+```bash
+dotnet --version   # 10.0.x
+docker --version   # 24.0.x or higher
+```
+
+**Shared packages** (from `tc-agro-common`): `TC.Agro.Contracts`, `TC.Agro.Messaging`, `TC.Agro.SharedKernel`
+
+---
 
 ## 🚀 Getting Started
 
-### Clone the Repository
-
 ```bash
-git clone https://github.com/tc-agro-solutions/services.git
-cd services/farm-service
-```
+git clone https://github.com/rdpresser/tc-agro-farm-service.git
+cd tc-agro-farm-service
 
-### Configure Environment
+# Start infrastructure (PostgreSQL, Redis, RabbitMQ)
+docker compose up -d
 
-Create a `.env` file in the root directory or set environment variables:
+# Apply migrations
+dotnet ef database update --project src/Adapters/Inbound/TC.Agro.Farm.Service
 
-```env
-# Database
-ConnectionStrings__DefaultConnection=Host=localhost;Database=farm_db;Username=postgres;Password=yourpassword
-
-# Redis (optional)
-ConnectionStrings__Redis=localhost:6379
-
-# OpenTelemetry (optional)
-OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
-```
-
-### Run Database Migrations
-
-```bash
-cd src/Adapters/Inbound/TC.Agro.Farm.Service
-dotnet ef database update
-```
-
-### Run the Service
-
-```bash
+# Run the service
 dotnet run --project src/Adapters/Inbound/TC.Agro.Farm.Service
 ```
 
-The API will be available at `https://localhost:5001` (HTTPS) or `http://localhost:5000` (HTTP).
-
-### Swagger Documentation
-
-Access the interactive API documentation at:
-- `https://localhost:5001/swagger`
+**Verify:**
+```bash
+curl http://localhost:5002/health/ready
+# open http://localhost:5002/swagger
+```
 
 ---
 
 ## ⚙️ Configuration
 
-### Configuration Structure
-
-The project uses ASP.NET Core's hierarchical configuration pattern:
-
-```
-appsettings.json (base - empty by default)
-├── appsettings.Development.json (local development)
-├── appsettings.Production.json (production/cloud)
-└── Environment Variables (Docker/Kubernetes - override)
-```
-
-### appsettings.Development.json (Example)
-
 ```json
+// appsettings.Development.json (key fields)
 {
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Port=5432;Database=farm_db;Username=postgres;Password=postgres",
     "Redis": "localhost:6379"
   },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.EntityFrameworkCore": "Warning"
+  "Messaging": {
+    "RabbitMQ": {
+      "Host": "localhost",
+      "Port": 5672,
+      "UserName": "guest",
+      "Password": "guest"
     }
   }
 }
 ```
 
-### appsettings.Production.json (Cloud Example)
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=your-db-server.com;Port=5432;Database=farm_db;Username=postgres;Password=${DB_PASSWORD};SSL Mode=Require",
-    "Redis": "${REDIS_CONNECTION_STRING}"
-  },
-  "ApplicationInsights": {
-    "ConnectionString": "${APPLICATIONINSIGHTS_CONNECTION_STRING}"
-  }
-}
-```
-
-### Environment Variables (Docker/Kubernetes)
-
+**Environment variables (Docker/Kubernetes):**
 ```bash
-# Database
-export ConnectionStrings__DefaultConnection="Host=postgres;Port=5432;Database=farm_db;Username=postgres;Password=${DB_PASSWORD}"
-
-# Redis
+export ConnectionStrings__DefaultConnection="Host=postgres;Database=farm_db;Username=postgres;Password=${DB_PASSWORD}"
 export ConnectionStrings__Redis="redis:6379"
-
-# OpenTelemetry
-export OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
-
-# Observability
-export ApplicationInsights__ConnectionString="${APPINSIGHTS_CONN_STRING}"
+export Messaging__RabbitMQ__Host=rabbitmq
 ```
 
 ---
 
 ## 🔌 API Endpoints
 
-All endpoints are served under the `/api` prefix (for example, `/api/properties`).
+All endpoints are served under the `/api` prefix and require **JWT Bearer Token**.
 
 ### Properties
 
-| Method | Endpoint                     | Description                                                                                 |
-|--------|------------------------------|---------------------------------------------------------------------------------------------|
-| `POST` | `/api/properties`            | Create a new property (farm).                                                              |
-| `GET`  | `/api/properties/{id}`       | Get detailed information about a property by ID.                                           |
-| `GET`  | `/api/properties`            | Get a paginated list of properties. Supports filtering and sorting via query parameters.   |
-| `PUT`  | `/api/properties/{id}`       | Update an existing property by ID.                                                         |
-| `GET`  | `/api/properties/{id}/plots` | Get a paginated list of plots for a given property.                                       |
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/properties` | Create a new property |
+| `GET` | `/api/properties` | List properties (paginated, filterable) |
+| `GET` | `/api/properties/{id}` | Get property by ID |
+| `PUT` | `/api/properties/{id}` | Update property |
+| `GET` | `/api/properties/{id}/plots` | List plots for a property (paginated) |
 
 ### Plots
 
-| Method | Endpoint              | Description                                                                               |
-|--------|------------------------|-------------------------------------------------------------------------------------------|
-| `POST` | `/api/plots`          | Create a new plot within an existing property.                                           |
-| `GET`  | `/api/plots/{id}`     | Get detailed information about a plot by ID.                                             |
-| `GET`  | `/api/plots`          | Get a paginated list of plots. Supports filtering and sorting via query parameters.      |
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/plots` | Create a new plot within a property |
+| `GET` | `/api/plots` | List plots (paginated, filterable) |
+| `GET` | `/api/plots/{id}` | Get plot by ID |
+| `GET` | `/api/plots/{id}/sensors` | List sensors installed in a plot |
 
-> Note: There is currently no generic `PUT /api/plots/{id}` update endpoint implemented.
+> Note: There is no generic `PUT /api/plots/{id}` endpoint. Plot attributes are set at creation time.
 
 ### Sensors
 
-| Method   | Endpoint                                | Description                                                                                                      |
-|----------|-----------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `POST`   | `/api/sensors`                          | Register a new IoT sensor within a plot.                                                                        |
-| `GET`    | `/api/sensors/{id}`                     | Get detailed information about a sensor by ID.                                                                  |
-| `GET`    | `/api/sensors`                          | Get a paginated list of sensors. Supports filtering by property, plot, type, and status.                        |
-| `GET`    | `/api/plots/{id}/sensors`               | Get a paginated list of sensors installed in a specific plot.                                                   |
-| `PUT`    | `/api/sensors/{sensorId}/status-change` | Change the operational status of a sensor (for example: Active, Maintenance, Faulty, Inactive).                 |
-| `DELETE` | `/api/sensors/{sensorId}`               | Deactivate (soft-delete) a sensor, marking it as inactive and removing it from active queries.                  |
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/sensors` | Register a new IoT sensor in a plot |
+| `GET` | `/api/sensors` | List sensors (paginated, filterable by property/plot/status) |
+| `GET` | `/api/sensors/{id}` | Get sensor by ID |
+| `PUT` | `/api/sensors/{id}/status-change` | Change operational status (Active / Maintenance / Faulty / Inactive) |
+| `DELETE` | `/api/sensors/{id}` | Deactivate sensor (soft-delete) |
 
-> Note: There is no generic `PUT /api/sensors/{id}` update endpoint; status changes and deactivation use the dedicated endpoints above.
+> Note: There is no generic `PUT /api/sensors/{id}` endpoint. Sensor changes go through dedicated status-change and deactivate endpoints.
 
 ### Owners
 
-| Method | Endpoint       | Description                                                                 |
-|--------|----------------|-----------------------------------------------------------------------------|
-| `GET`  | `/api/owners`  | Get a paginated list of active owners synchronized from the Identity service. |
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/owners` | List active owners (synced from Identity Service) |
+
+---
 
 ## 📨 Messaging
 
-The Farm Service is a **key integration point** in the TC.Agro ecosystem, both **consuming** and **publishing** integration events via **Wolverine** message broker.
+The Farm Service is a key integration point — it both **publishes** and **consumes** events via Wolverine.
 
 ### Published Events
 
-The Farm Service publishes **6 integration events** to notify other services about resource lifecycle changes:
+The Farm Service publishes **6 integration events**:
 
-#### Properties Events
-
-| Event | Description | Consumers |
-|-------|-------------|-----------|
-| `PropertyCreatedIntegrationEvent` | Published when a new property (farm) is created. Contains property metadata including ID, name, location, area, and owner association. | Analytics Worker, Reporting Service |
-| `PropertyUpdatedIntegrationEvent` | Published when property information is updated (name, location, area). Includes old and new values for audit purposes. | Analytics Worker, Reporting Service |
-
-#### Plots Events
-
-| Event | Description | Consumers |
-|-------|-------------|-----------|
-| `PlotCreatedIntegrationEvent` | Published when a new plot is created within a property. Contains plot metadata including ID, name, area, crop type, and property association. | Analytics Worker, Reporting Service |
-
-#### Sensors Events
-
-| Event | Description | Consumers |
-|-------|-------------|-----------|
-| `SensorRegisteredIntegrationEvent` | Published when a new IoT sensor is registered in a plot. Contains sensor metadata including ID, type, label, plot/property associations, and installation details. | **Sensor Ingest Service**, Analytics Worker |
-| `SensorOperationalStatusChangedIntegrationEvent` | Published when a sensor's operational status changes (e.g., Active → Maintenance, Faulty, Inactive). Includes sensor ID, old status, new status, timestamp, and optional reason. | **Sensor Ingest Service**, Analytics Worker |
-| `SensorDeactivatedIntegrationEvent` | Published when a sensor is deactivated (soft-deleted). Indicates the sensor should no longer accept or process telemetry data. Includes deactivation timestamp and reason. | **Sensor Ingest Service**, Analytics Worker |
+| Event | Trigger | Key Consumers |
+|---|---|---|
+| `PropertyCreatedIntegrationEvent` | Property created | Analytics Service |
+| `PropertyUpdatedIntegrationEvent` | Property updated | Analytics Service |
+| `PlotCreatedIntegrationEvent` | Plot created | Analytics Service |
+| `SensorRegisteredIntegrationEvent` | Sensor registered | **Sensor Ingest**, Analytics |
+| `SensorOperationalStatusChangedIntegrationEvent` | Status changed | **Sensor Ingest**, Analytics |
+| `SensorDeactivatedIntegrationEvent` | Sensor deactivated | **Sensor Ingest**, Analytics |
 
 ### Consumed Events
 
-The Farm Service **consumes** events from the **Identity Service** to maintain an up-to-date cache of owners (users):
+| Event | Source | Action |
+|---|---|---|
+| `UserRegisteredIntegrationEvent` | Identity Service | Create `OwnerSnapshot` |
+| `UserUpdatedIntegrationEvent` | Identity Service | Update `OwnerSnapshot` |
+| `UserDeactivatedIntegrationEvent` | Identity Service | Deactivate `OwnerSnapshot` |
 
-| Event | Description | Source Service |
-|-------|-------------|----------------|
-| `UserRegisteredIntegrationEvent` | Consumed when a new user registers in the Identity Service. Creates an `OwnerSnapshot` for quick lookups. | Identity Service |
-| `UserUpdatedIntegrationEvent` | Consumed when user profile information is updated (name, email, phone). Updates the corresponding `OwnerSnapshot`. | Identity Service |
-| `UserDeactivatedIntegrationEvent` | Consumed when a user account is deactivated. Marks the `OwnerSnapshot` as inactive. | Identity Service |
-
-### Event Flow Diagram
+### Event Flow
 
 ```
-┌──────────────────┐
-│ Identity Service │
-└────────┬─────────┘
-         │ User Events (UserRegistered, UserUpdated, UserDeactivated)
-         │
-         ▼
-    ┌────────────────────────┐
-    │   Farm Service         │
-    │  ┌──────────────────┐  │
-    │  │ Owner Snapshots  │  │ (Cached user data)
-    │  └──────────────────┘  │
-    │                        │
-    │  ┌──────────────────┐  │
-    │  │ Domain Logic     │  │ (Properties, Plots, Sensors)
-    │  └──────────────────┘  │
-    └─────────┬──────────────┘
-              │
-              │ Resource Events (6 types)
-              │ ├─ Property: Created, Updated
-              │ ├─ Plot: Created
-              │ └─ Sensor: Registered, StatusChanged, Deactivated
-              │
-              ▼
-    ┌───────────────────────────────────┐
-    │     RabbitMQ / Wolverine          │
-    └─────────┬─────────────────────────┘
-              │
-              ├──────────────────────────────────────┐
-              │                                      │
-              ▼                                      ▼
-    ┌────────────────────────┐          ┌────────────────────────┐
-    │ Sensor Ingest Service  │          │   Analytics Worker     │
-    │ (Sensor events only)   │          │ (All resource events)  │
-    └────────────────────────┘          └────────────────────────┘
+Identity Service → UserRegistered / Updated / Deactivated
+         ↓
+    Farm Service (OwnerSnapshotHandler)
+    └── maintains OwnerSnapshot table for fast lookups
+         ↓
+    Domain operations (Properties, Plots, Sensors)
+         ↓
+    6 resource events → RabbitMQ (Wolverine Outbox)
+         ↓
+    ├── Sensor Ingest Service (sensor lifecycle events only)
+    └── Analytics Service (all resource events)
 ```
-
-### Message Handler Implementation
-
-The Farm Service uses **Wolverine message handlers** to process consumed events:
-
-```csharp
-// Example: OwnerSnapshotHandler.cs (consumes Identity Service events)
-public class OwnerSnapshotHandler
-{
-    public async Task Handle(UserRegisteredIntegrationEvent @event, CancellationToken ct)
-    {
-        // Create OwnerSnapshot for quick lookups in property/plot/sensor creation
-        var snapshot = new OwnerSnapshot
-        {
-            Id = @event.UserId,
-            FullName = @event.FullName,
-            Email = @event.Email,
-            PhoneNumber = @event.PhoneNumber,
-            IsActive = true
-        };
-
-        await _context.OwnerSnapshots.AddAsync(snapshot, ct);
-        await _context.SaveChangesAsync(ct);
-    }
-}
-```
-
-These events ensure **eventual consistency** across services in the distributed TC.Agro ecosystem.
 
 ---
 
 ## 📂 Project Structure
 
-### Directory Layout
-
 ```
 tc-agro-farm-service/
 ├── src/
-│   ├── Core/                                           # Domain + Application Logic (Business Rules)
+│   ├── Core/
 │   │   ├── TC.Agro.Farm.Domain/
 │   │   │   ├── Aggregates/
-│   │   │   │   ├── PropertyAggregate.cs                # 🏡 Property aggregate root
-│   │   │   │   ├── PlotAggregate.cs                    # 🌱 Plot aggregate root
-│   │   │   │   ├── SensorAggregate.cs                  # 📡 Sensor aggregate root
-│   │   │   │   └── FarmDomainErrors.cs                 # Domain error definitions
+│   │   │   │   ├── PropertyAggregate.cs
+│   │   │   │   ├── PlotAggregate.cs             # includes CropType
+│   │   │   │   └── SensorAggregate.cs
 │   │   │   ├── ValueObjects/
-│   │   │   │   ├── PropertyName.cs                     # Validated property name
-│   │   │   │   ├── Address.cs                          # Complete address value object
-│   │   │   │   ├── Coordinates.cs                      # GPS coordinates (latitude/longitude)
-│   │   │   │   ├── PlotName.cs                         # Validated plot name
-│   │   │   │   ├── SensorLabel.cs                      # Validated sensor label
-│   │   │   │   └── SensorOperationalStatus.cs          # Active, Maintenance, Faulty, Inactive
-│   │   │   ├── Snapshots/
-│   │   │   │   └── OwnerSnapshot.cs                    # Cached user data from Identity Service
-│   │   │   └── DomainEvents/
-│   │   │       ├── PropertyCreatedDomainEvent.cs
-│   │   │       ├── PropertyUpdatedDomainEvent.cs
-│   │   │       ├── PlotCreatedDomainEvent.cs
-│   │   │       ├── SensorRegisteredDomainEvent.cs
-│   │   │       ├── SensorStatusChangedDomainEvent.cs
-│   │   │       └── SensorDeactivatedDomainEvent.cs
+│   │   │   │   ├── PropertyName.cs
+│   │   │   │   ├── Address.cs
+│   │   │   │   ├── Coordinates.cs               # GPS lat/lon
+│   │   │   │   ├── PlotName.cs
+│   │   │   │   ├── SensorLabel.cs
+│   │   │   │   └── SensorOperationalStatus.cs   # Active, Maintenance, Faulty, Inactive
+│   │   │   └── Snapshots/
+│   │   │       └── OwnerSnapshot.cs             # denormalized from Identity events
 │   │   │
 │   │   └── TC.Agro.Farm.Application/
-│   │       ├── UseCases/                               # 🎯 CQRS Commands & Queries
-│   │       │   ├── Properties/                         # Property use cases
-│   │       │   │   ├── Create/CreatePropertyCommandHandler.cs
-│   │       │   │   ├── Update/UpdatePropertyCommandHandler.cs
-│   │       │   │   ├── GetById/GetPropertyByIdQueryHandler.cs
-│   │       │   │   └── GetList/GetPropertiesQueryHandler.cs
-│   │       │   ├── Plots/                              # Plot use cases
-│   │       │   │   ├── Create/CreatePlotCommandHandler.cs
-│   │       │   │   ├── GetById/GetPlotByIdQueryHandler.cs
-│   │       │   │   └── GetList/GetPlotsQueryHandler.cs
-│   │       │   └── Sensors/                            # Sensor use cases
-│   │       │       ├── Create/CreateSensorCommandHandler.cs
-│   │       │       ├── ChangeStatus/ChangeSensorStatusCommandHandler.cs
-│   │       │       ├── Deactivate/DeactivateSensorCommandHandler.cs
-│   │       │       ├── GetById/GetSensorByIdQueryHandler.cs
-│   │       │       └── GetList/GetSensorsQueryHandler.cs
-│   │       ├── MessageBrokerHandlers/                  # 📨 Event Consumers (Wolverine)
-│   │       │   └── OwnerSnapshotHandler.cs             # Consumes Identity Service events
-│   │       ├── Abstractions/
-│   │       │   ├── Ports/                              # Repository interfaces
-│   │       │   │   ├── IPropertyAggregateRepository.cs
-│   │       │   │   ├── IPlotAggregateRepository.cs
-│   │       │   │   ├── ISensorAggregateRepository.cs
-│   │       │   │   ├── IPropertyReadStore.cs           # Read-optimized queries
-│   │       │   │   ├── IPlotReadStore.cs
-│   │       │   │   └── ISensorReadStore.cs
-│   │       │   └── Mappers/
-│   │       │       └── IntegrationEventMapper.cs       # Domain → Integration Event mapping
-│   │       └── DependencyInjection.cs
+│   │       ├── UseCases/
+│   │       │   ├── Properties/                  # Create, Update, GetById, GetList
+│   │       │   ├── Plots/                       # Create, GetById, GetList
+│   │       │   └── Sensors/                     # Create, ChangeStatus, Deactivate, GetById, GetList
+│   │       ├── MessageBrokerHandlers/
+│   │       │   └── OwnerSnapshotHandler.cs      # consumes Identity events
+│   │       └── Abstractions/Ports/
+│   │           ├── IPropertyAggregateRepository.cs
+│   │           ├── IPlotAggregateRepository.cs
+│   │           ├── ISensorAggregateRepository.cs
+│   │           ├── IPropertyReadStore.cs
+│   │           ├── IPlotReadStore.cs
+│   │           └── ISensorReadStore.cs
 │   │
-│   └── Adapters/                                       # Infrastructure & Presentation
-│       ├── Inbound/                                    # 🌐 Presentation Layer (REST API)
-│       │   └── TC.Agro.Farm.Service/
-│       │       ├── Program.cs                          # Bootstrap + DI Container
-│       │       ├── Endpoints/                          # 🚀 FastEndpoints
-│       │       │   ├── Properties/                     # Property endpoints
-│       │       │   ├── Plots/                          # Plot endpoints
-│       │       │   ├── Sensors/                        # Sensor endpoints
-│       │       │   └── Owners/                         # Owner endpoints
-│       │       ├── Extensions/
-│       │       │   └── ServiceCollectionExtensions.cs  # DI configuration
-│       │       ├── Telemetry/
-│       │       │   ├── FarmMetrics.cs                  # Prometheus metrics
-│       │       │   └── ActivitySourceFactory.cs        # OpenTelemetry tracing
-│       │       ├── appsettings.json
-│       │       ├── appsettings.Development.json
-│       │       └── appsettings.Production.json
+│   └── Adapters/
+│       ├── Inbound/TC.Agro.Farm.Service/
+│       │   ├── Endpoints/
+│       │   │   ├── Properties/
+│       │   │   ├── Plots/
+│       │   │   ├── Sensors/
+│       │   │   └── Owners/
+│       │   ├── Telemetry/
+│       │   │   ├── FarmMetrics.cs               # custom Prometheus metrics
+│       │   │   └── ActivitySourceFactory.cs
+│       │   └── Program.cs
 │       │
-│       └── Outbound/                                   # 🗄️ Infrastructure Layer
-│           └── TC.Agro.Farm.Infrastructure/
-│               ├── Repositories/                       # Data access implementations
-│               │   ├── PropertyAggregateRepository.cs
-│               │   ├── PlotAggregateRepository.cs
-│               │   ├── SensorAggregateRepository.cs
-│               │   ├── PropertyReadStore.cs            # Read-optimized queries
-│               │   ├── PlotReadStore.cs
-│               │   └── SensorReadStore.cs
-│               ├── Persistence/
-│               │   ├── ApplicationDbContext.cs         # EF Core DbContext
-│               │   └── Configurations/                 # Entity configurations
-│               │       ├── PropertyAggregateConfiguration.cs
-│               │       ├── PlotAggregateConfiguration.cs
-│               │       ├── SensorAggregateConfiguration.cs
-│               │       └── OwnerSnapshotConfiguration.cs
-│               ├── Migrations/                         # EF Core migrations
-│               └── DependencyInjection.cs
+│       └── Outbound/TC.Agro.Farm.Infrastructure/
+│           ├── ApplicationDbContext.cs
+│           ├── Repositories/
+│           │   ├── PropertyAggregateRepository.cs
+│           │   ├── PlotAggregateRepository.cs
+│           │   ├── SensorAggregateRepository.cs
+│           │   ├── PropertyReadStore.cs
+│           │   ├── PlotReadStore.cs
+│           │   └── SensorReadStore.cs
+│           ├── Configurations/                  # EF Core entity configs
+│           └── Migrations/
 │
-├── test/
-│   └── TC.Agro.Farm.Tests/                            # 🧪 Unit & Integration Tests
-│       ├── Domain/
-│       │   ├── Aggregates/
-│       │   │   ├── PropertyAggregateTests.cs
-│       │   │   ├── PlotAggregateTests.cs
-│       │   │   └── SensorAggregateTests.cs
-│       │   └── ValueObjects/
-│       │       ├── PropertyNameTests.cs
-│       │       ├── AddressTests.cs
-│       │       └── CoordinatesTests.cs
-│       ├── Application/
-│       │   ├── UseCases/
-│       │   │   ├── Properties/CreatePropertyCommandHandlerTests.cs
-│       │   │   ├── Plots/CreatePlotCommandHandlerTests.cs
-│       │   │   └── Sensors/CreateSensorCommandHandlerTests.cs
-│       │   └── MessageBrokerHandlers/
-│       │       └── OwnerSnapshotHandlerTests.cs
-│       ├── Infrastructure/
-│       │   └── Repositories/
-│       │       └── PropertyAggregateRepositoryTests.cs (integration)
-│       └── Builders/                                   # Test data builders
-│           ├── PropertyAggregateBuilder.cs
-│           ├── PlotAggregateBuilder.cs
-│           └── SensorAggregateBuilder.cs
-│
-├── docs/                                               # 📚 Technical documentation
-│   └── ARCHITECTURE.md                                 # Architecture guide
-│
-├── docker-compose.yml                                  # Local stack (PostgreSQL + RabbitMQ + Redis)
-├── Dockerfile                                          # Production container
-├── Directory.Packages.props                            # Central Package Management (CPM)
-├── .editorconfig                                       # Code style
-└── README.md
+└── test/TC.Agro.Farm.Tests/
+    ├── Domain/
+    │   ├── Aggregates/   # PropertyAggregate, PlotAggregate, SensorAggregate
+    │   └── ValueObjects/ # Address, Coordinates, SensorOperationalStatus...
+    ├── Application/
+    │   ├── UseCases/     # Create/Update/Get per aggregate
+    │   └── MessageBrokerHandlers/ # OwnerSnapshotHandler
+    └── Builders/         # PropertyAggregateBuilder, PlotAggregateBuilder, SensorAggregateBuilder
 ```
-
-### Layers and Responsibilities
-
-| Layer | Responsibility | Dependencies |
-|-------|----------------|--------------|  
-| **Domain** | Business rules, aggregates, value objects, domain events | None (pure domain logic) |
-| **Application** | Use cases (commands/queries), message handlers, interfaces | Domain |
-| **Infrastructure** | Persistence (EF Core), messaging (Wolverine), integrations | Application, Domain |
-| **Presentation** | REST API (FastEndpoints), health checks, telemetry | Application |
-
-### Key Architectural Patterns
-
-- ✅ **Clean Architecture** - Separation of concerns in layers (Domain → Application → Infrastructure → Presentation)
-- ✅ **Domain-Driven Design (DDD)** - Rich domain modeling with Aggregates and Value Objects
-- ✅ **CQRS** - Separation of commands (write) and queries (read) for optimal performance
-- ✅ **Event-Driven Architecture** - Asynchronous communication via RabbitMQ/Wolverine
-- ✅ **Outbox Pattern** - Transactional consistency of messages (Wolverine Outbox)
-- ✅ **Repository Pattern** - Persistence abstraction with separate read stores for queries
-- ✅ **Result Pattern** - Type-safe error handling without exceptions (Ardalis.Result)
-- ✅ **Snapshot Pattern** - Denormalized data cache (OwnerSnapshot) for query optimization
 
 ---
 
 ## 🧪 Running Tests
 
-### Run All Tests
-
 ```bash
-# Complete test suite
 dotnet test
-
-# With detailed output
 dotnet test --verbosity normal
-
-# Tests from a specific category
 dotnet test --filter "FullyQualifiedName~Domain"
 dotnet test --filter "FullyQualifiedName~Application"
-dotnet test --filter "FullyQualifiedName~Infrastructure"
-```
-
-### Run with Code Coverage
-
-```bash
-# Collect coverage
 dotnet test --collect:"XPlat Code Coverage"
-
-# Generate HTML report (requires ReportGenerator)
-dotnet tool install -g dotnet-reportgenerator-globaltool
-
-reportgenerator \
-  -reports:"**/coverage.cobertura.xml" \
-  -targetdir:"coveragereport" \
-  -reporttypes:Html
-
-# Open report
-start coveragereport/index.html  # Windows
-open coveragereport/index.html   # Mac/Linux
-```
-
-### Test Structure
-
-```
-test/TC.Agro.Farm.Tests/
-├── Domain/                        # Domain tests (pure, no mocks)
-│   ├── Aggregates/
-│   │   └── PropertyAggregateTests.cs
-│   └── ValueObjects/
-│       └── AddressTests.cs
-├── Application/                   # Application tests (with mocks)
-│   ├── UseCases/
-│   └── MessageBrokerHandlers/
-└── Infrastructure/                # Integration tests (database)
-    └── Repositories/
-        └── PropertyAggregateRepositoryTests.cs
-```
-
-### Tests in Watch Mode
-
-```bash
-# Run tests automatically on file save
-dotnet watch test --project test/TC.Agro.Farm.Tests
 ```
 
 ---
 
 ## 🐳 Docker
 
-### Build Image
-
 ```bash
+# Build
 docker build -t tc-agro-farm-service .
-```
 
-### Run Container
-
-```bash
-docker run -p 5000:8080 \
-  -e ConnectionStrings__DefaultConnection="Host=host.docker.internal;Database=farm_db;Username=postgres;Password=yourpassword" \
+# Run
+docker run -p 5002:8080 \
+  -e ConnectionStrings__DefaultConnection="Host=postgres;Database=farm_db;Username=postgres;Password=postgres" \
+  -e ConnectionStrings__Redis="redis:6379" \
+  --network tc-agro-network \
   tc-agro-farm-service
 ```
 
@@ -570,57 +339,36 @@ docker run -p 5000:8080 \
 
 ## 🏥 Health Checks
 
-The service exposes health check endpoints:
-
-- `/health` - Basic health check
-- `/health/ready` - Readiness check (includes database connectivity)
-- `/health/live` - Liveness check
+| Endpoint | Purpose |
+|---|---|
+| `/health` | Overall health (PostgreSQL, Redis) |
+| `/health/ready` | Kubernetes readiness probe |
+| `/health/live` | Kubernetes liveness probe |
 
 ---
 
 ## 📊 Observability
 
-### Logging
+- **Metrics:** `/metrics` — Prometheus format (HTTP, DB queries, Wolverine, FusionCache, custom farm registration counters)
+- **Tracing:** OTLP export, W3C Trace Context, `X-Correlation-Id` propagated through all requests and messages
+- **Logging:** Serilog structured logs → console + OTLP Collector → Grafana Loki
 
-Logs are structured using Serilog and can be exported to:
-- Console
-- Grafana Loki
-- OpenTelemetry Collector
-
-### Metrics & Tracing
-
-OpenTelemetry is configured for:
-- Distributed tracing
-- Prometheus metrics (available at `/metrics`)
+**Local access:**
+- Grafana: `http://localhost:3000` (admin/admin)
+- Prometheus: `http://localhost:9090`
 
 ---
 
-## 📚 Documentation
+## 📚 Related Services
 
-For more detailed information, refer to the following documentation:
-
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - Detailed architectural decisions, patterns, and design principles
-- **[API Reference](https://localhost:5001/swagger)** - Interactive API documentation (Swagger UI)
-- **Database Schema** - EF Core migrations in `src/Adapters/Outbound/TC.Agro.Farm.Infrastructure/Migrations/`
-
-### Related Services Documentation
-
-- **[Analytics Worker](../analytics-worker/README.md)** - Consumes Farm Service events for alert detection
-- **[Sensor Ingest Service](../sensor-ingest/README.md)** - Consumes sensor lifecycle events
-- **[Identity Service](../identity-service/README.md)** - Provides user/owner data via events
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- **[Identity Service](../identity-service/README.md)** — publishes user events consumed here
+- **[Sensor Ingest Service](../sensor-ingest-service/README.md)** — consumes sensor lifecycle events
+- **[Analytics Service](../analytics-worker/README.md)** — consumes all resource events
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.
+
+> Part of TC Agro Solutions — Hackathon 8NETT · FIAP Postgraduate · Phase 5
