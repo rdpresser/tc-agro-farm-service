@@ -167,38 +167,34 @@ namespace TC.Agro.Farm.Service.Extensions
             services.AddFusionCache()
                 .WithDefaultEntryOptions(options =>
                 {
-                    // L1 (Memory) cache duration - shorter to reduce incoherence window
                     options.Duration = TimeSpan.FromSeconds(20);
-
-                    // L2 (Redis) cache duration - longer for persistence
                     options.DistributedCacheDuration = TimeSpan.FromSeconds(60);
-
-                    // Reduce memory cache duration to mitigate incoherence
                     options.MemoryCacheDuration = TimeSpan.FromSeconds(10);
                 })
                 .WithDistributedCache(sp =>
                 {
                     var cacheProvider = sp.GetRequiredService<ICacheProvider>();
-
                     var options = new RedisCacheOptions
                     {
                         Configuration = cacheProvider.ConnectionString,
                         InstanceName = cacheProvider.InstanceName
                     };
-
                     return new RedisCache(options);
                 })
                 .WithBackplane(sp =>
                 {
                     var cacheProvider = sp.GetRequiredService<ICacheProvider>();
-
-                    // Create Redis backplane for cache coherence across multiple pods
                     return new RedisBackplane(new RedisBackplaneOptions
                     {
                         Configuration = cacheProvider.ConnectionString
                     });
                 })
-                .WithSerializer(new FusionCacheSystemTextJsonSerializer())
+                .WithSerializer(new FusionCacheSystemTextJsonSerializer(
+                    new System.Text.Json.JsonSerializerOptions
+                    {
+                        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve
+                    }
+                ))
                 .AsHybridCache();
 
             return services;
