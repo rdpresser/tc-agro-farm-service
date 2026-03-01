@@ -1,4 +1,5 @@
 using TC.Agro.Farm.Domain.Aggregates;
+using System.Text.Json.Serialization;
 
 namespace TC.Agro.Farm.Domain.Snapshots
 {
@@ -15,7 +16,8 @@ namespace TC.Agro.Farm.Domain.Snapshots
 
         private OwnerSnapshot() { } // EF
 
-        private OwnerSnapshot(Guid id, string name, string email, bool isActive, DateTimeOffset createdAt, DateTimeOffset? updatedAt)
+        [JsonConstructor]
+        public OwnerSnapshot(Guid id, string name, string email, bool isActive, DateTimeOffset createdAt, DateTimeOffset? updatedAt)
         {
             Id = id;
             Name = name;
