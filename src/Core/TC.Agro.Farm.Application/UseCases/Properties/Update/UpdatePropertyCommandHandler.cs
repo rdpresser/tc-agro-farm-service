@@ -99,12 +99,18 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, PropertyUpdatedIntegrationEvent>>
                     {
                         { typeof(PropertyUpdatedDomainEvent), e => UpdatePropertyMapper.ToIntegrationEvent((PropertyUpdatedDomainEvent)e, aggregate.OwnerId) }
-                    });
+                    })
+                .ToList();
 
-            foreach (var evt in integrationEvents)
+            if (integrationEvents.Count > 0)
             {
-                await _outbox.EnqueueAsync(evt, ct).ConfigureAwait(false);
+                await _outbox.EnqueueAsync(integrationEvents, ct).ConfigureAwait(false);
             }
+
+            _logger.LogInformation(
+                "Enqueued {Count} integration events for property {PropertyId}",
+                integrationEvents.Count,
+                aggregate.Id);
         }
     }
 }

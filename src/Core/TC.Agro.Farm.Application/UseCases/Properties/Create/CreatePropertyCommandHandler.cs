@@ -73,16 +73,17 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Create
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, PropertyCreatedIntegrationEvent>>
                     {
                         { typeof(PropertyCreatedDomainEvent), e => CreatePropertyMapper.ToIntegrationEvent((PropertyCreatedDomainEvent)e) }
-                    });
+                    })
+                .ToList();
 
-            foreach (var evt in integrationEvents)
+            if (integrationEvents.Count > 0)
             {
-                await Outbox.EnqueueAsync(evt, ct).ConfigureAwait(false);
+                await Outbox.EnqueueAsync(integrationEvents, ct).ConfigureAwait(false);
             }
 
             _logger.LogInformation(
                 "Enqueued {Count} integration events for property {PropertyId}",
-                integrationEvents.Count(),
+                integrationEvents.Count,
                 aggregate.Id);
         }
 

@@ -2,15 +2,15 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Deactivate
 {
     /// <summary>
     /// Command handler for deactivating (soft-deleting) a sensor.
-    /// 
+    ///
     /// Flow:
-    /// 1. Validates command via FluentValidation  
+    /// 1. Validates command via FluentValidation
     /// 2. Loads sensor aggregate from repository
     /// 3. Calls Deactivate() domain method which sets IsActive = false
     /// 4. Converts domain events to integration events
     /// 5. Enqueues to Outbox (Wolverine+EF Core transaction boundary)
     /// 6. Returns response with sensor ID and deactivation timestamp
-    /// 
+    ///
     /// Integration with other services:
     /// - Sensor Ingest Service: consumes SensorDeactivatedIntegrationEvent to stop data collection
     /// - Analytics Worker: may trigger cleanup or archival processes
@@ -75,8 +75,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Deactivate
         }
 
         /// <summary>
-        /// Override to skip Repository.Add() since the aggregate was already loaded 
-        /// and tracked by EF Core in MapAsync. The change tracker will detect 
+        /// Override to skip Repository.Add() since the aggregate was already loaded
+        /// and tracked by EF Core in MapAsync. The change tracker will detect
         /// the modifications automatically on SaveChangesAsync.
         /// </summary>
         protected override Task PersistAsync(SensorAggregate aggregate, CancellationToken ct)
@@ -104,22 +104,23 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Deactivate
                     handlerName: nameof(DeactivateSensorCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorDeactivatedIntegrationEvent>>
                     {
-                        { typeof(SensorAggregate.SensorDeactivatedDomainEvent), e => 
+                        { typeof(SensorAggregate.SensorDeactivatedDomainEvent), e =>
                             DeactivateSensorMapper.ToIntegrationEvent(
-                                (SensorAggregate.SensorDeactivatedDomainEvent)e, 
-                                aggregate, 
+                                (SensorAggregate.SensorDeactivatedDomainEvent)e,
+                                aggregate,
                                 UserContext.Id,
                                 _reason) }
-                    });
+                    })
+                .ToList();
 
-            foreach (var evt in integrationEvents)
+            if (integrationEvents.Count > 0)
             {
-                await Outbox.EnqueueAsync(evt, ct).ConfigureAwait(false);
+                await Outbox.EnqueueAsync(integrationEvents, ct).ConfigureAwait(false);
             }
 
             _logger.LogInformation(
                 "Enqueued {Count} integration events for sensor {SensorId} deactivation",
-                integrationEvents.Count(),
+                integrationEvents.Count,
                 aggregate.Id);
         }
 

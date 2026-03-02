@@ -103,16 +103,17 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorRegisteredIntegrationEvent>>
                     {
                         { typeof(SensorRegisteredDomainEvent), e => CreateSensorMapper.ToIntegrationEvent((SensorRegisteredDomainEvent)e) }
-                    });
+                    })
+                .ToList();
 
-            foreach (var evt in integrationEvents)
+            if (integrationEvents.Count > 0)
             {
-                await Outbox.EnqueueAsync(evt, ct).ConfigureAwait(false);
+                await Outbox.EnqueueAsync(integrationEvents, ct).ConfigureAwait(false);
             }
 
             _logger.LogInformation(
                 "Enqueued {Count} integration events for sensor {SensorId}",
-                integrationEvents.Count(),
+                integrationEvents.Count,
                 aggregate.Id);
         }
 

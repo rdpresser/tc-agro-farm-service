@@ -2,7 +2,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
 {
     /// <summary>
     /// Command handler for changing sensor operational status.
-    /// 
+    ///
     /// Flow:
     /// 1. Validates command via FluentValidation
     /// 2. Loads sensor aggregate from repository
@@ -11,7 +11,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
     /// 5. Converts domain events to integration events
     /// 6. Enqueues to Outbox (Wolverine+EF Core transaction boundary)
     /// 7. Returns response with before/after status
-    /// 
+    ///
     /// Integration with other services:
     /// - Sensor Ingest Service: consumes SensorOperationalStatusChangedIntegrationEvent
     /// - Analytics Worker: may trigger alert rules based on status change
@@ -72,8 +72,8 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
         }
 
         /// <summary>
-        /// Override to skip Repository.Add() since the aggregate was already loaded 
-        /// and tracked by EF Core in MapAsync. The change tracker will detect 
+        /// Override to skip Repository.Add() since the aggregate was already loaded
+        /// and tracked by EF Core in MapAsync. The change tracker will detect
         /// the modifications automatically on SaveChangesAsync.
         /// </summary>
         protected override Task PersistAsync(SensorAggregate aggregate, CancellationToken ct)
@@ -101,20 +101,21 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                     handlerName: nameof(ChangeSensorStatusCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorOperationalStatusChangedIntegrationEvent>>
                     {
-                        { typeof(SensorAggregate.SensorStatusChangedDomainEvent), e => 
+                        { typeof(SensorAggregate.SensorStatusChangedDomainEvent), e =>
                             ChangeSensorStatusMapper.ToIntegrationEvent(
-                                (SensorAggregate.SensorStatusChangedDomainEvent)e, 
+                                (SensorAggregate.SensorStatusChangedDomainEvent)e,
                                 aggregate) }
-                    });
+                    })
+                .ToList();
 
-            foreach (var evt in integrationEvents)
+            if (integrationEvents.Count > 0)
             {
-                await Outbox.EnqueueAsync(evt, ct).ConfigureAwait(false);
+                await Outbox.EnqueueAsync(integrationEvents, ct).ConfigureAwait(false);
             }
 
             _logger.LogInformation(
                 "Enqueued {Count} integration events for sensor {SensorId} status change",
-                integrationEvents.Count(),
+                integrationEvents.Count,
                 aggregate.Id);
         }
 

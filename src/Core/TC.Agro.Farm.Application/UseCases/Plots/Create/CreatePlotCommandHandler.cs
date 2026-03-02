@@ -104,16 +104,17 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, PlotCreatedIntegrationEvent>>
                     {
                         { typeof(PlotCreatedDomainEvent), e => CreatePlotMapper.ToIntegrationEvent((PlotCreatedDomainEvent)e) }
-                    });
+                    })
+                .ToList();
 
-            foreach (var evt in integrationEvents)
+            if (integrationEvents.Count > 0)
             {
-                await Outbox.EnqueueAsync(evt, ct).ConfigureAwait(false);
+                await Outbox.EnqueueAsync(integrationEvents, ct).ConfigureAwait(false);
             }
 
             _logger.LogInformation(
                 "Enqueued {Count} integration events for plot {PlotId}",
-                integrationEvents.Count(),
+                integrationEvents.Count,
                 aggregate.Id);
         }
 
