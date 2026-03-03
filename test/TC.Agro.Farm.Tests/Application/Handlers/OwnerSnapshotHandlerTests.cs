@@ -1,5 +1,6 @@
 using FakeItEasy;
 using TC.Agro.Contracts.Events.Identity;
+using TC.Agro.Farm.Application.Abstractions;
 using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Application.MessageBrokerHandlers;
 using TC.Agro.Farm.Domain.Aggregates;
@@ -36,8 +37,11 @@ namespace TC.Agro.Farm.Tests.Application.Handlers
                 Name: "Producer One",
                 Email: "producer.one@tcagro.com",
                 Username: "producer.one",
-                Role: "Producer",
+                Role: AppConstants.ProducerRole,
                 OccurredOn: DateTimeOffset.UtcNow);
+
+            A.CallTo(() => _store.GetByIdAsync(ownerId, A<CancellationToken>._))
+                .Returns(Task.FromResult<OwnerSnapshot?>(null));
 
             await _handler.HandleAsync(CreateEvent(eventData, ownerId), TestContext.Current.CancellationToken);
 
@@ -63,10 +67,13 @@ namespace TC.Agro.Farm.Tests.Application.Handlers
                 Name: "Admin User",
                 Email: "admin@tcagro.com",
                 Username: "admin.user",
-                Role: "Admin",
+                Role: AppConstants.AdminRole,
                 OccurredOn: DateTimeOffset.UtcNow);
 
             await _handler.HandleAsync(CreateEvent(eventData, ownerId), TestContext.Current.CancellationToken);
+
+            A.CallTo(() => _store.GetByIdAsync(A<Guid>._, A<CancellationToken>._))
+                .MustNotHaveHappened();
 
             A.CallTo(() => _store.AddAsync(A<OwnerSnapshot>._, A<CancellationToken>._))
                 .MustNotHaveHappened();
