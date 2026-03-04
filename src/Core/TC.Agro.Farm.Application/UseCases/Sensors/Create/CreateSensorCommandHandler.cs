@@ -55,13 +55,17 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                     "Selected OwnerId does not match the property owner for the target plot."));
             }
 
-            var propertyName = searchPlot.PropertyName;
-            var plotName = searchPlot.Name;
-            var plotLatitude = searchPlot.Latitude;
-            var plotLongitude = searchPlot.Longitude;
-            var plotBoundaryGeoJson = searchPlot.BoundaryGeoJson;
+            var aggregateResult = CreateSensorMapper.ToAggregate(
+                command: command,
+                ownerId: ownerId,
+                propertyId: propertyId,
+                plotId: command.PlotId,
+                propertyName: searchPlot.PropertyName,
+                plotName: searchPlot.Name,
+                plotLatitude: searchPlot.Latitude ?? property.Location.Latitude,
+                plotLongitude: searchPlot.Longitude ?? property.Location.Longitude,
+                plotBoundaryGeoJson: searchPlot.BoundaryGeoJson);
 
-            var aggregateResult = CreateSensorMapper.ToAggregate(command, ownerId, propertyId, plotId: command.PlotId, propertyName, plotName, plotLatitude ?? property.Location.Latitude, plotLongitude ?? property.Location.Longitude, plotBoundaryGeoJson);
             return aggregateResult;
         }
 
