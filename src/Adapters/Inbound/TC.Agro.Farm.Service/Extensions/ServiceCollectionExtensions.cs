@@ -269,6 +269,9 @@ namespace TC.Agro.Farm.Service.Extensions
                 if (mqConnectionFactory.AutoPurgeOnStartup)
                     rabbitOpts.AutoPurgeOnStartup();
 
+                var enableWiretapTestQueues = builder.Configuration.GetValue<bool>("Messaging:WiretapTestQueues:Enabled");
+                var wiretapQueuePrefix = builder.Configuration["Messaging:WiretapTestQueues:Prefix"] ?? "TEST-";
+
                 var exchangeName = $"{mqConnectionFactory.Exchange}-exchange";
 
                 // ============================================================
@@ -319,7 +322,9 @@ namespace TC.Agro.Farm.Service.Extensions
                 // ============================================================
                 opts.ConfigureIdentityUserEventsConsumption(
                     exchangeName: "identity.events-exchange",
-                    queueName: "farm-identity-user-events-queue"
+                    queueName: "farm-identity-user-events-queue",
+                    enableWiretapQueue: enableWiretapTestQueues,
+                    wiretapQueuePrefix: wiretapQueuePrefix
                 );
             });
 

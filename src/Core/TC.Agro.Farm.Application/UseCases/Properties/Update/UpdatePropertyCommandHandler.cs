@@ -105,7 +105,10 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
 
             if (integrationEvents.Count > 0)
             {
-                await _outbox.EnqueueAsync(integrationEvents, ct).ConfigureAwait(false);
+                foreach (var evt in integrationEvents)
+                {
+                    await _outbox.EnqueueAsync(evt, ct).ConfigureAwait(false);
+                }
             }
 
             _logger.LogInformation(
