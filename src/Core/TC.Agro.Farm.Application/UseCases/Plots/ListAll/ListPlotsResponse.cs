@@ -9,6 +9,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
         string Name,
         string CropType,
         double AreaHectares,
+        double? Latitude,
+        double? Longitude,
         bool IsActive,
         int SensorCount,
         DateTimeOffset CreatedAt,

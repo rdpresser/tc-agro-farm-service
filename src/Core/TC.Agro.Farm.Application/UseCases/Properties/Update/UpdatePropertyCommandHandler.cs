@@ -95,6 +95,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
                 .MapToIntegrationEvents(
                     aggregate: aggregate,
                     userContext: _userContext,
+                    requestedOwnerId: aggregate.OwnerId,
                     handlerName: nameof(UpdatePropertyCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, PropertyUpdatedIntegrationEvent>>
                     {

@@ -98,6 +98,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
                 .MapToIntegrationEvents(
                     aggregate: aggregate,
                     userContext: UserContext,
+                    requestedOwnerId: aggregate.OwnerId,
                     handlerName: nameof(ChangeSensorStatusCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorOperationalStatusChangedIntegrationEvent>>
                     {

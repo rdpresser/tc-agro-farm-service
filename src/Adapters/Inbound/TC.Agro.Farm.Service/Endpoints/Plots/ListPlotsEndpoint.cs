@@ -36,6 +36,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     $"Talhão {faker.Random.AlphaNumeric(2).ToUpper()}",
                     faker.PickRandom(CropType.CommonCropTypes),
                     faker.Random.Double(10, 100),
+                    -21.1775,
+                    -47.8103,
                     true,
                     faker.Random.Int(0, 5),
                     DateTimeOffset.UtcNow.AddDays(-faker.Random.Int(1, 365)),

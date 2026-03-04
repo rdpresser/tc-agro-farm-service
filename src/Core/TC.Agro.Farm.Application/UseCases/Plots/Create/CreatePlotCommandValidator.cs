@@ -53,14 +53,37 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                     .WithErrorCode($"{nameof(CreatePlotCommand.AreaHectares)}.MaximumValue");
             #endregion
 
+            #region Latitude and Longitude | Validation Rules (optional)
+            RuleFor(x => x.Latitude)
+                .InclusiveBetween(-90, 90)
+                    .When(x => x.Latitude.HasValue)
+                    .WithMessage("Latitude must be between -90 and 90.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.Latitude)}.OutOfRange");
+
+            RuleFor(x => x.Longitude)
+                .InclusiveBetween(-180, 180)
+                    .When(x => x.Longitude.HasValue)
+                    .WithMessage("Longitude must be between -180 and 180.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.Longitude)}.OutOfRange");
+
+            RuleFor(x => x)
+                .Must(x => x.Latitude.HasValue == x.Longitude.HasValue)
+                .WithMessage("Latitude and Longitude must be informed together.")
+                .WithErrorCode("GeoCoordinates.PairRequired");
+            #endregion
+
+            #region BoundaryGeoJson | Validation Rules (optional)
+            RuleFor(x => x.BoundaryGeoJson)
+                .MaximumLength(20_000)
+                    .WithMessage("BoundaryGeoJson must not exceed 20,000 characters.")
+                    .WithErrorCode($"{nameof(CreatePlotCommand.BoundaryGeoJson)}.MaximumLength");
+            #endregion
+
             #region PlantingDate | Validation Rules
             RuleFor(x => x.PlantingDate)
                 .NotEqual(default(DateTimeOffset))
                     .WithMessage("Planting date is required.")
-                    .WithErrorCode($"{nameof(CreatePlotCommand.PlantingDate)}.Required")
-                .LessThanOrEqualTo(DateTimeOffset.UtcNow)
-                    .WithMessage("Planting date cannot be in the future.")
-                    .WithErrorCode($"{nameof(CreatePlotCommand.PlantingDate)}.Future");
+                    .WithErrorCode($"{nameof(CreatePlotCommand.PlantingDate)}.Required");
             #endregion
 
             #region ExpectedHarvestDate | Validation Rules

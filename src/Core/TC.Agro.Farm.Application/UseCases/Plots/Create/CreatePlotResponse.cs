@@ -9,6 +9,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         string Name,
         string CropType,
         double AreaHectares,
+        double? Latitude,
+        double? Longitude,
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
         string IrrigationType,

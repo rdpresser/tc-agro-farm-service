@@ -57,9 +57,11 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
 
             var propertyName = searchPlot.PropertyName;
             var plotName = searchPlot.Name;
+            var plotLatitude = searchPlot.Latitude;
+            var plotLongitude = searchPlot.Longitude;
+            var plotBoundaryGeoJson = searchPlot.BoundaryGeoJson;
 
-
-            var aggregateResult = CreateSensorMapper.ToAggregate(command, ownerId, propertyId, plotId: command.PlotId, propertyName, plotName);
+            var aggregateResult = CreateSensorMapper.ToAggregate(command, ownerId, propertyId, plotId: command.PlotId, propertyName, plotName, plotLatitude ?? property.Location.Latitude, plotLongitude ?? property.Location.Longitude, plotBoundaryGeoJson);
             return aggregateResult;
         }
 
@@ -99,6 +101,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                 .MapToIntegrationEvents(
                     aggregate: aggregate,
                     userContext: UserContext,
+                    requestedOwnerId: aggregate.OwnerId,
                     handlerName: nameof(CreateSensorCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorRegisteredIntegrationEvent>>
                     {

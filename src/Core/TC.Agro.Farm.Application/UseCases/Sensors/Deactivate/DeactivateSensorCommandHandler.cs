@@ -101,6 +101,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Deactivate
                 .MapToIntegrationEvents(
                     aggregate: aggregate,
                     userContext: UserContext,
+                    requestedOwnerId: aggregate.OwnerId,
                     handlerName: nameof(DeactivateSensorCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, SensorDeactivatedIntegrationEvent>>
                     {

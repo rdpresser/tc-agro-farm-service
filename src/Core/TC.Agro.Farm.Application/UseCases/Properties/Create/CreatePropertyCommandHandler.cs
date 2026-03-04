@@ -69,6 +69,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Create
                 .MapToIntegrationEvents(
                     aggregate: aggregate,
                     userContext: UserContext,
+                    requestedOwnerId: aggregate.OwnerId,
                     handlerName: nameof(CreatePropertyCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, PropertyCreatedIntegrationEvent>>
                     {

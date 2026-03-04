@@ -34,7 +34,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string? label,
             string propertyName,
             string plotName,
-            string type)
+            string type,
+            double? plotLatitude = null,
+            double? plotLongitude = null,
+            string? plotBoundaryGeoJson = null)
         {
             var typeResult = SensorType.Create(type);
 
@@ -61,10 +64,13 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 label: labelResult?.Value,
                 propertyName: propertyName,
                 plotName: plotName,
+                plotLatitude: plotLatitude,
+                plotLongitude: plotLongitude,
+                plotBoundaryGeoJson: plotBoundaryGeoJson,
                 type: typeResult.Value);
         }
 
-        private static Result<SensorAggregate> CreateAggregate(Guid ownerId, Guid propertyId, Guid plotId, Name? label, string propertyName, string plotName, SensorType type)
+            private static Result<SensorAggregate> CreateAggregate(Guid ownerId, Guid propertyId, Guid plotId, Name? label, string propertyName, string plotName, double? plotLatitude, double? plotLongitude, string? plotBoundaryGeoJson, SensorType type)
         {
             var aggregate = new SensorAggregate(Guid.NewGuid());
             var @event = new SensorRegisteredDomainEvent(
@@ -75,6 +81,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 Label: label?.Value ?? string.Empty,
                 PropertyName: propertyName,
                 PlotName: plotName,
+                PlotLatitude: plotLatitude,
+                PlotLongitude: plotLongitude,
+                PlotBoundaryGeoJson: plotBoundaryGeoJson,
                 type.Value,
                 SensorStatus.Active,
                 DateTimeOffset.UtcNow);
@@ -338,6 +347,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string? Label,
             string PropertyName,
             string PlotName,
+            double? PlotLatitude,
+            double? PlotLongitude,
+            string? PlotBoundaryGeoJson,
             string Type,
             string Status,
             DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);

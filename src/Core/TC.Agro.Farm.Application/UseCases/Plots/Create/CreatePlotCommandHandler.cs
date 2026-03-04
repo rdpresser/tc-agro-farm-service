@@ -100,6 +100,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 .MapToIntegrationEvents(
                     aggregate: aggregate,
                     userContext: UserContext,
+                    requestedOwnerId: aggregate.OwnerId,
                     handlerName: nameof(CreatePlotCommandHandler),
                     mappings: new Dictionary<Type, Func<BaseDomainEvent, PlotCreatedIntegrationEvent>>
                     {

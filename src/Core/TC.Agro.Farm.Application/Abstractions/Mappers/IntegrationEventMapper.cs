@@ -5,6 +5,7 @@ namespace TC.Agro.Farm.Application.Abstractions.Mappers
     /// </summary>
     public static class IntegrationEventMapper
     {
+
         /// <summary>
         /// Maps multiple domain events to their respective integration events and wraps them in EventContext.
         /// Preserves the concrete type of integration events to include all properties in serialization.
@@ -23,6 +24,7 @@ namespace TC.Agro.Farm.Application.Abstractions.Mappers
             this IEnumerable<BaseDomainEvent> domainEvents,
             TAggregate aggregate,
             IUserContext userContext,
+            Guid requestedOwnerId,
             string? handlerName = null,
 
             IDictionary<Type, Func<BaseDomainEvent, TIntegrationEvent>>? mappings = null
@@ -44,7 +46,7 @@ namespace TC.Agro.Farm.Application.Abstractions.Mappers
                 yield return EventContext<TIntegrationEvent>.Create<TAggregate>(
                     data: integrationEvent,
                     aggregateId: aggregate.Id,
-                    userId: userContext.Id.ToString(),
+                    userId: requestedOwnerId.ToString(),
                     isAuthenticated: userContext.IsAuthenticated,
                     correlationId: userContext.CorrelationId,
                     source: $"Farm.Service.{handlerName ?? "UnknownHandler"}.{integrationEvent.GetType().Name}"

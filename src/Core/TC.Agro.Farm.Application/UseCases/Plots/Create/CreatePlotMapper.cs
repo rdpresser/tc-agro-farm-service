@@ -13,7 +13,10 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 command.PlantingDate,
                 command.ExpectedHarvestDate,
                 command.IrrigationType,
-                command.AdditionalNotes);
+                command.AdditionalNotes,
+                command.Latitude,
+                command.Longitude,
+                command.BoundaryGeoJson);
         }
 
         public static CreatePlotResponse FromAggregate(PlotAggregate aggregate)
@@ -24,6 +27,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 Name: aggregate.Name.Value,
                 CropType: aggregate.CropType.Value,
                 AreaHectares: aggregate.AreaHectares.Hectares,
+                Latitude: aggregate.Latitude,
+                Longitude: aggregate.Longitude,
                 PlantingDate: aggregate.PlantingDate,
                 ExpectedHarvestDate: aggregate.ExpectedHarvestDate,
                 IrrigationType: aggregate.IrrigationType.Value,

@@ -2,7 +2,7 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
 {
     public static class CreateSensorMapper
     {
-        public static Result<SensorAggregate> ToAggregate(CreateSensorCommand command, Guid ownerId, Guid propertyId, Guid plotId, string propertyName, string plotName)
+        public static Result<SensorAggregate> ToAggregate(CreateSensorCommand command, Guid ownerId, Guid propertyId, Guid plotId, string propertyName, string plotName, double? plotLatitude, double? plotLongitude, string? plotBoundaryGeoJson)
         {
             return SensorAggregate.Create(
                 ownerId: ownerId,
@@ -11,7 +11,10 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                 label: command.Label,
                 propertyName: propertyName,
                 plotName: plotName,
-                command.Type);
+                type: command.Type,
+                plotLatitude: plotLatitude,
+                plotLongitude: plotLongitude,
+                plotBoundaryGeoJson: plotBoundaryGeoJson);
         }
 
         public static CreateSensorResponse FromAggregate(SensorAggregate aggregate)
@@ -34,6 +37,9 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                 Label: domainEvent.Label,
                 PropertyName: domainEvent.PropertyName,
                 PlotName: domainEvent.PlotName,
+                PlotLatitude: domainEvent.PlotLatitude,
+                PlotLongitude: domainEvent.PlotLongitude,
+                PlotBoundaryGeoJson: domainEvent.PlotBoundaryGeoJson,
                 Type: domainEvent.Type,
                 Status: domainEvent.Status,
                 OccurredOn: domainEvent.OccurredOn);

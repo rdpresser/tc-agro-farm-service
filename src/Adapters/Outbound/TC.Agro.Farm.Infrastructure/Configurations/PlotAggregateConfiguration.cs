@@ -58,6 +58,21 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 area.WithOwner();
             });
 
+            builder.Property(p => p.Latitude)
+                .HasColumnName("latitude")
+                .HasColumnType("double precision")
+                .IsRequired(false);
+
+            builder.Property(p => p.Longitude)
+                .HasColumnName("longitude")
+                .HasColumnType("double precision")
+                .IsRequired(false);
+
+            builder.Property(p => p.BoundaryGeoJson)
+                .HasColumnName("boundary_geo_json")
+                .HasColumnType("text")
+                .IsRequired(false);
+
             // Agronomy fields
             builder.Property(p => p.PlantingDate)
                 .HasColumnName("planting_date")

@@ -11,6 +11,11 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public Name Name { get; private set; } = default!;
         public CropType CropType { get; private set; } = default!;
         public Area AreaHectares { get; private set; } = default!;
+
+        public double? Latitude { get; private set; } = default!;
+        public double? Longitude { get; private set; } = default!;
+        public string? BoundaryGeoJson { get; private set; } = default!;
+
         public DateTimeOffset PlantingDate { get; private set; }
         public DateTimeOffset ExpectedHarvestDate { get; private set; }
         public IrrigationType IrrigationType { get; private set; } = default!;
@@ -40,7 +45,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
             DateTimeOffset plantingDate,
             DateTimeOffset expectedHarvestDate,
             string irrigationType,
-            string? additionalNotes)
+            string? additionalNotes,
+            double? latitude = null,
+            double? longitude = null,
+            string? boundaryGeoJson = null)
         {
             var nameResult = ValueObjects.Name.Create(name);
             var cropTypeResult = ValueObjects.CropType.Create(cropType);
@@ -58,6 +66,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
             if (!additionalNotesResult.IsSuccess)
                 errors.AddRange(additionalNotesResult.ValidationErrors);
             errors.AddRange(ValidateDates(plantingDate, expectedHarvestDate));
+            errors.AddRange(ValidateCoordinates(latitude, longitude));
 
             if (errors.Count > 0)
             {
@@ -73,7 +82,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 plantingDate,
                 expectedHarvestDate,
                 irrigationTypeResult.Value,
-                additionalNotesResult.Value);
+                additionalNotesResult.Value,
+                latitude,
+                longitude,
+                boundaryGeoJson);
         }
 
         private static Result<PlotAggregate> CreateAggregate(
@@ -85,7 +97,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
             DateTimeOffset plantingDate,
             DateTimeOffset expectedHarvestDate,
             IrrigationType irrigationType,
-            AdditionalNotes? additionalNotes)
+            AdditionalNotes? additionalNotes,
+            double? latitude = null,
+            double? longitude = null,
+            string? boundaryGeoJson = null)
         {
             var aggregate = new PlotAggregate(Guid.NewGuid());
             var @event = new PlotCreatedDomainEvent(
@@ -95,6 +110,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 name.Value,
                 cropType.Value,
                 area.Hectares,
+                latitude,
+                longitude,
+                boundaryGeoJson,
                 plantingDate,
                 expectedHarvestDate,
                 irrigationType.Value,
@@ -116,7 +134,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
             DateTimeOffset plantingDate,
             DateTimeOffset expectedHarvestDate,
             string irrigationType,
-            string? additionalNotes)
+            string? additionalNotes,
+            double? latitude = null,
+            double? longitude = null,
+            string? boundaryGeoJson = null)
         {
             var nameResult = ValueObjects.Name.Create(name);
             var cropTypeResult = ValueObjects.CropType.Create(cropType);
@@ -132,6 +153,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
             if (!additionalNotesResult.IsSuccess)
                 errors.AddRange(additionalNotesResult.ValidationErrors);
             errors.AddRange(ValidateDates(plantingDate, expectedHarvestDate));
+            errors.AddRange(ValidateCoordinates(latitude, longitude));
 
             if (errors.Count > 0)
             {
@@ -143,6 +165,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 nameResult.Value.Value,
                 cropTypeResult.Value.Value,
                 areaResult.Value.Hectares,
+                latitude,
+                longitude,
+                boundaryGeoJson,
                 plantingDate,
                 expectedHarvestDate,
                 irrigationTypeResult.Value.Value,
@@ -207,6 +232,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Name = ValueObjects.Name.FromDb(@event.Name).Value;
             CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
             AreaHectares = Area.FromDb(@event.AreaHectares).Value;
+            Latitude = @event.Latitude;
+            Longitude = @event.Longitude;
+            BoundaryGeoJson = @event.BoundaryGeoJson;
             PlantingDate = @event.PlantingDate;
             ExpectedHarvestDate = @event.ExpectedHarvestDate;
             IrrigationType = ValueObjects.IrrigationType.FromDb(@event.IrrigationType).Value;
@@ -220,6 +248,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Name = ValueObjects.Name.FromDb(@event.Name).Value;
             CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
             AreaHectares = Area.FromDb(@event.AreaHectares).Value;
+            Latitude = @event.Latitude;
+            Longitude = @event.Longitude;
+            BoundaryGeoJson = @event.BoundaryGeoJson;
             PlantingDate = @event.PlantingDate;
             ExpectedHarvestDate = @event.ExpectedHarvestDate;
             IrrigationType = ValueObjects.IrrigationType.FromDb(@event.IrrigationType).Value;
@@ -296,11 +327,26 @@ namespace TC.Agro.Farm.Domain.Aggregates
             if (expectedHarvestDate == default)
                 yield return FarmDomainErrors.ExpectedHarvestRequired;
 
-            if (plantingDate > DateTimeOffset.UtcNow)
-                yield return FarmDomainErrors.PlantingDateFuture;
-
             if (expectedHarvestDate <= plantingDate)
                 yield return FarmDomainErrors.ExpectedHarvestBeforePlanting;
+        }
+
+        private static IEnumerable<ValidationError> ValidateCoordinates(double? latitude, double? longitude)
+        {
+            if (latitude.HasValue && (latitude.Value < -90 || latitude.Value > 90))
+            {
+                yield return new ValidationError(nameof(Latitude), "Latitude must be between -90 and 90.");
+            }
+
+            if (longitude.HasValue && (longitude.Value < -180 || longitude.Value > 180))
+            {
+                yield return new ValidationError(nameof(Longitude), "Longitude must be between -180 and 180.");
+            }
+
+            if (latitude.HasValue != longitude.HasValue)
+            {
+                yield return new ValidationError("GeoCoordinates", "Latitude and Longitude must be informed together.");
+            }
         }
 
         #endregion
@@ -314,6 +360,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string Name,
             string CropType,
             double AreaHectares,
+            double? Latitude,
+            double? Longitude,
+            string? BoundaryGeoJson,
             DateTimeOffset PlantingDate,
             DateTimeOffset ExpectedHarvestDate,
             string IrrigationType,
@@ -325,6 +374,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string Name,
             string CropType,
             double AreaHectares,
+            double? Latitude,
+            double? Longitude,
+            string? BoundaryGeoJson,
             DateTimeOffset PlantingDate,
             DateTimeOffset ExpectedHarvestDate,
             string IrrigationType,
