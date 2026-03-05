@@ -29,5 +29,6 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/TC.Agro.Farm.Tests/TC.Agro.Farm.Tests.csproj" />
+    <Project Path="test/TC.Agro.Farm.Architecture.Tests/TC.Agro.Farm.Architecture.Tests.csproj" />
   </Folder>
 </Solution>
