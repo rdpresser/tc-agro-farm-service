@@ -26,4 +26,4 @@ global using SensorRegisteredDomainEvent = TC.Agro.Farm.Domain.Aggregates.Sensor
 //**//
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-[assembly: InternalsVisibleTo("TC.Agro.Farm.Unit.Tests")]
+[assembly: InternalsVisibleTo("TC.Agro.Farm.Tests")]

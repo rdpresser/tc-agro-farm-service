@@ -60,7 +60,7 @@ global using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 global using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 //**//
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("TC.Agro.Farm.Unit.Tests")]
+[assembly: InternalsVisibleTo("TC.Agro.Farm.Tests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 //**//REMARK: Required for functional and integration tests to work.
 namespace TC.Agro.Farm.Service

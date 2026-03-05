@@ -25,4 +25,4 @@ global using TC.Agro.SharedKernel.Infrastructure.UserClaims;
 global using Wolverine.EntityFrameworkCore;
 //**//
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("TC.Agro.Farm.Unit.Tests")]
+[assembly: InternalsVisibleTo("TC.Agro.Farm.Tests")]
