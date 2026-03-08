@@ -1,10 +1,10 @@
 using FakeItEasy;
-using FastEndpoints;
 using Microsoft.Extensions.Logging;
 using TC.Agro.Farm.Application.Abstractions;
 using TC.Agro.Farm.Application.Abstractions.Ports;
 using TC.Agro.Farm.Application.UseCases.Plots.Update;
 using TC.Agro.Farm.Domain.Aggregates;
+using TC.Agro.Farm.Tests.TestHelpers;
 using TC.Agro.SharedKernel.Application.Ports;
 using TC.Agro.SharedKernel.Infrastructure.UserClaims;
 
@@ -20,7 +20,7 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
 
         public UpdatePlotCommandHandlerTests()
         {
-            Factory.RegisterTestServices(_ => { });
+            FastEndpointsTestBootstrap.EnsureInitialized();
 
             _repository = A.Fake<IPlotAggregateRepository>();
             _userContext = A.Fake<IUserContext>();

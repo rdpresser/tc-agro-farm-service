@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\Core\TC.Agro.Farm.Domain\TC.Agro.Farm.Domain.csproj" />
     <ProjectReference Include="..\..\src\Core\TC.Agro.Farm.Application\TC.Agro.Farm.Application.csproj" />
     <ProjectReference Include="..\..\src\Adapters\Outbound\TC.Agro.Farm.Infrastructure\TC.Agro.Farm.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Adapters\Inbound\TC.Agro.Farm.Service\TC.Agro.Farm.Service.csproj" />
   </ItemGroup>
 
 </Project>
