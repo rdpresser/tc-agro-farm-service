@@ -16,9 +16,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
             RequestBinder(new RequestBinder<ListSensorsQuery>(BindingSource.QueryParams));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<ListSensorsQuery, PaginatedResponse<ListSensorsResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<ListSensorsQuery, PaginatedResponse<ListSensorsResponse>>>();
-
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<PaginatedResponse<ListSensorsResponse>>(200)
                       .ProducesProblemDetails()
@@ -84,3 +82,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         }
     }
 }
+

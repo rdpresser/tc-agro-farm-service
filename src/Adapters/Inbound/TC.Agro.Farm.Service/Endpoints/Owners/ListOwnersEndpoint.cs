@@ -13,9 +13,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Owners
             RequestBinder(new RequestBinder<ListOwnersQuery>(BindingSource.QueryParams));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<ListOwnersQuery, PaginatedResponse<ListOwnersResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<ListOwnersQuery, PaginatedResponse<ListOwnersResponse>>>();
-
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<PaginatedResponse<ListOwnersResponse>>(200)
                       .ProducesProblemDetails()
@@ -69,3 +67,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Owners
         }
     }
 }
+

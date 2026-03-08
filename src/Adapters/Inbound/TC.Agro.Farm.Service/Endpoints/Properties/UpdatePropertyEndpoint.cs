@@ -8,8 +8,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         {
             Put("properties/{id:guid}");
             PostProcessor<LoggingCommandPostProcessorBehavior<UpdatePropertyCommand, UpdatePropertyResponse>>();
-            PostProcessor<CacheInvalidationPostProcessorBehavior<UpdatePropertyCommand, UpdatePropertyResponse>>();
-
+            this.AddCacheInvalidationIfNotTesting();
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
                 x => x.Produces<UpdatePropertyResponse>(200)
@@ -59,3 +58,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         }
     }
 }
+

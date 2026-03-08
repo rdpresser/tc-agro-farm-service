@@ -8,8 +8,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
         {
             Put("plots/{plotId:guid}");
             PostProcessor<LoggingCommandPostProcessorBehavior<UpdatePlotCommand, UpdatePlotResponse>>();
-            PostProcessor<CacheInvalidationPostProcessorBehavior<UpdatePlotCommand, UpdatePlotResponse>>();
-
+            this.AddCacheInvalidationIfNotTesting();
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
                 x => x.Produces<UpdatePlotResponse>(200)
@@ -80,3 +79,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
         }
     }
 }
+

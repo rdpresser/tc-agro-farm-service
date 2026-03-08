@@ -12,9 +12,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
             RequestBinder(new RequestBinder<GetSensorByIdQuery>(BindingSource.RouteValues));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<GetSensorByIdQuery, SensorByIdResponse>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<GetSensorByIdQuery, SensorByIdResponse>>();
-
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<SensorByIdResponse>(200)
                       .ProducesProblemDetails()
@@ -55,3 +53,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         }
     }
 }
+

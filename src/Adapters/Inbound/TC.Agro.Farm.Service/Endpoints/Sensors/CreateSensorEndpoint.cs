@@ -11,8 +11,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         {
             Post("sensors");
             PostProcessor<LoggingCommandPostProcessorBehavior<CreateSensorCommand, CreateSensorResponse>>();
-            PostProcessor<CacheInvalidationPostProcessorBehavior<CreateSensorCommand, CreateSensorResponse>>();
-
+            this.AddCacheInvalidationIfNotTesting();
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
                 x => x.Produces<CreateSensorResponse>(201)
@@ -61,3 +60,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         }
     }
 }
+

@@ -19,8 +19,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
             Put("sensors/{sensorId}/status-change");
 
             PostProcessor<LoggingCommandPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
-            PostProcessor<CacheInvalidationPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
-
+            this.AddCacheInvalidationIfNotTesting();
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
                 x => x.Produces<ChangeSensorStatusResponse>(200)
@@ -60,3 +59,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         }
     }
 }
+

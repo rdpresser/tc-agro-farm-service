@@ -12,9 +12,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
             RequestBinder(new RequestBinder<GetPropertyByIdQuery>(BindingSource.RouteValues));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<GetPropertyByIdQuery, GetPropertyByIdResponse>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<GetPropertyByIdQuery, GetPropertyByIdResponse>>();
-
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<GetPropertyByIdResponse>(200)
                       .ProducesProblemDetails()
@@ -57,3 +55,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         }
     }
 }
+

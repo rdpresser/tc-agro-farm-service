@@ -12,9 +12,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
             RequestBinder(new RequestBinder<GetPlotByIdQuery>(BindingSource.RouteValues));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<GetPlotByIdQuery, GetPlotByIdResponse>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<GetPlotByIdQuery, GetPlotByIdResponse>>();
-
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<GetPlotByIdResponse>(200)
                       .ProducesProblemDetails()
@@ -62,3 +60,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
         }
     }
 }
+

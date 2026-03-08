@@ -6,8 +6,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         {
             Post("properties");
             PostProcessor<LoggingCommandPostProcessorBehavior<CreatePropertyCommand, CreatePropertyResponse>>();
-            PostProcessor<CacheInvalidationPostProcessorBehavior<CreatePropertyCommand, CreatePropertyResponse>>();
-
+            this.AddCacheInvalidationIfNotTesting();
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
                 x => x.Produces<CreatePropertyResponse>(201)
@@ -63,3 +62,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         }
     }
 }
+

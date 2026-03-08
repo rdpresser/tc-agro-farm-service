@@ -8,8 +8,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
         {
             Post("plots");
             PostProcessor<LoggingCommandPostProcessorBehavior<CreatePlotCommand, CreatePlotResponse>>();
-            PostProcessor<CacheInvalidationPostProcessorBehavior<CreatePlotCommand, CreatePlotResponse>>();
-
+            this.AddCacheInvalidationIfNotTesting();
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
                 x => x.Produces<CreatePlotResponse>(201)
@@ -72,3 +71,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
         }
     }
 }
+

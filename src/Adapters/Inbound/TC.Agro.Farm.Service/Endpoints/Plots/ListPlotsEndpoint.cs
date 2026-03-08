@@ -15,8 +15,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
             RequestBinder(new RequestBinder<ListPlotsQuery>(BindingSource.QueryParams));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<ListPlotsQuery, PaginatedResponse<ListPlotsResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<ListPlotsQuery, PaginatedResponse<ListPlotsResponse>>>();
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<PaginatedResponse<ListPlotsResponse>>(200)
                       .ProducesProblemDetails()
@@ -82,3 +81,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
         }
     }
 }
+

@@ -19,8 +19,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
             Delete("sensors/{sensorId}");
 
             PostProcessor<LoggingCommandPostProcessorBehavior<DeactivateSensorCommand, DeactivateSensorResponse>>();
-            PostProcessor<CacheInvalidationPostProcessorBehavior<DeactivateSensorCommand, DeactivateSensorResponse>>();
-
+            this.AddCacheInvalidationIfNotTesting();
             Roles(AppConstants.AdminRole, AppConstants.ProducerRole);
             Description(
                 x => x.Produces<DeactivateSensorResponse>(200)
@@ -61,3 +60,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         }
     }
 }
+

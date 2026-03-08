@@ -18,9 +18,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
             RequestBinder(new RequestBinder<ListSensorsFromPlotQuery>(BindingSource.RouteValues));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<ListSensorsFromPlotQuery, PaginatedResponse<ListSensorsFromPlotResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<ListSensorsFromPlotQuery, PaginatedResponse<ListSensorsFromPlotResponse>>>();
-
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<PaginatedResponse<ListSensorsFromPlotResponse>>(200)
                       .ProducesProblemDetails()
@@ -82,3 +80,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         }
     }
 }
+

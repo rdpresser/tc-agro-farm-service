@@ -14,9 +14,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
             RequestBinder(new RequestBinder<ListPropertiesQuery>(BindingSource.QueryParams));
 
             Roles(AppConstants.UserRole, AppConstants.AdminRole, AppConstants.ProducerRole);
-            PreProcessor<QueryCachingPreProcessorBehavior<ListPropertiesQuery, PaginatedResponse<ListPropertiesResponse>>>();
-            PostProcessor<QueryCachingPostProcessorBehavior<ListPropertiesQuery, PaginatedResponse<ListPropertiesResponse>>>();
-
+            this.AddQueryCachingIfNotTesting();
             Description(
                 x => x.Produces<PaginatedResponse<ListPropertiesResponse>>(200)
                       .ProducesProblemDetails()
@@ -75,3 +73,4 @@ namespace TC.Agro.Farm.Service.Endpoints.Properties
         }
     }
 }
+
