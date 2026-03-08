@@ -12,15 +12,12 @@ internal static class FastEndpointsTestBootstrap
     {
         if (Interlocked.Exchange(ref _initialized, 1) == 0)
         {
-            var services = new ServiceCollection();
-            services.AddSingleton<ICacheService, NoOpCacheService>();
-            Factory.AddServicesForUnitTesting(services);
+            Factory.RegisterTestServices(testServices =>
+            {
+                testServices.AddLogging();
+                testServices.AddSingleton<ICacheService, NoOpCacheService>();
+            });
         }
-
-        Factory.RegisterTestServices(testServices =>
-        {
-            testServices.AddSingleton<ICacheService, NoOpCacheService>();
-        });
     }
 
     private sealed class NoOpCacheService : ICacheService
