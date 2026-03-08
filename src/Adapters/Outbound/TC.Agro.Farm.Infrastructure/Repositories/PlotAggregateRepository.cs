@@ -1,5 +1,3 @@
-using TC.Agro.Farm.Application.Abstractions;
-
 namespace TC.Agro.Farm.Infrastructure.Repositories
 {
     public sealed class PlotAggregateRepository : BaseRepository<PlotAggregate>, IPlotAggregateRepository

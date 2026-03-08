@@ -1,5 +1,4 @@
 using TC.Agro.Farm.Domain.ValueObjects;
-using TC.Agro.SharedKernel.Extensions;
 
 namespace TC.Agro.Farm.Application.UseCases.Sensors.ChangeStatus
 {

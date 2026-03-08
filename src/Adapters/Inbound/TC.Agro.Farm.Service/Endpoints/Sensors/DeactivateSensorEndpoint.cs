@@ -17,7 +17,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         public override void Configure()
         {
             Delete("sensors/{sensorId}");
-            
+
             PostProcessor<LoggingCommandPostProcessorBehavior<DeactivateSensorCommand, DeactivateSensorResponse>>();
             PostProcessor<CacheInvalidationPostProcessorBehavior<DeactivateSensorCommand, DeactivateSensorResponse>>();
 

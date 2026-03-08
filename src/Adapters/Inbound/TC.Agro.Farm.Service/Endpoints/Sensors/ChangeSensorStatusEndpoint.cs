@@ -17,7 +17,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
         public override void Configure()
         {
             Put("sensors/{sensorId}/status-change");
-            
+
             PostProcessor<LoggingCommandPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
             PostProcessor<CacheInvalidationPostProcessorBehavior<ChangeSensorStatusCommand, ChangeSensorStatusResponse>>();
 

@@ -70,7 +70,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 type: typeResult.Value);
         }
 
-            private static Result<SensorAggregate> CreateAggregate(Guid ownerId, Guid propertyId, Guid plotId, Name? label, string propertyName, string plotName, double? plotLatitude, double? plotLongitude, string? plotBoundaryGeoJson, SensorType type)
+        private static Result<SensorAggregate> CreateAggregate(Guid ownerId, Guid propertyId, Guid plotId, Name? label, string propertyName, string plotName, double? plotLatitude, double? plotLongitude, string? plotBoundaryGeoJson, SensorType type)
         {
             var aggregate = new SensorAggregate(Guid.NewGuid());
             var @event = new SensorRegisteredDomainEvent(

@@ -1,5 +1,5 @@
-using TC.Agro.Farm.Domain.Aggregates;
 using System.Text.Json.Serialization;
+using TC.Agro.Farm.Domain.Aggregates;
 
 namespace TC.Agro.Farm.Domain.Snapshots
 {

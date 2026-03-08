@@ -1,4 +1,3 @@
-using TC.Agro.Farm.Application.UseCases.Plots.ListByProperty;
 using TC.Agro.SharedKernel.Infrastructure.Pagination;
 
 namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll

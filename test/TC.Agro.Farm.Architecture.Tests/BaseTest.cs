@@ -2,7 +2,6 @@ using System.Reflection;
 using TC.Agro.Farm.Application.UseCases.Properties.Create;
 using TC.Agro.Farm.Domain.Aggregates;
 using TC.Agro.Farm.Infrastructure;
-using TC.Agro.Farm.Service;
 
 namespace TC.Agro.Farm.Architecture.Tests;
 
