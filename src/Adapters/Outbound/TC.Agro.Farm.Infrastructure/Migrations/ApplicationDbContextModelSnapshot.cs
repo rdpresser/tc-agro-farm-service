@@ -24,6 +24,199 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.CropTypeCatalogAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsSystemDefined")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_system_defined");
+
+                    b.Property<double?>("MaxSoilMoisture")
+                        .HasColumnType("double precision")
+                        .HasColumnName("max_soil_moisture");
+
+                    b.Property<double?>("MaxTemperature")
+                        .HasColumnType("double precision")
+                        .HasColumnName("max_temperature");
+
+                    b.Property<double?>("MinHumidity")
+                        .HasColumnType("double precision")
+                        .HasColumnName("min_humidity");
+
+                    b.Property<double?>("MinSoilMoisture")
+                        .HasColumnType("double precision")
+                        .HasColumnName("min_soil_moisture");
+
+                    b.Property<double?>("MinTemperature")
+                        .HasColumnType("double precision")
+                        .HasColumnName("min_temperature");
+
+                    b.Property<string>("RecommendedIrrigationType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("recommended_irrigation_type");
+
+                    b.Property<string>("ScientificName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("scientific_name");
+
+                    b.Property<int?>("TypicalHarvestCycleMonths")
+                        .HasColumnType("integer")
+                        .HasColumnName("typical_harvest_cycle_months");
+
+                    b.Property<int?>("TypicalPlantingEndMonth")
+                        .HasColumnType("integer")
+                        .HasColumnName("typical_planting_end_month");
+
+                    b.Property<int?>("TypicalPlantingStartMonth")
+                        .HasColumnType("integer")
+                        .HasColumnName("typical_planting_start_month");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_crop_type_catalog");
+
+                    b.ToTable("crop_type_catalog", "public");
+                });
+
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.CropTypeSuggestionAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<double?>("ConfidenceScore")
+                        .HasColumnType("double precision")
+                        .HasColumnName("confidence_score");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTimeOffset?>("GeneratedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("generated_at");
+
+                    b.Property<int?>("HarvestCycleMonths")
+                        .HasColumnType("integer")
+                        .HasColumnName("harvest_cycle_months");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsOverride")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_override");
+
+                    b.Property<bool>("IsStale")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_stale");
+
+                    b.Property<double?>("MaxTemperature")
+                        .HasColumnType("double precision")
+                        .HasColumnName("max_temperature");
+
+                    b.Property<double?>("MinHumidity")
+                        .HasColumnType("double precision")
+                        .HasColumnName("min_humidity");
+
+                    b.Property<double?>("MinSoilMoisture")
+                        .HasColumnType("double precision")
+                        .HasColumnName("min_soil_moisture");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("model");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<string>("PlantingWindow")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("planting_window");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("property_id");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("source");
+
+                    b.Property<string>("SuggestedIrrigationType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("suggested_irrigation_type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_crop_type_suggestions");
+
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_crop_type_suggestions_owner_id");
+
+                    b.HasIndex("PropertyId")
+                        .HasDatabaseName("ix_crop_type_suggestions_property_id");
+
+                    b.HasIndex("PropertyId", "OwnerId")
+                        .HasDatabaseName("ix_crop_type_suggestions_property_id_owner_id");
+
+                    b.HasIndex("PropertyId", "Source", "IsActive", "IsStale")
+                        .HasDatabaseName("ix_crop_type_suggestions_property_id_source_is_active_is_stale");
+
+                    b.ToTable("crop_type_suggestions", "public");
+                });
+
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -40,6 +233,10 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<Guid>("CropTypeCatalogId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("crop_type_catalog_id");
 
                     b.Property<DateTimeOffset>("ExpectedHarvestDate")
                         .HasColumnType("timestamptz")
@@ -71,6 +268,10 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("property_id");
 
+                    b.Property<Guid?>("SelectedCropTypeSuggestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("selected_crop_type_suggestion_id");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("updated_at");
@@ -78,11 +279,17 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_plots");
 
+                    b.HasIndex("CropTypeCatalogId")
+                        .HasDatabaseName("ix_plots_crop_type_catalog_id");
+
                     b.HasIndex("OwnerId")
                         .HasDatabaseName("ix_plots_owner_id");
 
                     b.HasIndex("PropertyId")
                         .HasDatabaseName("ix_plots_property_id");
+
+                    b.HasIndex("SelectedCropTypeSuggestionId")
+                        .HasDatabaseName("ix_plots_selected_crop_type_suggestion_id");
 
                     b.ToTable("plots", "public");
                 });
@@ -311,8 +518,87 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.CropTypeCatalogAggregate", b =>
+                {
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.CropType", "CropTypeName", b1 =>
+                        {
+                            b1.Property<Guid>("CropTypeCatalogAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("name");
+
+                            b1.HasKey("CropTypeCatalogAggregateId");
+
+                            b1.ToTable("crop_type_catalog", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CropTypeCatalogAggregateId")
+                                .HasConstraintName("fk_crop_type_catalog_crop_type_catalog_id");
+                        });
+
+                    b.Navigation("CropTypeName")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.CropTypeSuggestionAggregate", b =>
+                {
+                    b.HasOne("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_crop_type_suggestions_owner_snapshots_owner_id");
+
+                    b.HasOne("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_crop_type_suggestions_properties_property_id");
+
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.CropType", "CropName", b1 =>
+                        {
+                            b1.Property<Guid>("CropTypeSuggestionAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("crop_type");
+
+                            b1.HasKey("CropTypeSuggestionAggregateId");
+
+                            b1.ToTable("crop_type_suggestions", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CropTypeSuggestionAggregateId")
+                                .HasConstraintName("fk_crop_type_suggestions_crop_type_suggestions_id");
+                        });
+
+                    b.Navigation("CropName")
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+
+                    b.Navigation("Property");
+                });
+
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", b =>
                 {
+                    b.HasOne("TC.Agro.Farm.Domain.Aggregates.CropTypeCatalogAggregate", "CropTypeCatalog")
+                        .WithMany("Plots")
+                        .HasForeignKey("CropTypeCatalogId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_plots_crop_type_catalogs_crop_type_catalog_id");
+
                     b.HasOne("TC.Agro.Farm.Domain.Snapshots.OwnerSnapshot", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId")
@@ -326,6 +612,12 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_plots_properties_property_id");
+
+                    b.HasOne("TC.Agro.Farm.Domain.Aggregates.CropTypeSuggestionAggregate", "SelectedCropTypeSuggestion")
+                        .WithMany()
+                        .HasForeignKey("SelectedCropTypeSuggestionId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_plots_crop_type_suggestions_selected_crop_type_suggestion_id");
 
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Area", "AreaHectares", b1 =>
                         {
@@ -387,27 +679,6 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasConstraintName("fk_plots_plots_id");
                         });
 
-                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.CropType", "CropType", b1 =>
-                        {
-                            b1.Property<Guid>("PlotAggregateId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("crop_type");
-
-                            b1.HasKey("PlotAggregateId");
-
-                            b1.ToTable("plots", "public");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PlotAggregateId")
-                                .HasConstraintName("fk_plots_plots_id");
-                        });
-
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.IrrigationType", "IrrigationType", b1 =>
                         {
                             b1.Property<Guid>("PlotAggregateId")
@@ -434,8 +705,7 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.Navigation("AreaHectares")
                         .IsRequired();
 
-                    b.Navigation("CropType")
-                        .IsRequired();
+                    b.Navigation("CropTypeCatalog");
 
                     b.Navigation("IrrigationType")
                         .IsRequired();
@@ -446,6 +716,8 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                     b.Navigation("Owner");
 
                     b.Navigation("Property");
+
+                    b.Navigation("SelectedCropTypeSuggestion");
                 });
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PropertyAggregate", b =>
@@ -651,6 +923,11 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
 
                     b.Navigation("Type")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.CropTypeCatalogAggregate", b =>
+                {
+                    b.Navigation("Plots");
                 });
 
             modelBuilder.Entity("TC.Agro.Farm.Domain.Aggregates.PlotAggregate", b =>

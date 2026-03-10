@@ -18,6 +18,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
             var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
             var irrigationType = "Center Pivot";
+            var cropTypeCatalogId = Guid.NewGuid();
 
             // Act
             var result = PlotAggregate.Create(
@@ -30,7 +31,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 expectedHarvestDate,
                 irrigationType,
                 null,
-                cropTypeCatalogId: Guid.NewGuid());
+                cropTypeCatalogId: cropTypeCatalogId);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -39,7 +40,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             result.Value.PropertyId.ShouldBe(propertyId);
             result.Value.OwnerId.ShouldBe(ownerId);
             result.Value.Name.Value.ShouldBe(name);
-            result.Value.CropTypeDisplayName.ShouldBe(cropType);
+            result.Value.CropTypeCatalogId.ShouldBe(cropTypeCatalogId);
             result.Value.AreaHectares.Hectares.ShouldBe(areaHectares);
             result.Value.IsActive.ShouldBeTrue();
         }
@@ -60,6 +61,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plantingDate = DateTimeOffset.UtcNow.AddMonths(-2);
             var expectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(6);
             var irrigationType = "Center Pivot";
+            var cropTypeCatalogId = Guid.NewGuid();
 
             // Act
             var result = PlotAggregate.Create(
@@ -72,11 +74,11 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 expectedHarvestDate,
                 irrigationType,
                 null,
-                cropTypeCatalogId: Guid.NewGuid());
+                cropTypeCatalogId: cropTypeCatalogId);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
-            result.Value.CropTypeDisplayName.ShouldBe(cropType);
+            result.Value.CropTypeCatalogId.ShouldBe(cropTypeCatalogId);
         }
 
         #endregion
@@ -279,6 +281,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var newPlantingDate = DateTimeOffset.UtcNow.AddMonths(-1);
             var newExpectedHarvestDate = DateTimeOffset.UtcNow.AddMonths(7);
             var newIrrigationType = "Sprinkler";
+            var newCropTypeCatalogId = Guid.NewGuid();
 
             // Act
             var result = plot.Update(
@@ -289,12 +292,12 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 newExpectedHarvestDate,
                 newIrrigationType,
                 null,
-                cropTypeCatalogId: Guid.NewGuid());
+                cropTypeCatalogId: newCropTypeCatalogId);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
             plot.Name.Value.ShouldBe(newName);
-            plot.CropTypeDisplayName.ShouldBe(newCropType);
+            plot.CropTypeCatalogId.ShouldBe(newCropTypeCatalogId);
             plot.AreaHectares.Hectares.ShouldBe(newArea);
         }
 
@@ -378,13 +381,14 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             // Arrange
             var plot = CreateValidPlot();
             var newCropType = "Wheat";
+            var newCropTypeCatalogId = Guid.NewGuid();
 
             // Act
-            var result = plot.ChangeCropType(newCropType, cropTypeCatalogId: Guid.NewGuid());
+            var result = plot.ChangeCropType(newCropType, cropTypeCatalogId: newCropTypeCatalogId);
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
-            plot.CropTypeDisplayName.ShouldBe(newCropType);
+            plot.CropTypeCatalogId.ShouldBe(newCropTypeCatalogId);
         }
 
         [Fact]
