@@ -7,6 +7,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         private readonly ICropTypeCatalogRepository _cropTypeCatalogRepository;
         private readonly ICropTypeSuggestionRepository _cropTypeSuggestionRepository;
         private readonly ILogger<CreatePlotCommandHandler> _logger;
+        private string? _resolvedCropType;
 
         public CreatePlotCommandHandler(
             IPlotAggregateRepository repository,
@@ -42,6 +43,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
             {
                 return Result<PlotAggregate>.Invalid(cropReferenceResult.ValidationErrors);
             }
+
+            _resolvedCropType = cropReferenceResult.Value.ResolvedCropType;
 
             return CreatePlotMapper.ToAggregate(
                 command,
@@ -253,6 +256,6 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         }
 
         protected override Task<CreatePlotResponse> BuildResponseAsync(PlotAggregate aggregate, CancellationToken ct)
-            => Task.FromResult(CreatePlotMapper.FromAggregate(aggregate));
+            => Task.FromResult(CreatePlotMapper.FromAggregate(aggregate, _resolvedCropType!));
     }
 }

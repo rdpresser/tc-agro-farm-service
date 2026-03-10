@@ -2,13 +2,13 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
 {
     internal static class UpdatePlotMapper
     {
-        public static UpdatePlotResponse FromAggregate(PlotAggregate aggregate)
+        public static UpdatePlotResponse FromAggregate(PlotAggregate aggregate, string cropTypeDisplayName)
         {
             return new UpdatePlotResponse(
                 PlotId: aggregate.Id,
                 PropertyId: aggregate.PropertyId,
                 Name: aggregate.Name.Value,
-                CropType: aggregate.CropTypeDisplayName,
+                CropType: cropTypeDisplayName,
                 AreaHectares: aggregate.AreaHectares.Hectares,
                 Latitude: aggregate.Latitude,
                 Longitude: aggregate.Longitude,

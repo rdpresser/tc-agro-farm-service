@@ -102,7 +102,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
 
             _logger.LogInformation("Plot {PlotId} updated successfully", aggregate.Id);
 
-            return UpdatePlotMapper.FromAggregate(aggregate);
+            return UpdatePlotMapper.FromAggregate(aggregate, cropReferenceResult.Value.ResolvedCropType);
         }
 
         private async Task<Result<CropReferenceResolution>> ResolveCropReferencesAsync(
