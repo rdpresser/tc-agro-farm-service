@@ -4,17 +4,20 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
         : BaseHandler<UpdatePropertyCommand, UpdatePropertyResponse>
     {
         private readonly IPropertyAggregateRepository _repository;
+        private readonly ICropTypeSuggestionRepository _cropTypeRepository;
         private readonly IUserContext _userContext;
         private readonly ITransactionalOutbox _outbox;
         private readonly ILogger<UpdatePropertyCommandHandler> _logger;
 
         public UpdatePropertyCommandHandler(
             IPropertyAggregateRepository repository,
+            ICropTypeSuggestionRepository cropTypeRepository,
             IUserContext userContext,
             ITransactionalOutbox outbox,
             ILogger<UpdatePropertyCommandHandler> logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _cropTypeRepository = cropTypeRepository ?? throw new ArgumentNullException(nameof(cropTypeRepository));
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
             _outbox = outbox ?? throw new ArgumentNullException(nameof(outbox));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -61,6 +64,9 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
                 return BuildValidationErrorResult();
             }
 
+            var previousLatitude = aggregate.Location.Latitude;
+            var previousLongitude = aggregate.Location.Longitude;
+
             // 4. Apply update
             var updateResult = aggregate.Update(
                 command.Name,
@@ -76,6 +82,13 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
             {
                 AddErrors(updateResult.ValidationErrors);
                 return BuildValidationErrorResult();
+            }
+
+            if (HasLocationChanged(previousLatitude, previousLongitude, aggregate.Location.Latitude, aggregate.Location.Longitude))
+            {
+                await _cropTypeRepository
+                    .MarkAiSuggestionsAsStaleByPropertyAsync(aggregate.Id, ct)
+                    .ConfigureAwait(false);
             }
 
             // 5. Publish integration events
@@ -115,6 +128,24 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
                 "Enqueued {Count} integration events for property {PropertyId}",
                 integrationEvents.Count,
                 aggregate.Id);
+        }
+
+        private static bool HasLocationChanged(double? previousLatitude, double? previousLongitude, double? currentLatitude, double? currentLongitude)
+        {
+            if (previousLatitude.HasValue != currentLatitude.HasValue || previousLongitude.HasValue != currentLongitude.HasValue)
+            {
+                return true;
+            }
+
+            if (!previousLatitude.HasValue || !previousLongitude.HasValue || !currentLatitude.HasValue || !currentLongitude.HasValue)
+            {
+                return false;
+            }
+
+            const double tolerance = 0.000001;
+
+            return Math.Abs(previousLatitude.Value - currentLatitude.Value) > tolerance ||
+                   Math.Abs(previousLongitude.Value - currentLongitude.Value) > tolerance;
         }
     }
 }

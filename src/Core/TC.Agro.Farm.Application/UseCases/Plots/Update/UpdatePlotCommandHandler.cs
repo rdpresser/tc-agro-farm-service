@@ -4,17 +4,23 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
         : BaseHandler<UpdatePlotCommand, UpdatePlotResponse>
     {
         private readonly IPlotAggregateRepository _repository;
+        private readonly ICropTypeCatalogRepository _cropTypeCatalogRepository;
+        private readonly ICropTypeSuggestionRepository _cropTypeSuggestionRepository;
         private readonly IUserContext _userContext;
         private readonly ITransactionalOutbox _outbox;
         private readonly ILogger<UpdatePlotCommandHandler> _logger;
 
         public UpdatePlotCommandHandler(
             IPlotAggregateRepository repository,
+            ICropTypeCatalogRepository cropTypeCatalogRepository,
+            ICropTypeSuggestionRepository cropTypeSuggestionRepository,
             IUserContext userContext,
             ITransactionalOutbox outbox,
             ILogger<UpdatePlotCommandHandler> logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _cropTypeCatalogRepository = cropTypeCatalogRepository ?? throw new ArgumentNullException(nameof(cropTypeCatalogRepository));
+            _cropTypeSuggestionRepository = cropTypeSuggestionRepository ?? throw new ArgumentNullException(nameof(cropTypeSuggestionRepository));
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
             _outbox = outbox ?? throw new ArgumentNullException(nameof(outbox));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -60,9 +66,21 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
                 return BuildValidationErrorResult();
             }
 
+            var cropReferenceResult = await ResolveCropReferencesAsync(
+                command,
+                aggregate.OwnerId,
+                aggregate.PropertyId,
+                ct).ConfigureAwait(false);
+
+            if (!cropReferenceResult.IsSuccess)
+            {
+                AddErrors(cropReferenceResult.ValidationErrors);
+                return BuildValidationErrorResult();
+            }
+
             var updateResult = aggregate.Update(
                 command.Name,
-                command.CropType,
+                cropReferenceResult.Value.ResolvedCropType,
                 command.AreaHectares,
                 command.PlantingDate,
                 command.ExpectedHarvestDate,
@@ -70,7 +88,9 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
                 command.AdditionalNotes,
                 command.Latitude,
                 command.Longitude,
-                command.BoundaryGeoJson);
+                command.BoundaryGeoJson,
+                cropReferenceResult.Value.CropTypeCatalogId,
+                cropReferenceResult.Value.SelectedCropTypeSuggestionId);
 
             if (!updateResult.IsSuccess)
             {
@@ -84,5 +104,114 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
 
             return UpdatePlotMapper.FromAggregate(aggregate);
         }
+
+        private async Task<Result<CropReferenceResolution>> ResolveCropReferencesAsync(
+            UpdatePlotCommand command,
+            Guid ownerId,
+            Guid propertyId,
+            CancellationToken ct)
+        {
+            var normalizedCropType = string.IsNullOrWhiteSpace(command.CropType)
+                ? null
+                : command.CropType.Trim();
+
+            CropTypeCatalogAggregate? catalogAggregate = null;
+
+            if (command.CropTypeCatalogId.HasValue)
+            {
+                if (command.CropTypeCatalogId.Value == Guid.Empty)
+                {
+                    return Result<CropReferenceResolution>.Invalid(
+                        new ValidationError(nameof(command.CropTypeCatalogId), "CropTypeCatalogId cannot be empty when informed."));
+                }
+
+                catalogAggregate = await _cropTypeCatalogRepository
+                    .GetByIdAsync(command.CropTypeCatalogId.Value, ct)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(normalizedCropType))
+                {
+                    return Result<CropReferenceResolution>.Invalid(
+                        new ValidationError(nameof(command.CropType), "CropTypeCatalogId is required, or an existing CropType name must be informed."));
+                }
+
+                catalogAggregate = await _cropTypeCatalogRepository
+                    .GetByNameAsync(normalizedCropType, ct)
+                    .ConfigureAwait(false);
+            }
+
+            if (catalogAggregate is null)
+            {
+                return Result<CropReferenceResolution>.Invalid(FarmDomainErrors.CropTypeCatalogNotFound);
+            }
+
+            if (!string.IsNullOrWhiteSpace(normalizedCropType) &&
+                !string.Equals(normalizedCropType, catalogAggregate.CropTypeName.Value, StringComparison.OrdinalIgnoreCase))
+            {
+                return Result<CropReferenceResolution>.Invalid(
+                    new ValidationError(
+                        nameof(command.CropType),
+                        "CropType must match the informed CropTypeCatalogId when both are provided."));
+            }
+
+            var resolvedCropType = catalogAggregate.CropTypeName.Value;
+
+            if (command.SelectedCropTypeSuggestionId.HasValue)
+            {
+                if (command.SelectedCropTypeSuggestionId.Value == Guid.Empty)
+                {
+                    return Result<CropReferenceResolution>.Invalid(
+                        new ValidationError(
+                            nameof(command.SelectedCropTypeSuggestionId),
+                            "SelectedCropTypeSuggestionId cannot be empty when informed."));
+                }
+
+                var selectedSuggestion = await _cropTypeSuggestionRepository
+                    .GetByIdAsync(command.SelectedCropTypeSuggestionId.Value, ct)
+                    .ConfigureAwait(false);
+
+                if (selectedSuggestion is null)
+                {
+                    return Result<CropReferenceResolution>.Invalid(FarmDomainErrors.CropTypeSuggestionNotFound);
+                }
+
+                if (selectedSuggestion.PropertyId != propertyId)
+                {
+                    return Result<CropReferenceResolution>.Invalid(
+                        new ValidationError(
+                            nameof(command.SelectedCropTypeSuggestionId),
+                            "Selected crop type suggestion does not belong to the informed property."));
+                }
+
+                if (selectedSuggestion.OwnerId != ownerId)
+                {
+                    return Result<CropReferenceResolution>.Invalid(
+                        new ValidationError(
+                            nameof(command.SelectedCropTypeSuggestionId),
+                            "Selected crop type suggestion does not belong to the informed owner."));
+                }
+
+                if (!string.Equals(selectedSuggestion.CropName.Value, resolvedCropType, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Result<CropReferenceResolution>.Invalid(
+                        new ValidationError(
+                            nameof(command.SelectedCropTypeSuggestionId),
+                            "Selected crop type suggestion does not match the resolved crop type catalog."));
+                }
+            }
+
+            return Result<CropReferenceResolution>.Success(
+                new CropReferenceResolution(
+                    resolvedCropType,
+                    catalogAggregate.Id,
+                    command.SelectedCropTypeSuggestionId));
+        }
+
+        private sealed record CropReferenceResolution(
+            string ResolvedCropType,
+            Guid CropTypeCatalogId,
+            Guid? SelectedCropTypeSuggestionId);
     }
 }

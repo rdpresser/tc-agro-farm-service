@@ -24,19 +24,34 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
                 .WithErrorCode($"{nameof(UpdatePlotCommand.Name)}.MaximumLength");
 
             RuleFor(x => x.CropType)
-                .NotEmpty()
-                .WithMessage("Crop type is mandatory.")
-                .WithErrorCode($"{nameof(UpdatePlotCommand.CropType)}.Required")
                 .MinimumLength(2)
+                .When(x => !string.IsNullOrWhiteSpace(x.CropType))
                 .WithMessage("Crop type must be at least 2 characters long.")
                 .WithErrorCode($"{nameof(UpdatePlotCommand.CropType)}.MinimumLength")
                 .MaximumLength(100)
+                .When(x => !string.IsNullOrWhiteSpace(x.CropType))
                 .WithMessage("Crop type must not exceed 100 characters.")
-                .WithErrorCode($"{nameof(UpdatePlotCommand.CropType)}.MaximumLength")
-                .Must(cropType => CropType.CommonCropTypes.Contains(cropType, StringComparer.OrdinalIgnoreCase))
-                .WithMessage(cropType =>
-                    $"Crop type '{cropType.CropType}' is not recognized. Valid types are: {CropType.CommonCropTypes.JoinWithQuotes()}.")
-                .WithErrorCode($"{nameof(UpdatePlotCommand.CropType)}.InvalidValue");
+                .WithErrorCode($"{nameof(UpdatePlotCommand.CropType)}.MaximumLength");
+
+            RuleFor(x => x)
+                .Must(x => !string.IsNullOrWhiteSpace(x.CropType) || x.CropTypeCatalogId.HasValue)
+                .WithMessage("Either CropType or CropTypeCatalogId must be informed.")
+                .WithErrorCode("CropTypeCatalog.CompatibilityRequired");
+
+            RuleFor(x => x.CropTypeCatalogId)
+                .Must(id => !id.HasValue || id.Value != Guid.Empty)
+                .WithMessage("CropTypeCatalogId cannot be empty when informed.")
+                .WithErrorCode($"{nameof(UpdatePlotCommand.CropTypeCatalogId)}.Invalid");
+
+            RuleFor(x => x.SelectedCropTypeSuggestionId)
+                .Must(id => !id.HasValue || id.Value != Guid.Empty)
+                .WithMessage("SelectedCropTypeSuggestionId cannot be empty when informed.")
+                .WithErrorCode($"{nameof(UpdatePlotCommand.SelectedCropTypeSuggestionId)}.Invalid");
+
+            RuleFor(x => x)
+                .Must(x => !x.SelectedCropTypeSuggestionId.HasValue || x.CropTypeCatalogId.HasValue)
+                .WithMessage("CropTypeCatalogId is required when SelectedCropTypeSuggestionId is informed.")
+                .WithErrorCode($"{nameof(UpdatePlotCommand.CropTypeCatalogId)}.RequiredWhenSuggestionInformed");
 
             RuleFor(x => x.AreaHectares)
                 .GreaterThan(0)

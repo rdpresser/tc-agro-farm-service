@@ -64,8 +64,8 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
                     ? query.OrderBy(p => p.Name.Value)
                     : query.OrderByDescending(p => p.Name.Value),
                 "croptype" => isAscending
-                    ? query.OrderBy(p => p.CropType.Value)
-                    : query.OrderByDescending(p => p.CropType.Value),
+                    ? query.OrderBy(p => p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value)
+                    : query.OrderByDescending(p => p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value),
                 "areahectares" => isAscending
                     ? query.OrderBy(p => p.AreaHectares.Hectares)
                     : query.OrderByDescending(p => p.AreaHectares.Hectares),
@@ -151,6 +151,49 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
         }
 
         /// <summary>
+        /// Applies dynamic sorting to CropTypeSuggestionAggregate queries.
+        /// </summary>
+        public static IQueryable<CropTypeSuggestionAggregate> ApplySorting(
+            this IQueryable<CropTypeSuggestionAggregate> query,
+            string? sortBy,
+            string? sortDirection)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return query.OrderByDescending(c => c.CreatedAt);
+
+            var isAscending = string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+
+            return sortBy.ToLowerInvariant() switch
+            {
+                "croptype" => isAscending
+                    ? query.OrderBy(c => c.CropName.Value)
+                    : query.OrderByDescending(c => c.CropName.Value),
+                "propertyname" => isAscending
+                    ? query.OrderBy(c => c.Property.Name.Value)
+                    : query.OrderByDescending(c => c.Property.Name.Value),
+                "confidence" => isAscending
+                    ? query.OrderBy(c => c.ConfidenceScore)
+                    : query.OrderByDescending(c => c.ConfidenceScore),
+                "source" => isAscending
+                    ? query.OrderBy(c => c.Source)
+                    : query.OrderByDescending(c => c.Source),
+                "isstale" => isAscending
+                    ? query.OrderBy(c => c.IsStale)
+                    : query.OrderByDescending(c => c.IsStale),
+                "generatedat" => isAscending
+                    ? query.OrderBy(c => c.GeneratedAt)
+                    : query.OrderByDescending(c => c.GeneratedAt),
+                "updatedat" => isAscending
+                    ? query.OrderBy(c => c.UpdatedAt)
+                    : query.OrderByDescending(c => c.UpdatedAt),
+                "createdat" => isAscending
+                    ? query.OrderBy(c => c.CreatedAt)
+                    : query.OrderByDescending(c => c.CreatedAt),
+                _ => query.OrderByDescending(c => c.CreatedAt)
+            };
+        }
+
+        /// <summary>
         /// Applies text search filter to PropertyAggregate queries.
         /// </summary>
         public static IQueryable<PropertyAggregate> ApplyTextFilter(
@@ -179,10 +222,13 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
             if (string.IsNullOrWhiteSpace(filter))
                 return query;
 
-            var pattern = $"%{filter}%";
+            var pattern = $"%{filter.Trim()}%";
             return query.Where(p =>
                 EF.Functions.ILike(p.Name.Value, pattern) ||
-                EF.Functions.ILike(p.Property.Name.Value, pattern));
+                EF.Functions.ILike(p.Property.Name.Value, pattern) ||
+                EF.Functions.ILike(
+                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
+                    pattern));
         }
 
         /// <summary>
@@ -217,6 +263,27 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
                 (hasBool && o.IsActive == boolFilter) ||
                 (hasDate && o.CreatedAt >= dayStart && o.CreatedAt < dayEnd) ||
                 (hasDate && o.UpdatedAt.HasValue && o.UpdatedAt.Value >= dayStart && o.UpdatedAt.Value < dayEnd));
+        }
+
+        /// <summary>
+        /// Applies text search filter to CropTypeSuggestionAggregate queries.
+        /// </summary>
+        public static IQueryable<CropTypeSuggestionAggregate> ApplyTextFilter(
+            this IQueryable<CropTypeSuggestionAggregate> query,
+            string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            var pattern = $"%{filter.Trim()}%";
+
+            return query.Where(c =>
+                EF.Functions.ILike(c.CropName.Value, pattern) ||
+                EF.Functions.ILike(c.Property.Name.Value, pattern) ||
+                EF.Functions.ILike(c.Owner.Name, pattern) ||
+                EF.Functions.ILike(c.Source, pattern) ||
+                (c.Notes != null && EF.Functions.ILike(c.Notes, pattern)) ||
+                (c.SuggestedIrrigationType != null && EF.Functions.ILike(c.SuggestedIrrigationType, pattern)));
         }
 
         /// <summary>

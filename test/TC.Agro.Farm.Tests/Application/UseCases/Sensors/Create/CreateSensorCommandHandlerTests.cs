@@ -211,7 +211,8 @@ public sealed class CreateSensorCommandHandlerTests
             PlantingDate: DateTimeOffset.UtcNow.AddDays(-30),
             ExpectedHarvestDate: DateTimeOffset.UtcNow.AddDays(120),
             IrrigationType: "Center Pivot",
-            AdditionalNotes: null);
+            AdditionalNotes: null,
+            CropTypeCatalogId: Guid.NewGuid());
 
     private static PropertyAggregate CreateProperty(Guid ownerId)
     {
@@ -245,7 +246,8 @@ public sealed class CreateSensorCommandHandlerTests
             additionalNotes: null,
             latitude: -21.1775,
             longitude: -47.8103,
-            boundaryGeoJson: null);
+            boundaryGeoJson: null,
+            cropTypeCatalogId: Guid.NewGuid());
 
         result.IsSuccess.ShouldBeTrue();
 

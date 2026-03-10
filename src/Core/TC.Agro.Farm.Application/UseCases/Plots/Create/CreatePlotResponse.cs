@@ -16,5 +16,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
         string IrrigationType,
         string? AdditionalNotes,
         bool IsActive,
-        DateTimeOffset CreatedAt);
+        DateTimeOffset CreatedAt,
+        Guid CropTypeCatalogId,
+        Guid? SelectedCropTypeSuggestionId = null);
 }

@@ -22,6 +22,11 @@ namespace TC.Agro.Farm.Infrastructure
             services.AddScoped<ISensorAggregateRepository, SensorAggregateRepository>();
             services.AddScoped<ISensorReadStore, SensorReadStore>();
 
+            // Crop type suggestion repositories
+            services.AddScoped<ICropTypeCatalogRepository, CropTypeCatalogRepository>();
+            services.AddScoped<ICropTypeSuggestionRepository, CropTypeSuggestionRepository>();
+            services.AddScoped<ICropTypeSuggestionReadStore, CropTypeSuggestionReadStore>();
+
             // Owner snapshot store
             services.AddScoped<IOwnerSnapshotStore, OwnerSnapshotStore>();
             services.AddScoped<IOwnerReadStore, OwnerReadStore>();

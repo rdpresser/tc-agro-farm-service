@@ -20,7 +20,17 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                name,
+                cropType,
+                areaHectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
@@ -29,7 +39,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             result.Value.PropertyId.ShouldBe(propertyId);
             result.Value.OwnerId.ShouldBe(ownerId);
             result.Value.Name.Value.ShouldBe(name);
-            result.Value.CropType.Value.ShouldBe(cropType);
+            result.Value.CropTypeDisplayName.ShouldBe(cropType);
             result.Value.AreaHectares.Hectares.ShouldBe(areaHectares);
             result.Value.IsActive.ShouldBeTrue();
         }
@@ -52,11 +62,21 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                name,
+                cropType,
+                areaHectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
-            result.Value.CropType.Value.ShouldBe(cropType);
+            result.Value.CropTypeDisplayName.ShouldBe(cropType);
         }
 
         #endregion
@@ -77,7 +97,17 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                name,
+                cropType,
+                areaHectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -98,7 +128,17 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                name,
+                cropType,
+                areaHectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -119,7 +159,17 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                name,
+                cropType,
+                areaHectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -140,7 +190,17 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                name,
+                cropType,
+                areaHectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -161,11 +221,47 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var irrigationType = "Center Pivot";
 
             // Act
-            var result = PlotAggregate.Create(propertyId, ownerId, name, cropType, areaHectares, plantingDate, expectedHarvestDate, irrigationType, null);
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                name,
+                cropType,
+                areaHectares,
+                plantingDate,
+                expectedHarvestDate,
+                irrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
             result.ValidationErrors.Count().ShouldBeGreaterThan(1);
+        }
+
+        [Fact]
+        public void Create_WithSuggestionIdAndNoCatalogId_ShouldReturnValidationErrors()
+        {
+            // Arrange
+            var propertyId = Guid.NewGuid();
+            var ownerId = Guid.NewGuid();
+
+            // Act
+            var result = PlotAggregate.Create(
+                propertyId,
+                ownerId,
+                "Talhao A1",
+                "Soy",
+                25.5,
+                DateTimeOffset.UtcNow.AddMonths(-2),
+                DateTimeOffset.UtcNow.AddMonths(6),
+                "Center Pivot",
+                null,
+                cropTypeCatalogId: Guid.Empty,
+                selectedCropTypeSuggestionId: Guid.NewGuid());
+
+            // Assert
+            result.IsSuccess.ShouldBeFalse();
+            result.ValidationErrors.ShouldContain(e => e.Identifier == "Plot.CropTypeCatalogId");
         }
 
         #endregion
@@ -185,12 +281,20 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var newIrrigationType = "Sprinkler";
 
             // Act
-            var result = plot.Update(newName, newCropType, newArea, newPlantingDate, newExpectedHarvestDate, newIrrigationType, null);
+            var result = plot.Update(
+                newName,
+                newCropType,
+                newArea,
+                newPlantingDate,
+                newExpectedHarvestDate,
+                newIrrigationType,
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
             plot.Name.Value.ShouldBe(newName);
-            plot.CropType.Value.ShouldBe(newCropType);
+            plot.CropTypeDisplayName.ShouldBe(newCropType);
             plot.AreaHectares.Hectares.ShouldBe(newArea);
         }
 
@@ -205,7 +309,15 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plot = CreateValidPlot();
 
             // Act
-            var result = plot.Update("", "Corn", 30.0, DateTimeOffset.UtcNow.AddMonths(-2), DateTimeOffset.UtcNow.AddMonths(6), "Center Pivot", null);
+            var result = plot.Update(
+                "",
+                "Corn",
+                30.0,
+                DateTimeOffset.UtcNow.AddMonths(-2),
+                DateTimeOffset.UtcNow.AddMonths(6),
+                "Center Pivot",
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -219,7 +331,15 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plot = CreateValidPlot();
 
             // Act
-            var result = plot.Update("Valid Name", "", 30.0, DateTimeOffset.UtcNow.AddMonths(-2), DateTimeOffset.UtcNow.AddMonths(6), "Center Pivot", null);
+            var result = plot.Update(
+                "Valid Name",
+                "",
+                30.0,
+                DateTimeOffset.UtcNow.AddMonths(-2),
+                DateTimeOffset.UtcNow.AddMonths(6),
+                "Center Pivot",
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -233,7 +353,15 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plot = CreateValidPlot();
 
             // Act
-            var result = plot.Update("Valid Name", "Corn", -100.0, DateTimeOffset.UtcNow.AddMonths(-2), DateTimeOffset.UtcNow.AddMonths(6), "Center Pivot", null);
+            var result = plot.Update(
+                "Valid Name",
+                "Corn",
+                -100.0,
+                DateTimeOffset.UtcNow.AddMonths(-2),
+                DateTimeOffset.UtcNow.AddMonths(6),
+                "Center Pivot",
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
@@ -252,11 +380,11 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var newCropType = "Wheat";
 
             // Act
-            var result = plot.ChangeCropType(newCropType);
+            var result = plot.ChangeCropType(newCropType, cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeTrue();
-            plot.CropType.Value.ShouldBe(newCropType);
+            plot.CropTypeDisplayName.ShouldBe(newCropType);
         }
 
         [Fact]
@@ -266,11 +394,28 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             var plot = CreateValidPlot();
 
             // Act
-            var result = plot.ChangeCropType("");
+            var result = plot.ChangeCropType("", cropTypeCatalogId: Guid.NewGuid());
 
             // Assert
             result.IsSuccess.ShouldBeFalse();
             result.ValidationErrors.ShouldContain(e => e.Identifier == "CropType.Required");
+        }
+
+        [Fact]
+        public void ChangeCropType_WithSuggestionIdAndNoCatalogId_ShouldReturnValidationErrors()
+        {
+            // Arrange
+            var plot = CreateValidPlot();
+
+            // Act
+            var result = plot.ChangeCropType(
+                "Corn",
+                cropTypeCatalogId: Guid.Empty,
+                selectedCropTypeSuggestionId: Guid.NewGuid());
+
+            // Assert
+            result.IsSuccess.ShouldBeFalse();
+            result.ValidationErrors.ShouldContain(e => e.Identifier == "Plot.CropTypeCatalogId");
         }
 
         #endregion
@@ -356,7 +501,8 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 DateTimeOffset.UtcNow.AddMonths(-2),
                 DateTimeOffset.UtcNow.AddMonths(6),
                 "Center Pivot",
-                null);
+                null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             return result.Value;
         }

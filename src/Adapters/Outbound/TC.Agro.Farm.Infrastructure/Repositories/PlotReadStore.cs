@@ -30,7 +30,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.Owner.Name,
                     p.Property.Name.Value,
                     p.Name.Value,
-                    p.CropType.Value,
+                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
                     p.AreaHectares.Hectares,
                     p.Latitude ?? p.Property.Location.Latitude,
                     p.Longitude ?? p.Property.Location.Longitude,
@@ -42,7 +42,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
                     p.IrrigationType.Value,
-                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null))
+                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null,
+                    p.CropTypeCatalogId,
+                    p.SelectedCropTypeSuggestionId))
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -58,10 +60,17 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .AsNoTracking()
                 .Where(p => p.PropertyId == query.Id);
 
+            if (query.CropTypeCatalogId.HasValue && query.CropTypeCatalogId.Value != Guid.Empty)
+            {
+                plotsQuery = plotsQuery.Where(p => p.CropTypeCatalogId == query.CropTypeCatalogId.Value);
+            }
+
             // Apply optional crop type filter (using index on crop_type)
             if (!string.IsNullOrWhiteSpace(query.CropType))
             {
-                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(p.CropType.Value, query.CropType));
+                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(
+                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
+                    query.CropType));
             }
 
             // Apply text filter (searches name and crop type)
@@ -83,7 +92,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.Owner.Name,
                     p.Property.Name.Value,
                     p.Name.Value,
-                    p.CropType.Value,
+                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
                     p.AreaHectares.Hectares,
                     p.Latitude ?? p.Property.Location.Latitude,
                     p.Longitude ?? p.Property.Location.Longitude,
@@ -93,7 +102,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
                     p.IrrigationType.Value,
-                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null))
+                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null,
+                    p.CropTypeCatalogId,
+                    p.SelectedCropTypeSuggestionId))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -119,10 +130,17 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 plotsQuery = plotsQuery.Where(p => p.PropertyId == query.PropertyId.Value);
             }
 
+            if (query.CropTypeCatalogId.HasValue && query.CropTypeCatalogId.Value != Guid.Empty)
+            {
+                plotsQuery = plotsQuery.Where(p => p.CropTypeCatalogId == query.CropTypeCatalogId.Value);
+            }
+
             // Apply optional crop type filter (using index on crop_type)
             if (!string.IsNullOrWhiteSpace(query.CropType))
             {
-                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(p.CropType.Value, query.CropType));
+                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(
+                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
+                    query.CropType));
             }
 
             // Apply text filter (searches name and crop type)
@@ -144,7 +162,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.Owner.Name,
                     p.Property.Name.Value,
                     p.Name.Value,
-                    p.CropType.Value,
+                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
                     p.AreaHectares.Hectares,
                     p.Latitude ?? p.Property.Location.Latitude,
                     p.Longitude ?? p.Property.Location.Longitude,
@@ -154,7 +172,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
                     p.IrrigationType.Value,
-                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null))
+                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null,
+                    p.CropTypeCatalogId,
+                    p.SelectedCropTypeSuggestionId))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 

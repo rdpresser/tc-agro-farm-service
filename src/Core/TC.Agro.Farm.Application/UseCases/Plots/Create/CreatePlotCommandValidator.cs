@@ -27,20 +27,36 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                     .WithErrorCode($"{nameof(CreatePlotCommand.Name)}.MaximumLength");
             #endregion
 
-            #region CropType | Validation Rules (MANDATORY per hackathon requirement)
+            #region CropType / CropTypeCatalogId | Validation Rules
             RuleFor(x => x.CropType)
-                .NotEmpty()
-                    .WithMessage("Crop type is mandatory.")
-                    .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.Required")
                 .MinimumLength(2)
+                    .When(x => !string.IsNullOrWhiteSpace(x.CropType))
                     .WithMessage("Crop type must be at least 2 characters long.")
                     .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.MinimumLength")
                 .MaximumLength(100)
+                    .When(x => !string.IsNullOrWhiteSpace(x.CropType))
                     .WithMessage("Crop type must not exceed 100 characters.")
-                    .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.MaximumLength")
-                .Must(cropType => CropType.CommonCropTypes.Contains(cropType, StringComparer.OrdinalIgnoreCase))
-                    .WithMessage(cropType => $"Crop type '{cropType.CropType}' is not recognized. Valid types are: {CropType.CommonCropTypes.JoinWithQuotes()}.")
-                    .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.InvalidValue");
+                    .WithErrorCode($"{nameof(CreatePlotCommand.CropType)}.MaximumLength");
+
+            RuleFor(x => x)
+                .Must(x => !string.IsNullOrWhiteSpace(x.CropType) || x.CropTypeCatalogId.HasValue)
+                .WithMessage("Either CropType or CropTypeCatalogId must be informed.")
+                .WithErrorCode("CropTypeCatalog.CompatibilityRequired");
+
+            RuleFor(x => x.CropTypeCatalogId)
+                .Must(id => !id.HasValue || id.Value != Guid.Empty)
+                .WithMessage("CropTypeCatalogId cannot be empty when informed.")
+                .WithErrorCode($"{nameof(CreatePlotCommand.CropTypeCatalogId)}.Invalid");
+
+            RuleFor(x => x.SelectedCropTypeSuggestionId)
+                .Must(id => !id.HasValue || id.Value != Guid.Empty)
+                .WithMessage("SelectedCropTypeSuggestionId cannot be empty when informed.")
+                .WithErrorCode($"{nameof(CreatePlotCommand.SelectedCropTypeSuggestionId)}.Invalid");
+
+            RuleFor(x => x)
+                .Must(x => !x.SelectedCropTypeSuggestionId.HasValue || x.CropTypeCatalogId.HasValue)
+                .WithMessage("CropTypeCatalogId is required when SelectedCropTypeSuggestionId is informed.")
+                .WithErrorCode($"{nameof(CreatePlotCommand.CropTypeCatalogId)}.RequiredWhenSuggestionInformed");
             #endregion
 
             #region AreaHectares | Validation Rules

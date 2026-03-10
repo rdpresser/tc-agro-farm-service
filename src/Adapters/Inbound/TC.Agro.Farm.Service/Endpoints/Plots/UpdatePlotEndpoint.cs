@@ -32,7 +32,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddMonths(-1),
                     DateTimeOffset.UtcNow.AddMonths(5),
                     Domain.ValueObjects.IrrigationType.CenterPivot,
-                    "Updated notes about crop stage.");
+                    "Updated notes about crop stage.",
+                    CropTypeCatalogId: Guid.NewGuid());
                 s.ResponseExamples[200] = new UpdatePlotResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
@@ -45,7 +46,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddMonths(5),
                     Domain.ValueObjects.IrrigationType.CenterPivot,
                     "Updated notes about crop stage.",
-                    DateTimeOffset.UtcNow);
+                    DateTimeOffset.UtcNow,
+                    Guid.NewGuid());
                 s.Responses[200] = "Returned when the plot is successfully updated.";
                 s.Responses[400] = "Returned when the request contains validation errors.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";

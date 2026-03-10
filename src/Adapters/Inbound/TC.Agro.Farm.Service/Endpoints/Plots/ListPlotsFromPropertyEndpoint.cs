@@ -44,7 +44,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddMonths(-2),
                     DateTimeOffset.UtcNow.AddMonths(6),
                     IrrigationType.CenterPivot,
-                    null));
+                    null,
+                    Guid.NewGuid()));
             }
 
             var exampleResponse = new PaginatedResponse<ListPlotsFromPropertyResponse>(

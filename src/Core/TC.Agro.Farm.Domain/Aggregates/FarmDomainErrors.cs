@@ -80,5 +80,31 @@ namespace TC.Agro.Farm.Domain.Aggregates
             new("Sensor.InvalidStatus", "The provided sensor status is invalid.");
 
         #endregion
+
+        #region Crop Type Catalog Errors
+
+        public static readonly ValidationError CropTypeCatalogNotFound =
+            new("CropTypeCatalog.NotFound", "Crop type catalog entry not found.");
+
+        public static readonly ValidationError CropTypeCatalogAlreadyDeactivated =
+            new("CropTypeCatalog.AlreadyDeactivated", "Crop type catalog entry is already deactivated.");
+
+        public static readonly ValidationError CropTypeCatalogAlreadyActivated =
+            new("CropTypeCatalog.AlreadyActivated", "Crop type catalog entry is already activated.");
+
+        #endregion
+
+        #region Crop Type Suggestion Errors
+
+        public static readonly ValidationError CropTypeSuggestionNotFound =
+            new("CropTypeSuggestion.NotFound", "Crop type suggestion not found.");
+
+        public static readonly ValidationError CropTypeSuggestionAlreadyDeactivated =
+            new("CropTypeSuggestion.AlreadyDeactivated", "Crop type suggestion is already deactivated.");
+
+        public static readonly ValidationError CropTypeSuggestionPropertyIdRequired =
+            new("CropTypeSuggestion.PropertyIdRequired", "Property ID is required.");
+
+        #endregion
     }
 }
