@@ -15,8 +15,6 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 .HasColumnName("owner_id")
                 .IsRequired();
 
-            builder.Ignore(p => p.CropTypeDisplayName);
-
             builder.Property(p => p.CropTypeCatalogId)
                 .HasColumnName("crop_type_catalog_id")
                 .IsRequired();
