@@ -62,6 +62,53 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
         }
 
         [Fact]
+        public void Create_WithTenantScopeAndSuggestedImage_ShouldSucceed()
+        {
+            // Arrange
+            var ownerId = Guid.NewGuid();
+
+            // Act
+            var result = CropTypeCatalogAggregate.Create(
+                cropTypeName: "Dragon Fruit",
+                isSystemDefined: false,
+                ownerId: ownerId,
+                suggestedImage: "dragon");
+
+            // Assert
+            result.IsSuccess.ShouldBeTrue();
+            result.Value.OwnerId.ShouldBe(ownerId);
+            result.Value.SuggestedImage.ShouldBe("dragon");
+        }
+
+        [Fact]
+        public void Create_WithSystemDefinedCatalogAndOwnerId_ShouldReturnValidationError()
+        {
+            // Act
+            var result = CropTypeCatalogAggregate.Create(
+                cropTypeName: "Soy",
+                isSystemDefined: true,
+                ownerId: Guid.NewGuid());
+
+            // Assert
+            result.IsSuccess.ShouldBeFalse();
+            result.ValidationErrors.ShouldContain(x => x.Identifier == "CropTypeCatalog.OwnerId");
+        }
+
+        [Fact]
+        public void Create_WithTenantScopeAndMissingOwnerId_ShouldReturnValidationError()
+        {
+            // Act
+            var result = CropTypeCatalogAggregate.Create(
+                cropTypeName: "Soy",
+                isSystemDefined: false,
+                ownerId: null);
+
+            // Assert
+            result.IsSuccess.ShouldBeFalse();
+            result.ValidationErrors.ShouldContain(x => x.Identifier == "CropTypeCatalog.OwnerId");
+        }
+
+        [Fact]
         public void UpdateMetadata_WithValidData_ShouldSucceed()
         {
             // Arrange
@@ -109,9 +156,31 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             result.ValidationErrors.ShouldContain(x => x.Identifier == "CropTypeCatalog.AlreadyActivated");
         }
 
+        [Fact]
+        public void UpdateMetadata_WithSuggestedImageLongerThanTenCharacters_ShouldReturnValidationError()
+        {
+            // Arrange
+            var aggregate = CreateValidCatalog();
+
+            // Act
+            var result = aggregate.UpdateMetadata(
+                description: null,
+                recommendedIrrigationType: null,
+                typicalHarvestCycleMonths: null,
+                suggestedImage: "image-too-long");
+
+            // Assert
+            result.IsSuccess.ShouldBeFalse();
+            result.ValidationErrors.ShouldContain(x => x.Identifier == "CropTypeCatalog.SuggestedImage");
+        }
+
         private static CropTypeCatalogAggregate CreateValidCatalog()
         {
-            var result = CropTypeCatalogAggregate.Create(cropTypeName: "Wheat", isSystemDefined: false);
+            var result = CropTypeCatalogAggregate.Create(
+                cropTypeName: "Wheat",
+                isSystemDefined: false,
+                ownerId: Guid.NewGuid());
+            result.IsSuccess.ShouldBeTrue();
             return result.Value;
         }
     }

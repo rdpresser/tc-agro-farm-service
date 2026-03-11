@@ -6,17 +6,30 @@ namespace TC.Agro.Farm.Tests.TestHelpers;
 
 internal static class FastEndpointsTestBootstrap
 {
-    private static int _initialized;
+    private static readonly object SyncLock = new();
+    private static bool _initialized;
 
     public static void EnsureInitialized()
     {
-        if (Interlocked.Exchange(ref _initialized, 1) == 0)
+        if (_initialized)
         {
+            return;
+        }
+
+        lock (SyncLock)
+        {
+            if (_initialized)
+            {
+                return;
+            }
+
             Factory.RegisterTestServices(testServices =>
             {
                 testServices.AddLogging();
                 testServices.AddSingleton<ICacheService, NoOpCacheService>();
             });
+
+            _initialized = true;
         }
     }
 

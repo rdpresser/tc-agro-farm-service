@@ -8,11 +8,26 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         /// <summary>
         /// Gets a crop type catalog entry by name.
         /// </summary>
-        Task<CropTypeCatalogAggregate?> GetByNameAsync(string cropTypeName, CancellationToken cancellationToken = default);
+        Task<CropTypeCatalogAggregate?> GetByNameAsync(
+            string cropTypeName,
+            Guid? ownerId = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets a crop type catalog entry by identifier within the effective tenant scope.
+        /// </summary>
+        Task<CropTypeCatalogAggregate?> GetByIdScopedAsync(
+            Guid id,
+            Guid? ownerId = null,
+            bool includeInactive = false,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Checks whether a crop type catalog name already exists.
         /// </summary>
-        Task<bool> NameExistsAsync(string cropTypeName, CancellationToken cancellationToken = default);
+        Task<bool> NameExistsAsync(
+            string cropTypeName,
+            Guid? ownerId = null,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -5,6 +5,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Update
         Guid PropertyId,
         Guid OwnerId,
         string CropType,
+        string? SuggestedImage,
         string Source,
         bool IsOverride,
         bool IsStale,
@@ -15,5 +16,6 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Update
         double? MaxTemperature,
         double? MinHumidity,
         string? Notes,
-        DateTimeOffset? UpdatedAt);
+        DateTimeOffset? UpdatedAt,
+        Guid CropTypeCatalogId);
 }

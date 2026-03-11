@@ -194,6 +194,40 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
         }
 
         /// <summary>
+        /// Applies dynamic sorting to CropTypeCatalogAggregate queries.
+        /// </summary>
+        public static IQueryable<CropTypeCatalogAggregate> ApplySorting(
+            this IQueryable<CropTypeCatalogAggregate> query,
+            string? sortBy,
+            string? sortDirection)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return query.OrderByDescending(c => c.CreatedAt);
+
+            var isAscending = string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+
+            return sortBy.ToLowerInvariant() switch
+            {
+                "croptype" or "name" => isAscending
+                    ? query.OrderBy(c => c.CropTypeName.Value)
+                    : query.OrderByDescending(c => c.CropTypeName.Value),
+                "ownername" => isAscending
+                    ? query.OrderBy(c => c.Owner == null ? string.Empty : c.Owner.Name)
+                    : query.OrderByDescending(c => c.Owner == null ? string.Empty : c.Owner.Name),
+                "scientificname" => isAscending
+                    ? query.OrderBy(c => c.ScientificName)
+                    : query.OrderByDescending(c => c.ScientificName),
+                "updatedat" => isAscending
+                    ? query.OrderBy(c => c.UpdatedAt)
+                    : query.OrderByDescending(c => c.UpdatedAt),
+                "createdat" => isAscending
+                    ? query.OrderBy(c => c.CreatedAt)
+                    : query.OrderByDescending(c => c.CreatedAt),
+                _ => query.OrderByDescending(c => c.CreatedAt)
+            };
+        }
+
+        /// <summary>
         /// Applies text search filter to PropertyAggregate queries.
         /// </summary>
         public static IQueryable<PropertyAggregate> ApplyTextFilter(
@@ -284,6 +318,26 @@ namespace TC.Agro.Farm.Infrastructure.Extensions
                 EF.Functions.ILike(c.Source, pattern) ||
                 (c.Notes != null && EF.Functions.ILike(c.Notes, pattern)) ||
                 (c.SuggestedIrrigationType != null && EF.Functions.ILike(c.SuggestedIrrigationType, pattern)));
+        }
+
+        /// <summary>
+        /// Applies text search filter to CropTypeCatalogAggregate queries.
+        /// </summary>
+        public static IQueryable<CropTypeCatalogAggregate> ApplyTextFilter(
+            this IQueryable<CropTypeCatalogAggregate> query,
+            string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+                return query;
+
+            var pattern = $"%{filter.Trim()}%";
+
+            return query.Where(c =>
+                EF.Functions.ILike(c.CropTypeName.Value, pattern) ||
+                (c.Description != null && EF.Functions.ILike(c.Description, pattern)) ||
+                (c.ScientificName != null && EF.Functions.ILike(c.ScientificName, pattern)) ||
+                (c.RecommendedIrrigationType != null && EF.Functions.ILike(c.RecommendedIrrigationType, pattern)) ||
+                (c.Owner != null && EF.Functions.ILike(c.Owner.Name, pattern)));
         }
 
         /// <summary>

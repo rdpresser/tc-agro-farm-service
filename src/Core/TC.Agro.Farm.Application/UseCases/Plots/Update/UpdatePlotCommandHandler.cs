@@ -114,6 +114,9 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
             var normalizedCropType = string.IsNullOrWhiteSpace(command.CropType)
                 ? null
                 : command.CropType.Trim();
+            var selectedSuggestionId = NormalizeSelectedSuggestionId(
+                command.CropTypeCatalogId,
+                command.SelectedCropTypeSuggestionId);
 
             CropTypeCatalogAggregate? catalogAggregate = null;
 
@@ -126,7 +129,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
                 }
 
                 catalogAggregate = await _cropTypeCatalogRepository
-                    .GetByIdAsync(command.CropTypeCatalogId.Value, ct)
+                    .GetByIdScopedAsync(command.CropTypeCatalogId.Value, ownerId, cancellationToken: ct)
                     .ConfigureAwait(false);
             }
             else
@@ -138,7 +141,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
                 }
 
                 catalogAggregate = await _cropTypeCatalogRepository
-                    .GetByNameAsync(normalizedCropType, ct)
+                    .GetByNameAsync(normalizedCropType, ownerId, ct)
                     .ConfigureAwait(false);
             }
 
@@ -158,9 +161,9 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
 
             var resolvedCropType = catalogAggregate.CropTypeName.Value;
 
-            if (command.SelectedCropTypeSuggestionId.HasValue)
+            if (selectedSuggestionId.HasValue)
             {
-                if (command.SelectedCropTypeSuggestionId.Value == Guid.Empty)
+                if (selectedSuggestionId.Value == Guid.Empty)
                 {
                     return Result<CropReferenceResolution>.Invalid(
                         new ValidationError(
@@ -169,7 +172,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
                 }
 
                 var selectedSuggestion = await _cropTypeSuggestionRepository
-                    .GetByIdAsync(command.SelectedCropTypeSuggestionId.Value, ct)
+                    .GetByIdAsync(selectedSuggestionId.Value, ct)
                     .ConfigureAwait(false);
 
                 if (selectedSuggestion is null)
@@ -206,7 +209,22 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
                 new CropReferenceResolution(
                     resolvedCropType,
                     catalogAggregate.Id,
-                    command.SelectedCropTypeSuggestionId));
+                    selectedSuggestionId));
+        }
+
+        private static Guid? NormalizeSelectedSuggestionId(Guid? cropTypeCatalogId, Guid? selectedCropTypeSuggestionId)
+        {
+            if (!selectedCropTypeSuggestionId.HasValue)
+            {
+                return null;
+            }
+
+            if (cropTypeCatalogId.HasValue && cropTypeCatalogId.Value != Guid.Empty && cropTypeCatalogId == selectedCropTypeSuggestionId)
+            {
+                return null;
+            }
+
+            return selectedCropTypeSuggestionId;
         }
 
         private sealed record CropReferenceResolution(

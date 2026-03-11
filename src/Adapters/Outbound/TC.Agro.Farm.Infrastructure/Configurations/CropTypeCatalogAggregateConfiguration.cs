@@ -7,6 +7,17 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             base.Configure(builder);
             builder.ToTable("crop_type_catalog");
 
+            builder.Property(c => c.OwnerId)
+                .HasColumnName("owner_id")
+                .IsRequired(false);
+
+            builder.HasIndex(c => c.OwnerId);
+
+            builder.HasOne(c => c.Owner)
+                .WithMany()
+                .HasForeignKey(c => c.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.Property(c => c.IsSystemDefined)
                 .HasColumnName("is_system_defined")
                 .IsRequired()
@@ -62,6 +73,11 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             builder.Property(c => c.MaxSoilMoisture)
                 .HasColumnName("max_soil_moisture")
                 .HasColumnType("double precision")
+                .IsRequired(false);
+
+            builder.Property(c => c.SuggestedImage)
+                .HasColumnName("suggested_image")
+                .HasMaxLength(10)
                 .IsRequired(false);
 
             builder.OwnsOne(c => c.CropTypeName, cropTypeName =>

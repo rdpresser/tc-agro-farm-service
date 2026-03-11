@@ -19,8 +19,8 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
 
             Summary(s =>
             {
-                s.Summary = "Update a crop type suggestion.";
-                s.Description = "Updates a crop type suggestion. The route cropTypeId must match body cropTypeId when provided.";
+                s.Summary = "Update a crop type catalog entry.";
+                s.Description = "Updates metadata of a crop type catalog entry. The route cropTypeId must match body cropTypeId when provided.";
                 s.ExampleRequest = new UpdateCropTypeCommand(
                     Guid.NewGuid(),
                     "Corn",
@@ -31,11 +31,11 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
                     36,
                     42,
                     "Adjusted thresholds after field inspection.");
-                s.Responses[200] = "Returned when the crop type suggestion is successfully updated.";
+                s.Responses[200] = "Returned when the crop type catalog entry is successfully updated.";
                 s.Responses[400] = "Returned when the request contains validation errors.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";
                 s.Responses[403] = "Returned when the caller lacks the required role.";
-                s.Responses[404] = "Returned when no crop type suggestion is found with the given ID.";
+                s.Responses[404] = "Returned when no crop type catalog entry is found with the given ID.";
             });
         }
 

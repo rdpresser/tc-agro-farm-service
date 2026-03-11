@@ -100,7 +100,7 @@ namespace TC.Agro.Farm.Service.Providers
                 "Return only JSON with an object containing a 'suggestions' array. " +
                 "Each suggestion must include: cropType (string), confidenceScore (0-100), plantingWindow (string), " +
                 "harvestCycleMonths (integer), suggestedIrrigationType (string), minSoilMoisture (0-100), " +
-                "maxTemperature (-30 to 80), minHumidity (0-100), notes (string).";
+                "maxTemperature (-30 to 80), minHumidity (0-100), notes (string), suggestedImage (short unicode emoji, max 10 chars).";
 
             var userPrompt =
                 $"Generate {suggestionCount} crop suggestions for a property located in {request.City}, {request.State}, {request.Country}. " +
@@ -193,7 +193,8 @@ namespace TC.Agro.Farm.Service.Providers
                     MinSoilMoisture: ClampNullable(ReadNullableDouble(item, "minSoilMoisture"), 0, 100),
                     MaxTemperature: ClampNullable(ReadNullableDouble(item, "maxTemperature"), -30, 80),
                     MinHumidity: ClampNullable(ReadNullableDouble(item, "minHumidity"), 0, 100),
-                    Notes: TrimNullable(ReadString(item, "notes"), 500)));
+                    Notes: TrimNullable(ReadString(item, "notes"), 500),
+                    SuggestedImage: TrimNullable(ReadString(item, "suggestedImage"), 10)));
 
                 if (suggestions.Count >= maxSuggestions)
                 {
@@ -214,27 +215,27 @@ namespace TC.Agro.Farm.Service.Providers
             {
                 <= 15 => new[]
                 {
-                    ("Banana", "Drip Irrigation", 45d, 34d, 60d, 12, "Warm and humid profile."),
-                    ("Mango", "Drip Irrigation", 35d, 36d, 55d, 8, "Suitable for tropical conditions."),
-                    ("Rice", "Flood/Furrow", 50d, 34d, 70d, 5, "Good option for wetter zones."),
-                    ("Sugarcane", "Flood/Furrow", 35d, 37d, 50d, 12, "Performs well with heat and water."),
-                    ("Coffee", "Drip Irrigation", 40d, 30d, 60d, 8, "Viable with mild thermal variation.")
+                    ("Banana", "🍌", "Drip Irrigation", 45d, 34d, 60d, 12, "Warm and humid profile."),
+                    ("Mango", "🥭", "Drip Irrigation", 35d, 36d, 55d, 8, "Suitable for tropical conditions."),
+                    ("Rice", "🌾", "Flood/Furrow", 50d, 34d, 70d, 5, "Good option for wetter zones."),
+                    ("Sugarcane", "🎋", "Flood/Furrow", 35d, 37d, 50d, 12, "Performs well with heat and water."),
+                    ("Coffee", "☕", "Drip Irrigation", 40d, 30d, 60d, 8, "Viable with mild thermal variation.")
                 },
                 <= 30 => new[]
                 {
-                    ("Soy", "Center Pivot", 32d, 35d, 45d, 5, "Common in subtropical commercial farms."),
-                    ("Corn", "Center Pivot", 30d, 35d, 45d, 5, "High adaptability and productivity."),
-                    ("Beans", "Sprinkler", 35d, 33d, 50d, 3, "Short cycle and diversified rotation."),
-                    ("Cotton", "Center Pivot", 28d, 38d, 40d, 6, "Performs in warmer and drier periods."),
-                    ("Tomato", "Drip Irrigation", 40d, 32d, 60d, 4, "Good value crop with managed irrigation.")
+                    ("Soy", "🫘", "Center Pivot", 32d, 35d, 45d, 5, "Common in subtropical commercial farms."),
+                    ("Corn", "🌽", "Center Pivot", 30d, 35d, 45d, 5, "High adaptability and productivity."),
+                    ("Beans", "🫘", "Sprinkler", 35d, 33d, 50d, 3, "Short cycle and diversified rotation."),
+                    ("Cotton", "🧵", "Center Pivot", 28d, 38d, 40d, 6, "Performs in warmer and drier periods."),
+                    ("Tomato", "🍅", "Drip Irrigation", 40d, 32d, 60d, 4, "Good value crop with managed irrigation.")
                 },
                 _ => new[]
                 {
-                    ("Wheat", "Rainfed (No Irrigation)", 25d, 30d, 40d, 5, "Suitable for cooler seasonal windows."),
-                    ("Potato", "Sprinkler", 40d, 28d, 60d, 4, "Performs well in milder temperatures."),
-                    ("Apple", "Drip Irrigation", 32d, 32d, 45d, 10, "Temperate profile with perennial planning."),
-                    ("Grape", "Drip Irrigation", 30d, 34d, 45d, 6, "Requires canopy and irrigation management."),
-                    ("Onion", "Drip Irrigation", 35d, 30d, 50d, 4, "Suitable for cooler and stable cycles.")
+                    ("Wheat", "🌾", "Rainfed (No Irrigation)", 25d, 30d, 40d, 5, "Suitable for cooler seasonal windows."),
+                    ("Potato", "🥔", "Sprinkler", 40d, 28d, 60d, 4, "Performs well in milder temperatures."),
+                    ("Apple", "🍎", "Drip Irrigation", 32d, 32d, 45d, 10, "Temperate profile with perennial planning."),
+                    ("Grape", "🍇", "Drip Irrigation", 30d, 34d, 45d, 6, "Requires canopy and irrigation management."),
+                    ("Onion", "🧅", "Drip Irrigation", 35d, 30d, 50d, 4, "Suitable for cooler and stable cycles.")
                 }
             };
 
@@ -244,12 +245,13 @@ namespace TC.Agro.Farm.Service.Providers
                     CropType: seed.Item1,
                     ConfidenceScore: Math.Max(60, 92 - (index * 4)),
                     PlantingWindow: "Based on local seasonal profile",
-                    HarvestCycleMonths: seed.Item6,
-                    SuggestedIrrigationType: seed.Item2,
-                    MinSoilMoisture: seed.Item3,
-                    MaxTemperature: seed.Item4,
-                    MinHumidity: seed.Item5,
-                    Notes: seed.Item7))
+                    HarvestCycleMonths: seed.Item7,
+                    SuggestedIrrigationType: seed.Item3,
+                    MinSoilMoisture: seed.Item4,
+                    MaxTemperature: seed.Item5,
+                    MinHumidity: seed.Item6,
+                    Notes: seed.Item8,
+                    SuggestedImage: seed.Item2))
                 .ToList();
         }
 

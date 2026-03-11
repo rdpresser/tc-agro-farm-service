@@ -18,8 +18,8 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
 
             Summary(s =>
             {
-                s.Summary = "Create a manual crop type suggestion.";
-                s.Description = "Creates a user-managed crop type suggestion for a property.";
+                s.Summary = "Create a crop type catalog entry.";
+                s.Description = "Creates a tenant-scoped crop type catalog entry linked to the property owner.";
                 s.ExampleRequest = new CreateCropTypeCommand(
                     Guid.NewGuid(),
                     "Soy",
@@ -29,8 +29,8 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
                     30,
                     35,
                     45,
-                    "Manual override based on local agronomist recommendation.");
-                s.Responses[201] = "Returned when the crop type suggestion is successfully created.";
+                    "Catalog metadata based on local agronomist recommendation.");
+                s.Responses[201] = "Returned when the crop type catalog entry is successfully created.";
                 s.Responses[400] = "Returned when the request contains validation errors.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";
                 s.Responses[403] = "Returned when the caller lacks the required role.";

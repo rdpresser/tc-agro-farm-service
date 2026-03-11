@@ -9,7 +9,8 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
         double? MinSoilMoisture,
         double? MaxTemperature,
         double? MinHumidity,
-        string? Notes) : IBaseCommand<CreateCropTypeResponse>, IInvalidateCache
+        string? Notes,
+        string? SuggestedImage = null) : IBaseCommand<CreateCropTypeResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>
         [

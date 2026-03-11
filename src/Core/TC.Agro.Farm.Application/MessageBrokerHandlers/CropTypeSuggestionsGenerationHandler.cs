@@ -119,7 +119,8 @@ namespace TC.Agro.Farm.Application.MessageBrokerHandlers
                     minHumidity: draft.MinHumidity,
                     notes: draft.Notes,
                     model: "openai",
-                    generatedAt: generatedAt);
+                    generatedAt: generatedAt,
+                    suggestedImage: draft.SuggestedImage);
 
                 if (!createResult.IsSuccess)
                 {
@@ -182,7 +183,8 @@ namespace TC.Agro.Farm.Application.MessageBrokerHandlers
                     MinSoilMoisture: ClampNullable(draft.MinSoilMoisture, 0, 100),
                     MaxTemperature: ClampNullable(draft.MaxTemperature, -30, 80),
                     MinHumidity: ClampNullable(draft.MinHumidity, 0, 100),
-                    Notes: TrimNullable(draft.Notes, 500)));
+                    Notes: TrimNullable(draft.Notes, 500),
+                    SuggestedImage: TrimNullable(draft.SuggestedImage, 10)));
 
                 if (result.Count >= maxSuggestions)
                 {

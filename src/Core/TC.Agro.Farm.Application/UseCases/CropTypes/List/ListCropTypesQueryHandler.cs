@@ -4,11 +4,11 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.List
 {
     internal sealed class ListCropTypesQueryHandler : BaseQueryHandler<ListCropTypesQuery, PaginatedResponse<ListCropTypesResponse>>
     {
-        private readonly ICropTypeSuggestionReadStore _readStore;
+        private readonly ICropTypeCatalogReadStore _readStore;
         private readonly ILogger<ListCropTypesQueryHandler> _logger;
 
         public ListCropTypesQueryHandler(
-            ICropTypeSuggestionReadStore readStore,
+            ICropTypeCatalogReadStore readStore,
             IUserContext userContext,
             ILogger<ListCropTypesQueryHandler> logger)
         {
@@ -21,7 +21,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.List
             CancellationToken ct = default)
         {
             _logger.LogDebug(
-                "Listing crop types. OwnerId={OwnerId}, PropertyId={PropertyId}, IncludeStale={IncludeStale}, IncludeInactive={IncludeInactive}, Page={PageNumber}, Size={PageSize}",
+                "Listing crop types from catalog. OwnerId={OwnerId}, PropertyId={PropertyId}, IncludeStale={IncludeStale}, IncludeInactive={IncludeInactive}, Page={PageNumber}, Size={PageSize}",
                 query.OwnerId,
                 query.PropertyId,
                 query.IncludeStale,

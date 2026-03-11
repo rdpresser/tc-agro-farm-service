@@ -96,7 +96,7 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
                 .Returns(false);
 
             var existingCatalog = CropTypeCatalogAggregate.Create("Corn").Value;
-            A.CallTo(() => _cropTypeCatalogRepository.GetByNameAsync("Corn", A<CancellationToken>._))
+            A.CallTo(() => _cropTypeCatalogRepository.GetByNameAsync("Corn", ownerId, A<CancellationToken>._))
                 .Returns(existingCatalog);
 
             A.CallTo(() => _userContext.Id).Returns(ownerId);
@@ -133,7 +133,7 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
                     plot.Id,
                     A<CancellationToken>._))
                 .Returns(false);
-            A.CallTo(() => _cropTypeCatalogRepository.GetByIdAsync(catalog.Id, A<CancellationToken>._))
+            A.CallTo(() => _cropTypeCatalogRepository.GetByIdScopedAsync(catalog.Id, ownerId, false, A<CancellationToken>._))
                 .Returns(catalog);
             A.CallTo(() => _userContext.Id).Returns(ownerId);
             A.CallTo(() => _userContext.IsAdmin).Returns(false);
@@ -144,6 +144,42 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
             result.Value.CropType.ShouldBe("Soy");
             result.Value.CropTypeCatalogId.ShouldBe(catalog.Id);
             A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_WhenSelectedSuggestionIdMatchesCatalogId_ShouldTreatItAsCatalogOnlySelection()
+        {
+            var ownerId = Guid.NewGuid();
+            var plot = CreateValidPlot(ownerId);
+            var catalog = CropTypeCatalogAggregate.Create("Soy").Value;
+
+            var command = CreateValidCommand(plot.Id) with
+            {
+                CropType = string.Empty,
+                CropTypeCatalogId = catalog.Id,
+                SelectedCropTypeSuggestionId = catalog.Id
+            };
+
+            A.CallTo(() => _repository.GetByIdAsync(command.PlotId, A<CancellationToken>._))
+                .Returns(Task.FromResult<PlotAggregate?>(plot));
+            A.CallTo(() => _repository.NameExistsForPropertyExcludingAsync(
+                    command.Name,
+                    plot.PropertyId,
+                    plot.Id,
+                    A<CancellationToken>._))
+                .Returns(false);
+            A.CallTo(() => _cropTypeCatalogRepository.GetByIdScopedAsync(catalog.Id, ownerId, false, A<CancellationToken>._))
+                .Returns(catalog);
+            A.CallTo(() => _userContext.Id).Returns(ownerId);
+            A.CallTo(() => _userContext.IsAdmin).Returns(false);
+
+            var result = await _handler.ExecuteAsync(command, TestContext.Current.CancellationToken);
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Value.CropTypeCatalogId.ShouldBe(catalog.Id);
+            result.Value.SelectedCropTypeSuggestionId.ShouldBeNull();
+            A.CallTo(() => _cropTypeSuggestionRepository.GetByIdAsync(A<Guid>._, A<CancellationToken>._))
+                .MustNotHaveHappened();
         }
 
         private static UpdatePlotCommand CreateValidCommand(Guid? plotId = null)

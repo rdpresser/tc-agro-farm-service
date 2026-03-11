@@ -3,14 +3,14 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
     internal sealed class CreateCropTypeCommandHandler
         : BaseHandler<CreateCropTypeCommand, CreateCropTypeResponse>
     {
-        private readonly ICropTypeSuggestionRepository _repository;
+        private readonly ICropTypeCatalogRepository _repository;
         private readonly IPropertyAggregateRepository _propertyRepository;
         private readonly IUserContext _userContext;
         private readonly ITransactionalOutbox _outbox;
         private readonly ILogger<CreateCropTypeCommandHandler> _logger;
 
         public CreateCropTypeCommandHandler(
-            ICropTypeSuggestionRepository repository,
+            ICropTypeCatalogRepository repository,
             IPropertyAggregateRepository propertyRepository,
             IUserContext userContext,
             ITransactionalOutbox outbox,
@@ -39,21 +39,38 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
 
             if (property.OwnerId != _userContext.Id && !_userContext.IsAdmin)
             {
-                AddError(x => x.PropertyId, "You are not authorized to create crop types for this property.", "CropTypeSuggestion.NotAuthorized");
+                AddError(x => x.PropertyId, "You are not authorized to create crop types for this property.", "CropTypeCatalog.NotAuthorized");
                 return BuildNotAuthorizedResult();
             }
 
-            var aggregateResult = CropTypeSuggestionAggregate.CreateManual(
-                propertyId: property.Id,
-                ownerId: property.OwnerId,
-                cropType: command.CropType,
-                plantingWindow: command.PlantingWindow,
-                harvestCycleMonths: command.HarvestCycleMonths,
-                suggestedIrrigationType: command.SuggestedIrrigationType,
-                minSoilMoisture: command.MinSoilMoisture,
+            var existingEntry = await _repository
+                .GetByNameAsync(command.CropType, property.OwnerId, ct)
+                .ConfigureAwait(false);
+
+            if (existingEntry is not null && existingEntry.OwnerId == property.OwnerId)
+            {
+                AddError(x => x.CropType, "A crop type catalog entry with this name already exists for this owner.", "CropTypeCatalog.NameAlreadyExists");
+                return BuildValidationErrorResult();
+            }
+
+            var (startMonth, endMonth) = CropTypeCatalogCommandMapping.ParsePlantingWindow(command.PlantingWindow);
+
+            var aggregateResult = CropTypeCatalogAggregate.Create(
+                cropTypeName: command.CropType,
+                isSystemDefined: false,
+                description: command.Notes,
+                recommendedIrrigationType: command.SuggestedIrrigationType,
+                typicalHarvestCycleMonths: command.HarvestCycleMonths,
+                typicalPlantingStartMonth: startMonth,
+                typicalPlantingEndMonth: endMonth,
                 maxTemperature: command.MaxTemperature,
                 minHumidity: command.MinHumidity,
-                notes: command.Notes);
+                minSoilMoisture: command.MinSoilMoisture,
+                suggestedImage: command.SuggestedImage,
+                ownerId: property.OwnerId,
+                scientificName: null,
+                minTemperature: null,
+                maxSoilMoisture: null);
 
             if (!aggregateResult.IsSuccess)
             {
@@ -66,29 +83,34 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
             await _outbox.SaveChangesAsync(ct).ConfigureAwait(false);
 
             _logger.LogInformation(
-                "Manual crop type suggestion {CropTypeSuggestionId} created for property {PropertyId}",
+                "Crop type catalog entry {CropTypeCatalogId} created for owner {OwnerId} and property {PropertyId}",
                 aggregate.Id,
-                aggregate.PropertyId);
+                property.OwnerId,
+                property.Id);
 
             return new CreateCropTypeResponse(
                 aggregate.Id,
-                aggregate.PropertyId,
-                aggregate.OwnerId,
-                aggregate.CropName.Value,
-                aggregate.Source,
-                aggregate.IsOverride,
-                aggregate.IsStale,
-                aggregate.ConfidenceScore,
-                aggregate.PlantingWindow,
-                aggregate.HarvestCycleMonths,
-                aggregate.SuggestedIrrigationType,
+                property.Id,
+                property.OwnerId,
+                aggregate.CropTypeName.Value,
+                aggregate.SuggestedImage,
+                "Catalog",
+                false,
+                false,
+                null,
+                CropTypeCatalogCommandMapping.BuildPlantingWindow(
+                    aggregate.TypicalPlantingStartMonth,
+                    aggregate.TypicalPlantingEndMonth),
+                aggregate.TypicalHarvestCycleMonths,
+                aggregate.RecommendedIrrigationType,
                 aggregate.MinSoilMoisture,
                 aggregate.MaxTemperature,
                 aggregate.MinHumidity,
-                aggregate.Notes,
-                aggregate.Model,
-                aggregate.GeneratedAt,
-                aggregate.CreatedAt);
+                aggregate.Description,
+                null,
+                null,
+                aggregate.CreatedAt,
+                aggregate.Id);
         }
     }
 }

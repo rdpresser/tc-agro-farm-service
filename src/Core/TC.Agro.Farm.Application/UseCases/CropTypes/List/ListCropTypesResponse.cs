@@ -7,6 +7,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.List
         string PropertyName,
         string OwnerName,
         string CropType,
+        string? SuggestedImage,
         string Source,
         bool IsOverride,
         bool IsStale,
@@ -22,5 +23,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.List
         DateTimeOffset? GeneratedAt,
         bool IsActive,
         DateTimeOffset CreatedAt,
-        DateTimeOffset? UpdatedAt);
+        DateTimeOffset? UpdatedAt,
+        Guid CropTypeCatalogId,
+        Guid? SelectedCropTypeSuggestionId = null);
 }

@@ -20,6 +20,11 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public static readonly ValidationError PropertyAlreadyActivated =
             new("Property.AlreadyActivated", "Property is already activated.");
 
+        public static readonly ValidationError PropertyLocationChangeBlockedByActiveCropCycles =
+            new(
+                "Property.LocationChangeBlockedByActiveCropCycles",
+                "Property location cannot be changed while there are active crop cycles.");
+
         #endregion
 
         #region Plot Errors
@@ -104,6 +109,16 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public static readonly ValidationError CropTypeSuggestionPropertyIdRequired =
             new("CropTypeSuggestion.PropertyIdRequired", "Property ID is required.");
+
+        #endregion
+
+        #region Crop Cycle Errors
+
+        public static readonly ValidationError CropCycleNotFound =
+            new("CropCycle.NotFound", "Crop cycle not found.");
+
+        public static readonly ValidationError CropCycleAlreadyActiveForPlot =
+            new("CropCycle.ActiveCycleAlreadyExists", "The plot already has an active crop cycle.");
 
         #endregion
     }

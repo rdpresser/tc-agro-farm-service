@@ -31,6 +31,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     x.Property.Name.Value,
                     x.Owner.Name,
                     x.CropName.Value,
+                    x.SuggestedImage,
                     x.Source,
                     x.IsOverride,
                     x.IsStale,
@@ -46,7 +47,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     x.GeneratedAt,
                     x.IsActive,
                     x.CreatedAt,
-                    x.UpdatedAt))
+                    x.UpdatedAt,
+                    Guid.Empty,
+                    x.Id))
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -94,6 +97,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     x.Property.Name.Value,
                     x.Owner.Name,
                     x.CropName.Value,
+                    x.SuggestedImage,
                     x.Source,
                     x.IsOverride,
                     x.IsStale,
@@ -109,7 +113,9 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                     x.GeneratedAt,
                     x.IsActive,
                     x.CreatedAt,
-                    x.UpdatedAt))
+                    x.UpdatedAt,
+                    Guid.Empty,
+                    x.Id))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 

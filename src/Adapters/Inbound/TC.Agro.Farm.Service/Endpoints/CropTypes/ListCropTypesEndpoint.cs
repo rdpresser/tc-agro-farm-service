@@ -21,8 +21,8 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
 
             Summary(s =>
             {
-                s.Summary = "Get crop type suggestions.";
-                s.Description = "Retrieves crop type suggestions with optional filters for owner, property, source, stale and active states.";
+                s.Summary = "Get crop type catalog entries.";
+                s.Description = "Retrieves tenant-scoped crop type catalog entries with optional property-specific suggestion overlays.";
                 s.ExampleRequest = new ListCropTypesQuery
                 {
                     PageNumber = 1,
@@ -33,7 +33,7 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
                     IncludeStale = false,
                     IncludeInactive = false
                 };
-                s.Responses[200] = "Returned when crop type suggestions are successfully retrieved.";
+                s.Responses[200] = "Returned when crop type catalog entries are successfully retrieved.";
                 s.Responses[400] = "Returned when the request contains invalid parameters.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";
                 s.Responses[403] = "Returned when the caller lacks the required role.";

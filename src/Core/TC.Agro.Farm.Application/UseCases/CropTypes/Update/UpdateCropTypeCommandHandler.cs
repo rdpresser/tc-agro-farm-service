@@ -3,13 +3,13 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Update
     internal sealed class UpdateCropTypeCommandHandler
         : BaseHandler<UpdateCropTypeCommand, UpdateCropTypeResponse>
     {
-        private readonly ICropTypeSuggestionRepository _repository;
+        private readonly ICropTypeCatalogRepository _repository;
         private readonly IUserContext _userContext;
         private readonly ITransactionalOutbox _outbox;
         private readonly ILogger<UpdateCropTypeCommandHandler> _logger;
 
         public UpdateCropTypeCommandHandler(
-            ICropTypeSuggestionRepository repository,
+            ICropTypeCatalogRepository repository,
             IUserContext userContext,
             ITransactionalOutbox outbox,
             ILogger<UpdateCropTypeCommandHandler> logger)
@@ -24,31 +24,46 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Update
             UpdateCropTypeCommand command,
             CancellationToken ct = default)
         {
-            var aggregate = await _repository
-                .GetByIdAsync(command.CropTypeId, ct)
-                .ConfigureAwait(false);
+            var aggregate = _userContext.IsAdmin
+                ? await _repository.GetByIdAsync(command.CropTypeId, ct).ConfigureAwait(false)
+                : await _repository.GetByIdScopedAsync(command.CropTypeId, _userContext.Id, cancellationToken: ct).ConfigureAwait(false);
 
             if (aggregate is null)
             {
-                AddError(x => x.CropTypeId, "Crop type suggestion not found.", FarmDomainErrors.CropTypeSuggestionNotFound.ErrorCode);
+                AddError(x => x.CropTypeId, "Crop type catalog entry not found.", FarmDomainErrors.CropTypeCatalogNotFound.ErrorCode);
                 return BuildNotFoundResult();
             }
 
             if (aggregate.OwnerId != _userContext.Id && !_userContext.IsAdmin)
             {
-                AddError(x => x.CropTypeId, "You are not authorized to update this crop type suggestion.", "CropTypeSuggestion.NotAuthorized");
+                AddError(x => x.CropTypeId, "You are not authorized to update this crop type catalog entry.", "CropTypeCatalog.NotAuthorized");
                 return BuildNotAuthorizedResult();
             }
 
-            var updateResult = aggregate.UpdateManual(
-                cropType: command.CropType,
-                plantingWindow: command.PlantingWindow,
-                harvestCycleMonths: command.HarvestCycleMonths,
-                suggestedIrrigationType: command.SuggestedIrrigationType,
-                minSoilMoisture: command.MinSoilMoisture,
+            if (!string.Equals(command.CropType.Trim(), aggregate.CropTypeName.Value, StringComparison.OrdinalIgnoreCase))
+            {
+                AddError(
+                    x => x.CropType,
+                    "CropType cannot be renamed via update. Create a new crop type entry for a different name.",
+                    "CropTypeCatalog.RenameNotSupported");
+                return BuildValidationErrorResult();
+            }
+
+            var (startMonth, endMonth) = CropTypeCatalogCommandMapping.ParsePlantingWindow(command.PlantingWindow);
+
+            var updateResult = aggregate.UpdateMetadata(
+                description: command.Notes,
+                recommendedIrrigationType: command.SuggestedIrrigationType,
+                typicalHarvestCycleMonths: command.HarvestCycleMonths,
+                scientificName: null,
+                typicalPlantingStartMonth: startMonth,
+                typicalPlantingEndMonth: endMonth,
+                minTemperature: null,
                 maxTemperature: command.MaxTemperature,
                 minHumidity: command.MinHumidity,
-                notes: command.Notes);
+                minSoilMoisture: command.MinSoilMoisture,
+                maxSoilMoisture: null,
+                suggestedImage: command.SuggestedImage);
 
             if (!updateResult.IsSuccess)
             {
@@ -59,26 +74,30 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Update
             await _outbox.SaveChangesAsync(ct).ConfigureAwait(false);
 
             _logger.LogInformation(
-                "Crop type suggestion {CropTypeSuggestionId} updated by user {UserId}",
+                "Crop type catalog entry {CropTypeCatalogId} updated by user {UserId}",
                 aggregate.Id,
                 _userContext.Id);
 
             return new UpdateCropTypeResponse(
                 aggregate.Id,
-                aggregate.PropertyId,
-                aggregate.OwnerId,
-                aggregate.CropName.Value,
-                aggregate.Source,
-                aggregate.IsOverride,
-                aggregate.IsStale,
-                aggregate.PlantingWindow,
-                aggregate.HarvestCycleMonths,
-                aggregate.SuggestedIrrigationType,
+                Guid.Empty,
+                aggregate.OwnerId ?? Guid.Empty,
+                aggregate.CropTypeName.Value,
+                aggregate.SuggestedImage,
+                "Catalog",
+                false,
+                false,
+                CropTypeCatalogCommandMapping.BuildPlantingWindow(
+                    aggregate.TypicalPlantingStartMonth,
+                    aggregate.TypicalPlantingEndMonth),
+                aggregate.TypicalHarvestCycleMonths,
+                aggregate.RecommendedIrrigationType,
                 aggregate.MinSoilMoisture,
                 aggregate.MaxTemperature,
                 aggregate.MinHumidity,
-                aggregate.Notes,
-                aggregate.UpdatedAt);
+                aggregate.Description,
+                aggregate.UpdatedAt,
+                aggregate.Id);
         }
     }
 }

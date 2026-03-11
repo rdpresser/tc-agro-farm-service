@@ -21,14 +21,14 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
 
             Summary(s =>
             {
-                s.Summary = "Get crop type suggestion details.";
-                s.Description = "Retrieves details of a specific crop type suggestion by identifier.";
+                s.Summary = "Get crop type details.";
+                s.Description = "Retrieves details of a specific crop type catalog entry, or a suggestion-backed catalog view when addressed by suggestion id.";
                 s.ExampleRequest = new GetCropTypeByIdQuery { Id = Guid.NewGuid(), IncludeInactive = false };
-                s.Responses[200] = "Returned when the crop type suggestion is found.";
+                s.Responses[200] = "Returned when the crop type entry is found.";
                 s.Responses[400] = "Returned when the request is invalid.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";
                 s.Responses[403] = "Returned when the caller lacks the required role.";
-                s.Responses[404] = "Returned when no crop type suggestion is found with the given ID.";
+                s.Responses[404] = "Returned when no crop type entry is found with the given ID.";
             });
         }
 

@@ -29,5 +29,6 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
         double? MinSoilMoisture,
         double? MaxTemperature,
         double? MinHumidity,
-        string? Notes);
+        string? Notes,
+        string? SuggestedImage = null);
 }

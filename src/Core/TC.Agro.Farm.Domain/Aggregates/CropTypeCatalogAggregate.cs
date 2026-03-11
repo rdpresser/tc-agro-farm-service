@@ -1,3 +1,5 @@
+using TC.Agro.Farm.Domain.Snapshots;
+
 namespace TC.Agro.Farm.Domain.Aggregates
 {
     /// <summary>
@@ -8,6 +10,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         private const int MaxDescriptionLength = 500;
         private const int MaxIrrigationTypeLength = 100;
         private const int MaxScientificNameLength = 150;
+        private const int MaxSuggestedImageLength = 10;
         private const int MaxHarvestCycleMonths = 120;
         private const int MinMonth = 1;
         private const int MaxMonth = 12;
@@ -17,6 +20,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         private const double MaxAllowedPercentage = 100;
 
         public CropType CropTypeName { get; private set; } = default!;
+        public Guid? OwnerId { get; private set; }
         public bool IsSystemDefined { get; private set; }
         public string? Description { get; private set; }
         public string? ScientificName { get; private set; }
@@ -29,7 +33,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public double? MinHumidity { get; private set; }
         public double? MinSoilMoisture { get; private set; }
         public double? MaxSoilMoisture { get; private set; }
+        public string? SuggestedImage { get; private set; }
 
+        public OwnerSnapshot? Owner { get; private set; }
         public ICollection<PlotAggregate> Plots { get; private set; } = [];
 
         private CropTypeCatalogAggregate(Guid id) : base(id) { }
@@ -50,13 +56,17 @@ namespace TC.Agro.Farm.Domain.Aggregates
             double? maxTemperature = null,
             double? minHumidity = null,
             double? minSoilMoisture = null,
-            double? maxSoilMoisture = null)
+            double? maxSoilMoisture = null,
+            string? suggestedImage = null,
+            Guid? ownerId = null)
         {
             var cropTypeResult = CropType.Create(cropTypeName);
+            var normalizedOwnerId = NormalizeOwnerId(ownerId);
 
             var errors = new List<ValidationError>();
             errors.AddErrorsIfFailure(cropTypeResult);
-            errors.AddRange(ValidateOptionalText(description, recommendedIrrigationType, scientificName));
+            errors.AddRange(ValidateOwnerScope(isSystemDefined, normalizedOwnerId));
+            errors.AddRange(ValidateOptionalText(description, recommendedIrrigationType, scientificName, suggestedImage));
             errors.AddRange(ValidateHarvestCycle(typicalHarvestCycleMonths));
             errors.AddRange(ValidatePlantingWindow(typicalPlantingStartMonth, typicalPlantingEndMonth));
             errors.AddRange(ValidateClimateProfile(
@@ -87,7 +97,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 minHumidity,
                 minSoilMoisture,
                 maxSoilMoisture,
-                DateTimeOffset.UtcNow);
+                normalizedOwnerId,
+                DateTimeOffset.UtcNow,
+                TrimNullable(suggestedImage, MaxSuggestedImageLength));
 
             aggregate.ApplyEvent(@event);
             return Result.Success(aggregate);
@@ -108,10 +120,11 @@ namespace TC.Agro.Farm.Domain.Aggregates
             double? maxTemperature = null,
             double? minHumidity = null,
             double? minSoilMoisture = null,
-            double? maxSoilMoisture = null)
+            double? maxSoilMoisture = null,
+            string? suggestedImage = null)
         {
             var errors = new List<ValidationError>();
-            errors.AddRange(ValidateOptionalText(description, recommendedIrrigationType, scientificName));
+            errors.AddRange(ValidateOptionalText(description, recommendedIrrigationType, scientificName, suggestedImage));
             errors.AddRange(ValidateHarvestCycle(typicalHarvestCycleMonths));
             errors.AddRange(ValidatePlantingWindow(typicalPlantingStartMonth, typicalPlantingEndMonth));
             errors.AddRange(ValidateClimateProfile(
@@ -139,7 +152,8 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 minHumidity,
                 minSoilMoisture,
                 maxSoilMoisture,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                TrimNullable(suggestedImage, MaxSuggestedImageLength));
 
             ApplyEvent(@event);
             return Result.Success();
@@ -177,6 +191,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         {
             SetId(@event.AggregateId);
             CropTypeName = CropType.FromDb(@event.CropTypeName).Value;
+            OwnerId = @event.OwnerId;
             IsSystemDefined = @event.IsSystemDefined;
             Description = @event.Description;
             ScientificName = @event.ScientificName;
@@ -189,6 +204,8 @@ namespace TC.Agro.Farm.Domain.Aggregates
             MinHumidity = @event.MinHumidity;
             MinSoilMoisture = @event.MinSoilMoisture;
             MaxSoilMoisture = @event.MaxSoilMoisture;
+            SuggestedImage = @event.SuggestedImage;
+            Owner = null;
             SetCreatedAt(@event.OccurredOn);
             SetActivate();
         }
@@ -206,6 +223,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
             MinHumidity = @event.MinHumidity;
             MinSoilMoisture = @event.MinSoilMoisture;
             MaxSoilMoisture = @event.MaxSoilMoisture;
+            SuggestedImage = @event.SuggestedImage;
             SetUpdatedAt(@event.OccurredOn);
         }
 
@@ -248,7 +266,8 @@ namespace TC.Agro.Farm.Domain.Aggregates
         private static IEnumerable<ValidationError> ValidateOptionalText(
             string? description,
             string? recommendedIrrigationType,
-            string? scientificName)
+            string? scientificName,
+            string? suggestedImage)
         {
             if (!string.IsNullOrWhiteSpace(description) && description.Trim().Length > MaxDescriptionLength)
             {
@@ -270,6 +289,48 @@ namespace TC.Agro.Farm.Domain.Aggregates
                     "CropTypeCatalog.ScientificName",
                     $"Scientific name cannot exceed {MaxScientificNameLength} characters.");
             }
+
+            if (!string.IsNullOrWhiteSpace(suggestedImage) && suggestedImage.Trim().Length > MaxSuggestedImageLength)
+            {
+                yield return new ValidationError(
+                    "CropTypeCatalog.SuggestedImage",
+                    $"Suggested image cannot exceed {MaxSuggestedImageLength} characters.");
+            }
+        }
+
+        private static Guid? NormalizeOwnerId(Guid? ownerId)
+            => ownerId.HasValue && ownerId.Value != Guid.Empty
+                ? ownerId.Value
+                : null;
+
+        private static IEnumerable<ValidationError> ValidateOwnerScope(bool isSystemDefined, Guid? ownerId)
+        {
+            if (isSystemDefined && ownerId.HasValue)
+            {
+                yield return new ValidationError(
+                    "CropTypeCatalog.OwnerId",
+                    "System-defined catalog entries cannot be assigned to a tenant owner.");
+            }
+
+            if (!isSystemDefined && !ownerId.HasValue)
+            {
+                yield return new ValidationError(
+                    "CropTypeCatalog.OwnerId",
+                    "OwnerId is required for tenant-scoped catalog entries.");
+            }
+        }
+
+        private static string? TrimNullable(string? value, int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var trimmed = value.Trim();
+            return trimmed.Length <= maxLength
+                ? trimmed
+                : trimmed[..maxLength];
         }
 
         private static IEnumerable<ValidationError> ValidateHarvestCycle(int? typicalHarvestCycleMonths)
@@ -389,7 +450,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             double? MinHumidity,
             double? MinSoilMoisture,
             double? MaxSoilMoisture,
-            DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
+            Guid? OwnerId,
+            DateTimeOffset OccurredOn,
+            string? SuggestedImage = null) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record CropTypeCatalogUpdatedDomainEvent(
             Guid AggregateId,
@@ -404,7 +467,8 @@ namespace TC.Agro.Farm.Domain.Aggregates
             double? MinHumidity,
             double? MinSoilMoisture,
             double? MaxSoilMoisture,
-            DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
+            DateTimeOffset OccurredOn,
+            string? SuggestedImage = null) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record CropTypeCatalogDeactivatedDomainEvent(
             Guid AggregateId,

@@ -79,6 +79,11 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 .HasColumnType("timestamptz")
                 .IsRequired(false);
 
+            builder.Property(c => c.SuggestedImage)
+                .HasColumnName("suggested_image")
+                .HasMaxLength(10)
+                .IsRequired(false);
+
             builder.OwnsOne(c => c.CropName, cropName =>
             {
                 cropName.Property(x => x.Value)

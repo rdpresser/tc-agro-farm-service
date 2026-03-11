@@ -8,35 +8,70 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
         }
 
         /// <inheritdoc />
-        public async Task<CropTypeCatalogAggregate?> GetByNameAsync(string cropTypeName, CancellationToken cancellationToken = default)
+        public async Task<CropTypeCatalogAggregate?> GetByNameAsync(
+            string cropTypeName,
+            Guid? ownerId = null,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(cropTypeName))
             {
                 return null;
             }
 
-            var normalized = cropTypeName.Trim();
+            var normalized = cropTypeName.Trim().ToLowerInvariant();
 
-            return await DbSet
+            return await BuildScopedQuery(ownerId)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => EF.Functions.ILike(x.CropTypeName.Value, normalized), cancellationToken)
+                .Where(x => x.CropTypeName.Value.ToLower() == normalized)
+                .OrderByDescending(x => ownerId.HasValue && x.OwnerId == ownerId.Value)
+                .ThenBy(x => x.IsSystemDefined)
+                .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public async Task<bool> NameExistsAsync(string cropTypeName, CancellationToken cancellationToken = default)
+        public async Task<CropTypeCatalogAggregate?> GetByIdScopedAsync(
+            Guid id,
+            Guid? ownerId = null,
+            bool includeInactive = false,
+            CancellationToken cancellationToken = default)
+        {
+            return await BuildScopedQuery(ownerId, includeInactive)
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> NameExistsAsync(
+            string cropTypeName,
+            Guid? ownerId = null,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(cropTypeName))
             {
                 return false;
             }
 
-            var normalized = cropTypeName.Trim();
+            var normalized = cropTypeName.Trim().ToLowerInvariant();
 
-            return await DbSet
+            return await BuildScopedQuery(ownerId)
                 .AsNoTracking()
-                .AnyAsync(x => EF.Functions.ILike(x.CropTypeName.Value, normalized), cancellationToken)
+                .AnyAsync(x => x.CropTypeName.Value.ToLower() == normalized, cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        private IQueryable<CropTypeCatalogAggregate> BuildScopedQuery(Guid? ownerId, bool includeInactive = false)
+        {
+            var query = includeInactive
+                ? DbSet.IgnoreQueryFilters()
+                : DbSet;
+
+            if (ownerId.HasValue && ownerId.Value != Guid.Empty)
+            {
+                return query.Where(x => x.OwnerId == null || x.OwnerId == ownerId.Value);
+            }
+
+            return query.Where(x => x.OwnerId == null);
         }
     }
 }

@@ -3,12 +3,12 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Delete
     internal sealed class DeleteCropTypeCommandHandler
         : BaseHandler<DeleteCropTypeCommand, DeleteCropTypeResponse>
     {
-        private readonly ICropTypeSuggestionRepository _repository;
+        private readonly ICropTypeCatalogRepository _repository;
         private readonly IUserContext _userContext;
         private readonly ITransactionalOutbox _outbox;
 
         public DeleteCropTypeCommandHandler(
-            ICropTypeSuggestionRepository repository,
+            ICropTypeCatalogRepository repository,
             IUserContext userContext,
             ITransactionalOutbox outbox)
         {
@@ -21,19 +21,19 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Delete
             DeleteCropTypeCommand command,
             CancellationToken ct = default)
         {
-            var aggregate = await _repository
-                .GetByIdAsync(command.CropTypeId, ct)
-                .ConfigureAwait(false);
+            var aggregate = _userContext.IsAdmin
+                ? await _repository.GetByIdAsync(command.CropTypeId, ct).ConfigureAwait(false)
+                : await _repository.GetByIdScopedAsync(command.CropTypeId, _userContext.Id, includeInactive: true, cancellationToken: ct).ConfigureAwait(false);
 
             if (aggregate is null)
             {
-                AddError(x => x.CropTypeId, "Crop type suggestion not found.", FarmDomainErrors.CropTypeSuggestionNotFound.ErrorCode);
+                AddError(x => x.CropTypeId, "Crop type catalog entry not found.", FarmDomainErrors.CropTypeCatalogNotFound.ErrorCode);
                 return BuildNotFoundResult();
             }
 
             if (aggregate.OwnerId != _userContext.Id && !_userContext.IsAdmin)
             {
-                AddError(x => x.CropTypeId, "You are not authorized to delete this crop type suggestion.", "CropTypeSuggestion.NotAuthorized");
+                AddError(x => x.CropTypeId, "You are not authorized to delete this crop type catalog entry.", "CropTypeCatalog.NotAuthorized");
                 return BuildNotAuthorizedResult();
             }
 

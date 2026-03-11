@@ -5,6 +5,7 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
     {
         private readonly IPropertyAggregateRepository _repository;
         private readonly ICropTypeSuggestionRepository _cropTypeRepository;
+        private readonly ICropCycleAggregateRepository _cropCycleRepository;
         private readonly IUserContext _userContext;
         private readonly ITransactionalOutbox _outbox;
         private readonly ILogger<UpdatePropertyCommandHandler> _logger;
@@ -12,12 +13,14 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
         public UpdatePropertyCommandHandler(
             IPropertyAggregateRepository repository,
             ICropTypeSuggestionRepository cropTypeRepository,
+            ICropCycleAggregateRepository cropCycleRepository,
             IUserContext userContext,
             ITransactionalOutbox outbox,
             ILogger<UpdatePropertyCommandHandler> logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _cropTypeRepository = cropTypeRepository ?? throw new ArgumentNullException(nameof(cropTypeRepository));
+            _cropCycleRepository = cropCycleRepository ?? throw new ArgumentNullException(nameof(cropCycleRepository));
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
             _outbox = outbox ?? throw new ArgumentNullException(nameof(outbox));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -66,6 +69,27 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
 
             var previousLatitude = aggregate.Location.Latitude;
             var previousLongitude = aggregate.Location.Longitude;
+            var locationChanged = HasLocationChanged(
+                previousLatitude,
+                previousLongitude,
+                command.Latitude,
+                command.Longitude);
+
+            if (locationChanged)
+            {
+                var hasActiveCycles = await _cropCycleRepository
+                    .HasActiveCyclesByPropertyAsync(aggregate.Id, ct)
+                    .ConfigureAwait(false);
+
+                if (hasActiveCycles)
+                {
+                    AddError(
+                        x => x.Id,
+                        FarmDomainErrors.PropertyLocationChangeBlockedByActiveCropCycles.ErrorMessage,
+                        FarmDomainErrors.PropertyLocationChangeBlockedByActiveCropCycles.ErrorCode);
+                    return BuildValidationErrorResult();
+                }
+            }
 
             // 4. Apply update
             var updateResult = aggregate.Update(
@@ -84,11 +108,25 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Update
                 return BuildValidationErrorResult();
             }
 
-            if (HasLocationChanged(previousLatitude, previousLongitude, aggregate.Location.Latitude, aggregate.Location.Longitude))
+            if (locationChanged)
             {
                 await _cropTypeRepository
                     .MarkAiSuggestionsAsStaleByPropertyAsync(aggregate.Id, ct)
                     .ConfigureAwait(false);
+
+                if (aggregate.Location.Latitude.HasValue && aggregate.Location.Longitude.HasValue)
+                {
+                    var triggerUserId = _userContext.Id == Guid.Empty ? aggregate.OwnerId : _userContext.Id;
+
+                    await _outbox.EnqueueAsync(
+                        new CropTypes.Regenerate.GeneratePropertyCropTypeSuggestionsMessage(
+                            PropertyId: aggregate.Id,
+                            OwnerId: aggregate.OwnerId,
+                            TriggeredByUserId: triggerUserId,
+                            TriggerReason: "property-location-changed",
+                            RequestedAt: DateTimeOffset.UtcNow),
+                        ct).ConfigureAwait(false);
+                }
             }
 
             // 5. Publish integration events

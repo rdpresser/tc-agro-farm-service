@@ -61,6 +61,12 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
                 .When(x => !string.IsNullOrWhiteSpace(x.Notes))
                 .WithMessage("Notes must not exceed 500 characters.")
                 .WithErrorCode($"{nameof(CreateCropTypeCommand.Notes)}.MaximumLength");
+
+            RuleFor(x => x.SuggestedImage)
+                .MaximumLength(10)
+                .When(x => !string.IsNullOrWhiteSpace(x.SuggestedImage))
+                .WithMessage("SuggestedImage must not exceed 10 characters.")
+                .WithErrorCode($"{nameof(CreateCropTypeCommand.SuggestedImage)}.MaximumLength");
         }
     }
 }

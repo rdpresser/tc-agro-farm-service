@@ -5,6 +5,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
         Guid PropertyId,
         Guid OwnerId,
         string CropType,
+        string? SuggestedImage,
         string Source,
         bool IsOverride,
         bool IsStale,
@@ -18,5 +19,6 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
         string? Notes,
         string? Model,
         DateTimeOffset? GeneratedAt,
-        DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    Guid CropTypeCatalogId);
 }
