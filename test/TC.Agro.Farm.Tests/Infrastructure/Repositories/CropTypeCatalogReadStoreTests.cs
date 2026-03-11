@@ -37,7 +37,7 @@ public sealed class CropTypeCatalogReadStoreTests
     }
 
     [Fact]
-    public async Task ListAsync_WhenPropertyFilterIsProvided_ShouldExposeCatalogIdAndOverlaySuggestionId()
+    public async Task ListAsync_WhenOwnerHasProperty_ShouldPopulatePropertyContextForOwnerScopedCatalogEntries()
     {
         await using var dbContext = CreateDbContext();
         var seed = await SeedDataAsync(dbContext);
@@ -46,7 +46,6 @@ public sealed class CropTypeCatalogReadStoreTests
 
         var query = new ListCropTypesQuery
         {
-            PropertyId = seed.PropertyId,
             PageNumber = 1,
             PageSize = 20,
             SortBy = "createdAt",
@@ -56,14 +55,15 @@ public sealed class CropTypeCatalogReadStoreTests
         var (cropTypes, _) = await sut.ListAsync(query, CancellationToken.None);
 
         var sorghum = cropTypes.Single(item => item.CropType == "Sorghum");
-        sorghum.Id.ShouldBe(seed.SuggestionId);
+        sorghum.Id.ShouldBe(seed.SuggestionCatalogId);
         sorghum.CropTypeCatalogId.ShouldBe(seed.SuggestionCatalogId);
-        sorghum.SelectedCropTypeSuggestionId.ShouldBe(seed.SuggestionId);
+        sorghum.SelectedCropTypeSuggestionId.ShouldBeNull();
         sorghum.PropertyId.ShouldBe(seed.PropertyId);
-        sorghum.Source.ShouldBe(CropTypeSuggestionAggregate.AiSource);
+        sorghum.Source.ShouldBe("Catalog");
 
         var corn = cropTypes.Single(item => item.CropType == "Corn");
         corn.CropTypeCatalogId.ShouldBe(seed.GlobalCatalogId);
+        corn.PropertyId.ShouldBe(Guid.Empty);
         corn.SelectedCropTypeSuggestionId.ShouldBeNull();
     }
 

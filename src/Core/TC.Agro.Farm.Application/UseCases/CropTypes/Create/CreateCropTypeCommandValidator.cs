@@ -4,11 +4,6 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
     {
         public CreateCropTypeCommandValidator()
         {
-            RuleFor(x => x.PropertyId)
-                .NotEmpty()
-                .WithMessage("PropertyId is required.")
-                .WithErrorCode($"{nameof(CreateCropTypeCommand.PropertyId)}.Required");
-
             RuleFor(x => x.CropType)
                 .NotEmpty()
                 .WithMessage("CropType is required.")

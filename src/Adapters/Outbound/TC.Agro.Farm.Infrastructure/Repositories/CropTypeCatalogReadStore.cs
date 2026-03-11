@@ -32,7 +32,12 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             if (catalog is not null)
             {
-                return ToGetByIdResponse(catalog);
+                var propertyContext = await ResolvePropertyContextByOwnerAsync(
+                    catalog.OwnerId,
+                    includeInactive,
+                    cancellationToken).ConfigureAwait(false);
+
+                return ToGetByIdResponse(catalog, propertyContext);
             }
 
             var suggestion = await BuildSuggestionQuery(includeInactive)
@@ -60,11 +65,6 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             ListCropTypesQuery query,
             CancellationToken cancellationToken = default)
         {
-            if (query.PropertyId.HasValue && query.PropertyId.Value != Guid.Empty)
-            {
-                return await ListForPropertyAsync(query, cancellationToken).ConfigureAwait(false);
-            }
-
             if (!string.IsNullOrWhiteSpace(query.Source) &&
                 !string.Equals(query.Source, CatalogSource, StringComparison.OrdinalIgnoreCase))
             {
@@ -86,95 +86,24 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            return (rows.Select(ToListResponse).ToList(), totalCount);
-        }
+            var ownerIds = rows
+                .Where(catalog => catalog.OwnerId.HasValue && catalog.OwnerId.Value != Guid.Empty)
+                .Select(catalog => catalog.OwnerId!.Value)
+                .Distinct()
+                .ToArray();
 
-        private async Task<(IReadOnlyList<ListCropTypesResponse> CropTypes, int TotalCount)> ListForPropertyAsync(
-            ListCropTypesQuery query,
-            CancellationToken cancellationToken)
-        {
-            var property = await BuildPropertyQuery(query.IncludeInactive, query.OwnerId)
-                .AsNoTracking()
-                .Where(x => x.Id == query.PropertyId!.Value)
-                .Select(x => new PropertyProjection(x.Id, x.OwnerId, x.Name.Value, x.Owner.Name))
-                .FirstOrDefaultAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            if (property is null)
-            {
-                return ([], 0);
-            }
-
-            var catalogs = await BuildCatalogQuery(query.IncludeInactive, property.OwnerId)
-                .AsNoTracking()
-                .Select(CatalogProjection.Selector)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            var suggestionsQuery = BuildSuggestionQuery(query.IncludeInactive, property.OwnerId)
-                .AsNoTracking()
-                .Where(x => x.PropertyId == property.Id);
-
-            if (!query.IncludeStale)
-            {
-                suggestionsQuery = suggestionsQuery.Where(x => !x.IsStale);
-            }
-
-            if (!string.IsNullOrWhiteSpace(query.Source) &&
-                !string.Equals(query.Source, CatalogSource, StringComparison.OrdinalIgnoreCase))
-            {
-                var normalizedSource = query.Source.Trim().ToLowerInvariant();
-                suggestionsQuery = suggestionsQuery.Where(x => x.Source.ToLower() == normalizedSource);
-            }
-
-            var suggestions = await suggestionsQuery
-                .Select(SuggestionProjection.Selector)
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            var bestSuggestionsByCrop = suggestions
-                .GroupBy(suggestion => NormalizeCropType(suggestion.CropType))
-                .ToDictionary(
-                    group => group.Key,
-                    group => group
-                        .OrderByDescending(item => item.IsOverride)
-                        .ThenBy(item => item.IsStale)
-                        .ThenByDescending(item => item.GeneratedAt ?? item.CreatedAt)
-                        .ThenByDescending(item => item.CreatedAt)
-                        .First(),
-                    StringComparer.OrdinalIgnoreCase);
-
-            var matchedSuggestionIds = new HashSet<Guid>();
-            var rows = new List<ListCropTypesResponse>(catalogs.Count + suggestions.Count);
-
-            foreach (var catalog in catalogs)
-            {
-                bestSuggestionsByCrop.TryGetValue(NormalizeCropType(catalog.CropType), out var suggestion);
-
-                if (suggestion is not null)
-                {
-                    matchedSuggestionIds.Add(suggestion.Id);
-                }
-
-                rows.Add(ToListResponse(catalog, property, suggestion));
-            }
-
-            foreach (var suggestion in suggestions.Where(item => !matchedSuggestionIds.Contains(item.Id)))
-            {
-                rows.Add(ToListResponse(property, suggestion));
-            }
-
-            var filteredRows = ApplySourceFilter(rows, query.Source)
-                .ApplyTextFilter(query.Filter)
-                .ApplySorting(query.SortBy, query.SortDirection)
-                .ToList();
-
-            var totalCount = filteredRows.Count;
+            var propertyContexts = await ResolvePropertyContextByOwnersAsync(
+                ownerIds,
+                query.IncludeInactive,
+                cancellationToken).ConfigureAwait(false);
 
             return (
-                filteredRows
-                    .Skip((query.PageNumber - 1) * query.PageSize)
-                    .Take(query.PageSize)
+                rows
+                    .Select(catalog =>
+                    {
+                        propertyContexts.TryGetValue(catalog.OwnerId ?? Guid.Empty, out var propertyContext);
+                        return ToListResponse(catalog, propertyContext);
+                    })
                     .ToList(),
                 totalCount);
         }
@@ -236,6 +165,58 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             return query.Where(x => x.OwnerId == _userContext.Id);
         }
 
+        private async Task<PropertyProjection?> ResolvePropertyContextByOwnerAsync(
+            Guid? ownerId,
+            bool includeInactive,
+            CancellationToken cancellationToken)
+        {
+            if (!ownerId.HasValue || ownerId.Value == Guid.Empty)
+            {
+                return null;
+            }
+
+            return await BuildPropertyQuery(includeInactive, ownerId.Value)
+                .AsNoTracking()
+                .OrderBy(x => x.Name.Value)
+                .Select(x => new PropertyProjection(x.Id, x.OwnerId, x.Name.Value))
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        private async Task<Dictionary<Guid, PropertyProjection>> ResolvePropertyContextByOwnersAsync(
+            IReadOnlyCollection<Guid> ownerIds,
+            bool includeInactive,
+            CancellationToken cancellationToken)
+        {
+            if (ownerIds.Count == 0)
+            {
+                return new Dictionary<Guid, PropertyProjection>();
+            }
+
+            var ownerIdsArray = ownerIds
+                .Where(ownerId => ownerId != Guid.Empty)
+                .Distinct()
+                .ToArray();
+
+            if (ownerIdsArray.Length == 0)
+            {
+                return new Dictionary<Guid, PropertyProjection>();
+            }
+
+            var properties = await BuildPropertyQuery(includeInactive)
+                .AsNoTracking()
+                .Where(x => ownerIdsArray.Contains(x.OwnerId))
+                .OrderBy(x => x.Name.Value)
+                .ThenBy(x => x.Id)
+                .Select(x => new PropertyProjection(x.Id, x.OwnerId, x.Name.Value))
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return properties
+                .GroupBy(x => x.OwnerId)
+                .ToDictionary(group => group.Key, group => group.First());
+        }
+
         private async Task<CatalogProjection?> ResolveCatalogForSuggestionAsync(
             string cropType,
             Guid ownerId,
@@ -275,12 +256,14 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 : $"{start} to {end}";
         }
 
-        private static ListCropTypesResponse ToListResponse(CatalogProjection catalog)
+        private static ListCropTypesResponse ToListResponse(
+            CatalogProjection catalog,
+            PropertyProjection? propertyContext)
             => new(
                 Id: catalog.Id,
-                PropertyId: Guid.Empty,
-                OwnerId: catalog.OwnerId ?? Guid.Empty,
-                PropertyName: string.Empty,
+                PropertyId: propertyContext?.Id ?? Guid.Empty,
+                OwnerId: propertyContext?.OwnerId ?? catalog.OwnerId ?? Guid.Empty,
+                PropertyName: propertyContext?.PropertyName ?? string.Empty,
                 OwnerName: catalog.OwnerName ?? "System",
                 CropType: catalog.CropType,
                 SuggestedImage: catalog.SuggestedImage,
@@ -303,71 +286,14 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 CropTypeCatalogId: catalog.Id,
                 SelectedCropTypeSuggestionId: null);
 
-        private static ListCropTypesResponse ToListResponse(
+        private static GetCropTypeByIdResponse ToGetByIdResponse(
             CatalogProjection catalog,
-            PropertyProjection property,
-            SuggestionProjection? suggestion)
-            => new(
-                Id: suggestion?.Id ?? catalog.Id,
-                PropertyId: property.Id,
-                OwnerId: property.OwnerId,
-                PropertyName: property.PropertyName,
-                OwnerName: property.OwnerName,
-                CropType: catalog.CropType,
-                SuggestedImage: suggestion?.SuggestedImage ?? catalog.SuggestedImage,
-                Source: suggestion?.Source ?? CatalogSource,
-                IsOverride: suggestion?.IsOverride ?? false,
-                IsStale: suggestion?.IsStale ?? false,
-                ConfidenceScore: suggestion?.ConfidenceScore,
-                PlantingWindow: suggestion?.PlantingWindow ?? BuildPlantingWindow(catalog),
-                HarvestCycleMonths: suggestion?.HarvestCycleMonths ?? catalog.TypicalHarvestCycleMonths,
-                SuggestedIrrigationType: suggestion?.SuggestedIrrigationType ?? catalog.RecommendedIrrigationType,
-                MinSoilMoisture: suggestion?.MinSoilMoisture ?? catalog.MinSoilMoisture,
-                MaxTemperature: suggestion?.MaxTemperature ?? catalog.MaxTemperature,
-                MinHumidity: suggestion?.MinHumidity ?? catalog.MinHumidity,
-                Notes: suggestion?.Notes ?? catalog.Description,
-                Model: suggestion?.Model,
-                GeneratedAt: suggestion?.GeneratedAt,
-                IsActive: suggestion?.IsActive ?? catalog.IsActive,
-                CreatedAt: suggestion?.CreatedAt ?? catalog.CreatedAt,
-                UpdatedAt: suggestion?.UpdatedAt ?? catalog.UpdatedAt,
-                CropTypeCatalogId: catalog.Id,
-                SelectedCropTypeSuggestionId: suggestion?.Id);
-
-        private static ListCropTypesResponse ToListResponse(PropertyProjection property, SuggestionProjection suggestion)
-            => new(
-                Id: suggestion.Id,
-                PropertyId: property.Id,
-                OwnerId: property.OwnerId,
-                PropertyName: property.PropertyName,
-                OwnerName: property.OwnerName,
-                CropType: suggestion.CropType,
-                SuggestedImage: suggestion.SuggestedImage,
-                Source: suggestion.Source,
-                IsOverride: suggestion.IsOverride,
-                IsStale: suggestion.IsStale,
-                ConfidenceScore: suggestion.ConfidenceScore,
-                PlantingWindow: suggestion.PlantingWindow,
-                HarvestCycleMonths: suggestion.HarvestCycleMonths,
-                SuggestedIrrigationType: suggestion.SuggestedIrrigationType,
-                MinSoilMoisture: suggestion.MinSoilMoisture,
-                MaxTemperature: suggestion.MaxTemperature,
-                MinHumidity: suggestion.MinHumidity,
-                Notes: suggestion.Notes,
-                Model: suggestion.Model,
-                GeneratedAt: suggestion.GeneratedAt,
-                IsActive: suggestion.IsActive,
-                CreatedAt: suggestion.CreatedAt,
-                UpdatedAt: suggestion.UpdatedAt,
-                CropTypeCatalogId: Guid.Empty,
-                SelectedCropTypeSuggestionId: suggestion.Id);
-
-        private static GetCropTypeByIdResponse ToGetByIdResponse(CatalogProjection catalog)
+            PropertyProjection? propertyContext)
             => new(
                 Id: catalog.Id,
-                PropertyId: Guid.Empty,
-                OwnerId: catalog.OwnerId ?? Guid.Empty,
-                PropertyName: string.Empty,
+                PropertyId: propertyContext?.Id ?? Guid.Empty,
+                OwnerId: propertyContext?.OwnerId ?? catalog.OwnerId ?? Guid.Empty,
+                PropertyName: propertyContext?.PropertyName ?? string.Empty,
                 OwnerName: catalog.OwnerName ?? "System",
                 CropType: catalog.CropType,
                 SuggestedImage: catalog.SuggestedImage,
@@ -420,27 +346,10 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 CropTypeCatalogId: catalog?.Id ?? Guid.Empty,
                 SelectedCropTypeSuggestionId: suggestion.Id);
 
-        private static List<ListCropTypesResponse> ApplySourceFilter(
-            List<ListCropTypesResponse> rows,
-            string? source)
-        {
-            if (string.IsNullOrWhiteSpace(source))
-            {
-                return rows;
-            }
-
-            var normalizedSource = source.Trim();
-
-            return rows
-                .Where(row => string.Equals(row.Source, normalizedSource, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-
         private sealed record PropertyProjection(
             Guid Id,
             Guid OwnerId,
-            string PropertyName,
-            string OwnerName);
+            string PropertyName);
 
         private sealed record CatalogProjection(
             Guid Id,

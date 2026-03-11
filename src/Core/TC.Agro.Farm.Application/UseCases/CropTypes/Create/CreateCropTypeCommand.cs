@@ -1,7 +1,6 @@
 namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
 {
     public sealed record CreateCropTypeCommand(
-        Guid PropertyId,
         string CropType,
         string? PlantingWindow,
         int? HarvestCycleMonths,

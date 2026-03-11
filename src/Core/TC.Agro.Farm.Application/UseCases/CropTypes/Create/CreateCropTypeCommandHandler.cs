@@ -27,27 +27,21 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
             CreateCropTypeCommand command,
             CancellationToken ct = default)
         {
-            var property = await _propertyRepository
-                .GetByIdAsync(command.PropertyId, ct)
-                .ConfigureAwait(false);
-
-            if (property is null)
+            var ownerId = _userContext.Id;
+            if (ownerId == Guid.Empty)
             {
-                AddError(x => x.PropertyId, "Property not found.", FarmDomainErrors.PropertyNotFound.ErrorCode);
-                return BuildNotFoundResult();
-            }
-
-            if (property.OwnerId != _userContext.Id && !_userContext.IsAdmin)
-            {
-                AddError(x => x.PropertyId, "You are not authorized to create crop types for this property.", "CropTypeCatalog.NotAuthorized");
+                AddError(
+                    x => x.CropType,
+                    "You are not authorized to create owner-scoped crop catalog entries.",
+                    "CropTypeCatalog.NotAuthorized");
                 return BuildNotAuthorizedResult();
             }
 
             var existingEntry = await _repository
-                .GetByNameAsync(command.CropType, property.OwnerId, ct)
+                .GetByNameAsync(command.CropType, ownerId, ct)
                 .ConfigureAwait(false);
 
-            if (existingEntry is not null && existingEntry.OwnerId == property.OwnerId)
+            if (existingEntry is not null && existingEntry.OwnerId == ownerId)
             {
                 AddError(x => x.CropType, "A crop type catalog entry with this name already exists for this owner.", "CropTypeCatalog.NameAlreadyExists");
                 return BuildValidationErrorResult();
@@ -67,7 +61,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
                 minHumidity: command.MinHumidity,
                 minSoilMoisture: command.MinSoilMoisture,
                 suggestedImage: command.SuggestedImage,
-                ownerId: property.OwnerId,
+                ownerId: ownerId,
                 scientificName: null,
                 minTemperature: null,
                 maxSoilMoisture: null);
@@ -82,16 +76,22 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Create
             _repository.Add(aggregate);
             await _outbox.SaveChangesAsync(ct).ConfigureAwait(false);
 
+            var ownerProperty = await _propertyRepository
+                .GetAnyByOwnerAsync(ownerId, ct)
+                .ConfigureAwait(false);
+
+            var propertyIdContext = ownerProperty?.Id ?? Guid.Empty;
+
             _logger.LogInformation(
-                "Crop type catalog entry {CropTypeCatalogId} created for owner {OwnerId} and property {PropertyId}",
+                "Crop type catalog entry {CropTypeCatalogId} created for owner {OwnerId} with property context {PropertyId}",
                 aggregate.Id,
-                property.OwnerId,
-                property.Id);
+                ownerId,
+                propertyIdContext);
 
             return new CreateCropTypeResponse(
                 aggregate.Id,
-                property.Id,
-                property.OwnerId,
+                propertyIdContext,
+                ownerId,
                 aggregate.CropTypeName.Value,
                 aggregate.SuggestedImage,
                 "Catalog",

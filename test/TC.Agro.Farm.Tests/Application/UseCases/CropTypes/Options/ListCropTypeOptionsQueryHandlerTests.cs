@@ -22,11 +22,12 @@ public sealed class ListCropTypeOptionsQueryHandlerTests
     {
         var query = new ListCropTypeOptionsQuery
         {
-            PropertyId = Guid.NewGuid(),
             IncludeInactive = false,
             IncludeStale = false,
             Limit = 100
         };
+
+        var propertyId = Guid.NewGuid();
 
         var cropTypeCatalogId = Guid.NewGuid();
         var suggestionId = Guid.NewGuid();
@@ -35,7 +36,7 @@ public sealed class ListCropTypeOptionsQueryHandlerTests
         {
             new(
                 Id: suggestionId,
-                PropertyId: query.PropertyId!.Value,
+                PropertyId: propertyId,
                 OwnerId: Guid.NewGuid(),
                 PropertyName: "Farm A",
                 OwnerName: "Owner A",
@@ -63,7 +64,6 @@ public sealed class ListCropTypeOptionsQueryHandlerTests
 
         A.CallTo(() => _readStore.ListAsync(
                 A<ListCropTypesQuery>.That.Matches(x =>
-                    x.PropertyId == query.PropertyId &&
                     x.PageNumber == 1 &&
                     x.PageSize == query.Limit &&
                     x.SortBy == "cropType" &&

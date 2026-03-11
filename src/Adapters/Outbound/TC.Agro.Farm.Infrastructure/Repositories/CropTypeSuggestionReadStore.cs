@@ -66,11 +66,6 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
                 cropTypesQuery = cropTypesQuery.Where(x => x.OwnerId == query.OwnerId.Value);
             }
 
-            if (query.PropertyId.HasValue && query.PropertyId.Value != Guid.Empty)
-            {
-                cropTypesQuery = cropTypesQuery.Where(x => x.PropertyId == query.PropertyId.Value);
-            }
-
             if (!query.IncludeStale)
             {
                 cropTypesQuery = cropTypesQuery.Where(x => !x.IsStale);

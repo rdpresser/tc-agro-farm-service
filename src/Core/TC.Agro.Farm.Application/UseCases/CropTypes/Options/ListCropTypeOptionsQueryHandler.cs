@@ -21,9 +21,8 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
             CancellationToken ct = default)
         {
             _logger.LogDebug(
-                "Listing crop type options. OwnerId={OwnerId}, PropertyId={PropertyId}, IncludeStale={IncludeStale}, IncludeInactive={IncludeInactive}, Filter={Filter}, Limit={Limit}",
+                "Listing crop type options. OwnerId={OwnerId}, IncludeStale={IncludeStale}, IncludeInactive={IncludeInactive}, Filter={Filter}, Limit={Limit}",
                 query.OwnerId,
-                query.PropertyId,
                 query.IncludeStale,
                 query.IncludeInactive,
                 query.Filter,
@@ -32,7 +31,6 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
             var listQuery = new ListCropTypesQuery
             {
                 OwnerId = query.OwnerId,
-                PropertyId = query.PropertyId,
                 Source = query.Source,
                 IncludeStale = query.IncludeStale,
                 IncludeInactive = query.IncludeInactive,

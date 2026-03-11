@@ -19,9 +19,8 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
             Summary(s =>
             {
                 s.Summary = "Create a crop type catalog entry.";
-                s.Description = "Creates a tenant-scoped crop type catalog entry linked to the property owner.";
+                s.Description = "Creates a tenant-scoped crop type catalog entry linked to the authenticated owner context.";
                 s.ExampleRequest = new CreateCropTypeCommand(
-                    Guid.NewGuid(),
                     "Soy",
                     "September to November",
                     5,

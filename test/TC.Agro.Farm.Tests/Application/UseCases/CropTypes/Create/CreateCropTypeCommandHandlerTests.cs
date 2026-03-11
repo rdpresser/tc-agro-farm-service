@@ -23,35 +23,10 @@ public sealed class CreateCropTypeCommandHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPropertyDoesNotExist_ShouldReturnNotFound()
+    public async Task ExecuteAsync_WhenUserContextHasNoOwnerId_ShouldReturnUnauthorized()
     {
-        var userContext = TestUserContextFactory.CreateProducer();
+        var userContext = TestUserContextFactory.CreateProducer(Guid.Empty);
         var command = CreateCommand();
-
-        A.CallTo(() => _propertyRepository.GetByIdAsync(command.PropertyId, A<CancellationToken>._))
-            .Returns(Task.FromResult<PropertyAggregate?>(null));
-
-        var sut = CreateHandler(userContext);
-
-        var result = await sut.ExecuteAsync(command, CancellationToken.None);
-
-        result.Status.ShouldBe(ResultStatus.NotFound);
-        result.Errors.ShouldContain(error => error.Contains("Property not found", StringComparison.OrdinalIgnoreCase));
-
-        A.CallTo(() => _repository.Add(A<CropTypeCatalogAggregate>._)).MustNotHaveHappened();
-        A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustNotHaveHappened();
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_WhenCallerIsNotOwnerAndNotAdmin_ShouldReturnUnauthorized()
-    {
-        var ownerId = Guid.NewGuid();
-        var userContext = TestUserContextFactory.CreateProducer(Guid.NewGuid());
-        var property = CreateProperty(ownerId);
-        var command = CreateCommand(property.Id);
-
-        A.CallTo(() => _propertyRepository.GetByIdAsync(command.PropertyId, A<CancellationToken>._))
-            .Returns(property);
 
         var sut = CreateHandler(userContext);
 
@@ -69,12 +44,9 @@ public sealed class CreateCropTypeCommandHandlerTests
     {
         var ownerId = Guid.NewGuid();
         var userContext = TestUserContextFactory.CreateProducer(ownerId);
-        var property = CreateProperty(ownerId);
-        var command = CreateCommand(property.Id);
+        var command = CreateCommand();
         var existingCatalog = CropTypeCatalogAggregate.Create(command.CropType, isSystemDefined: false, ownerId: ownerId).Value;
 
-        A.CallTo(() => _propertyRepository.GetByIdAsync(command.PropertyId, A<CancellationToken>._))
-            .Returns(property);
         A.CallTo(() => _repository.GetByNameAsync(command.CropType, ownerId, A<CancellationToken>._))
             .Returns(existingCatalog);
 
@@ -96,15 +68,15 @@ public sealed class CreateCropTypeCommandHandlerTests
         var ownerId = Guid.NewGuid();
         var userContext = TestUserContextFactory.CreateProducer(ownerId);
         var property = CreateProperty(ownerId);
-        var command = CreateCommand(property.Id);
+        var command = CreateCommand();
         CropTypeCatalogAggregate? persistedAggregate = null;
 
-        A.CallTo(() => _propertyRepository.GetByIdAsync(command.PropertyId, A<CancellationToken>._))
-            .Returns(property);
         A.CallTo(() => _repository.GetByNameAsync(command.CropType, ownerId, A<CancellationToken>._))
             .Returns(Task.FromResult<CropTypeCatalogAggregate?>(null));
         A.CallTo(() => _repository.Add(A<CropTypeCatalogAggregate>._))
             .Invokes(call => persistedAggregate = call.GetArgument<CropTypeCatalogAggregate>(0));
+        A.CallTo(() => _propertyRepository.GetAnyByOwnerAsync(ownerId, A<CancellationToken>._))
+            .Returns(property);
 
         var sut = CreateHandler(userContext);
 
@@ -128,9 +100,8 @@ public sealed class CreateCropTypeCommandHandlerTests
     private CreateCropTypeCommandHandler CreateHandler(IUserContext userContext)
         => new(_repository, _propertyRepository, userContext, _outbox, _logger);
 
-    private static CreateCropTypeCommand CreateCommand(Guid? propertyId = null)
+    private static CreateCropTypeCommand CreateCommand()
         => new(
-            PropertyId: propertyId ?? Guid.NewGuid(),
             CropType: "Soy",
             PlantingWindow: "September to November",
             HarvestCycleMonths: 5,
