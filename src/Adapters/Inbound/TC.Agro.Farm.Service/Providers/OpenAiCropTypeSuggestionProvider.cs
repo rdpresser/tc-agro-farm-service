@@ -86,6 +86,13 @@ namespace TC.Agro.Farm.Service.Providers
             {
                 throw;
             }
+            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning(ex,
+                    "OpenAI request timed out after {TimeoutSeconds}s. Falling back to deterministic suggestions.",
+                    _options.TimeoutSeconds);
+                return BuildFallbackSuggestions(request, desiredCount);
+            }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "OpenAI suggestion generation failed. Falling back to deterministic suggestions.");

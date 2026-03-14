@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="TC.Agro.Farm.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- API / Endpoints -->
     <PackageReference Include="FastEndpoints.Swagger" />
 
