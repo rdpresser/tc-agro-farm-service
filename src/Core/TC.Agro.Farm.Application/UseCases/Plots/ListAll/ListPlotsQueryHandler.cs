@@ -20,10 +20,11 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListAll
             CancellationToken ct = default)
         {
             _logger.LogDebug(
-                "Getting plot list. Page: {PageNumber}, Size: {PageSize}, CropType: {CropType}",
+                "Getting plot list. Page: {PageNumber}, Size: {PageSize}, CropType: {CropType}, CropTypeCatalogId: {CropTypeCatalogId}",
                 query.PageNumber,
                 query.PageSize,
-                query.CropType);
+                query.CropType,
+                query.CropTypeCatalogId);
 
             var (plots, totalCount) = await _plotReadStore
                 .ListPlotsAsync(query, ct)

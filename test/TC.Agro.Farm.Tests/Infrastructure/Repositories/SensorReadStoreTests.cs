@@ -114,8 +114,13 @@ public sealed class SensorReadStoreTests
         dbContext.Properties.Add(propertyA);
         dbContext.Properties.Add(propertyB);
 
-        var plotA = CreatePlot(propertyA.Id, ownerAId, "Plot A");
-        var plotB = CreatePlot(propertyB.Id, ownerBId, "Plot B");
+        var cropCatalogA = CreateCropCatalog("Soy");
+        var cropCatalogB = CreateCropCatalog("Corn");
+        dbContext.CropTypeCatalogs.Add(cropCatalogA);
+        dbContext.CropTypeCatalogs.Add(cropCatalogB);
+
+        var plotA = CreatePlot(propertyA.Id, ownerAId, "Plot A", cropCatalogA.Id);
+        var plotB = CreatePlot(propertyB.Id, ownerBId, "Plot B", cropCatalogB.Id);
         dbContext.Plots.Add(plotA);
         dbContext.Plots.Add(plotB);
 
@@ -151,7 +156,7 @@ public sealed class SensorReadStoreTests
         return result.Value;
     }
 
-    private static PlotAggregate CreatePlot(Guid propertyId, Guid ownerId, string name)
+    private static PlotAggregate CreatePlot(Guid propertyId, Guid ownerId, string name, Guid cropTypeCatalogId)
     {
         var result = PlotAggregate.Create(
             propertyId: propertyId,
@@ -165,8 +170,16 @@ public sealed class SensorReadStoreTests
             additionalNotes: null,
             latitude: -21.1775,
             longitude: -47.8103,
-            boundaryGeoJson: null);
+            boundaryGeoJson: null,
+            cropTypeCatalogId: cropTypeCatalogId);
 
+        result.IsSuccess.ShouldBeTrue();
+        return result.Value;
+    }
+
+    private static CropTypeCatalogAggregate CreateCropCatalog(string cropType)
+    {
+        var result = CropTypeCatalogAggregate.Create(cropTypeName: cropType, isSystemDefined: true);
         result.IsSuccess.ShouldBeTrue();
         return result.Value;
     }

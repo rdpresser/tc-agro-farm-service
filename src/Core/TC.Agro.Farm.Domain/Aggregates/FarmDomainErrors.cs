@@ -20,6 +20,11 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public static readonly ValidationError PropertyAlreadyActivated =
             new("Property.AlreadyActivated", "Property is already activated.");
 
+        public static readonly ValidationError PropertyLocationChangeBlockedByActiveCropCycles =
+            new(
+                "Property.LocationChangeBlockedByActiveCropCycles",
+                "Property location cannot be changed while there are active crop cycles.");
+
         #endregion
 
         #region Plot Errors
@@ -78,6 +83,42 @@ namespace TC.Agro.Farm.Domain.Aggregates
 
         public static readonly ValidationError InvalidSensorStatus =
             new("Sensor.InvalidStatus", "The provided sensor status is invalid.");
+
+        #endregion
+
+        #region Crop Type Catalog Errors
+
+        public static readonly ValidationError CropTypeCatalogNotFound =
+            new("CropTypeCatalog.NotFound", "Crop type catalog entry not found.");
+
+        public static readonly ValidationError CropTypeCatalogAlreadyDeactivated =
+            new("CropTypeCatalog.AlreadyDeactivated", "Crop type catalog entry is already deactivated.");
+
+        public static readonly ValidationError CropTypeCatalogAlreadyActivated =
+            new("CropTypeCatalog.AlreadyActivated", "Crop type catalog entry is already activated.");
+
+        #endregion
+
+        #region Crop Type Suggestion Errors
+
+        public static readonly ValidationError CropTypeSuggestionNotFound =
+            new("CropTypeSuggestion.NotFound", "Crop type suggestion not found.");
+
+        public static readonly ValidationError CropTypeSuggestionAlreadyDeactivated =
+            new("CropTypeSuggestion.AlreadyDeactivated", "Crop type suggestion is already deactivated.");
+
+        public static readonly ValidationError CropTypeSuggestionPropertyIdRequired =
+            new("CropTypeSuggestion.PropertyIdRequired", "Property ID is required.");
+
+        #endregion
+
+        #region Crop Cycle Errors
+
+        public static readonly ValidationError CropCycleNotFound =
+            new("CropCycle.NotFound", "Crop cycle not found.");
+
+        public static readonly ValidationError CropCycleAlreadyActiveForPlot =
+            new("CropCycle.ActiveCycleAlreadyExists", "The plot already has an active crop cycle.");
 
         #endregion
     }

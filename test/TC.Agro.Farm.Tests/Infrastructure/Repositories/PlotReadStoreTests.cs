@@ -98,16 +98,58 @@ namespace TC.Agro.Farm.Tests.Infrastructure.Repositories
             plot.Longitude.ShouldBe(-46.6333);
         }
 
-        private static async Task<(Guid OwnerId, Guid PropertyId, Guid PlotId)> SeedPlotAsync(
+        [Fact]
+        public async Task ListPlotsAsync_WhenFilteringByCropTypeCatalogId_ShouldReturnOnlyMatchingPlots()
+        {
+            await using var dbContext = CreateDbContext();
+
+            var soySeed = await SeedPlotAsync(
+                dbContext,
+                propertyLatitude: -21.1775,
+                propertyLongitude: -47.8103,
+                catalogCropType: "Soy");
+
+            await SeedPlotAsync(
+                dbContext,
+                propertyLatitude: -22.0000,
+                propertyLongitude: -48.0000,
+                catalogCropType: "Corn");
+
+            var sut = new PlotReadStore(dbContext, CreateUserContext(AppConstants.AdminRole, soySeed.OwnerId));
+
+            var query = new ListPlotsQuery
+            {
+                PageNumber = 1,
+                PageSize = 10,
+                CropTypeCatalogId = soySeed.CatalogId
+            };
+
+            var (plots, totalCount) = await sut.ListPlotsAsync(query, TestContext.Current.CancellationToken);
+
+            totalCount.ShouldBe(1);
+            plots.Count.ShouldBe(1);
+            plots[0].Id.ShouldBe(soySeed.PlotId);
+            plots[0].CropTypeCatalogId.ShouldBe(soySeed.CatalogId);
+            plots[0].CropType.ShouldBe("Soy");
+        }
+
+        private static async Task<(Guid OwnerId, Guid PropertyId, Guid PlotId, Guid CatalogId)> SeedPlotAsync(
             ApplicationDbContext dbContext,
             double? propertyLatitude,
             double? propertyLongitude,
             double? plotLatitude = null,
-            double? plotLongitude = null)
+            double? plotLongitude = null,
+            string? catalogCropType = null)
         {
             var ownerId = Guid.NewGuid();
             var ownerSnapshot = OwnerSnapshot.Create(ownerId, "Producer A", "producer.a@tcagro.com");
             dbContext.OwnerSnapshots.Add(ownerSnapshot);
+
+            var normalizedCropType = string.IsNullOrWhiteSpace(catalogCropType) ? "Soy" : catalogCropType;
+            var catalogResult = CropTypeCatalogAggregate.Create(normalizedCropType);
+            catalogResult.IsSuccess.ShouldBeTrue();
+            var catalogAggregate = catalogResult.Value;
+            dbContext.CropTypeCatalogs.Add(catalogAggregate);
 
             var propertyResult = PropertyAggregate.Create(
                 name: "Property A",
@@ -136,7 +178,8 @@ namespace TC.Agro.Farm.Tests.Infrastructure.Repositories
                 additionalNotes: null,
                 latitude: plotLatitude,
                 longitude: plotLongitude,
-                boundaryGeoJson: null);
+                boundaryGeoJson: null,
+                cropTypeCatalogId: catalogAggregate.Id);
 
             plotResult.IsSuccess.ShouldBeTrue();
             var plot = plotResult.Value;
@@ -144,7 +187,7 @@ namespace TC.Agro.Farm.Tests.Infrastructure.Repositories
 
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            return (ownerId, property.Id, plot.Id);
+            return (ownerId, property.Id, plot.Id, catalogAggregate.Id);
         }
 
         private static ApplicationDbContext CreateDbContext()

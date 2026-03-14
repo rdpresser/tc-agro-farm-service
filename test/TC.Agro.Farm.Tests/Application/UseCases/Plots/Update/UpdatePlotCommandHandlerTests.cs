@@ -13,6 +13,8 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
     public sealed class UpdatePlotCommandHandlerTests
     {
         private readonly IPlotAggregateRepository _repository;
+        private readonly ICropTypeCatalogRepository _cropTypeCatalogRepository;
+        private readonly ICropTypeSuggestionRepository _cropTypeSuggestionRepository;
         private readonly IUserContext _userContext;
         private readonly ITransactionalOutbox _outbox;
         private readonly ILogger<UpdatePlotCommandHandler> _logger;
@@ -23,12 +25,16 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
             FastEndpointsTestBootstrap.EnsureInitialized();
 
             _repository = A.Fake<IPlotAggregateRepository>();
+            _cropTypeCatalogRepository = A.Fake<ICropTypeCatalogRepository>();
+            _cropTypeSuggestionRepository = A.Fake<ICropTypeSuggestionRepository>();
             _userContext = A.Fake<IUserContext>();
             _outbox = A.Fake<ITransactionalOutbox>();
             _logger = A.Fake<ILogger<UpdatePlotCommandHandler>>();
 
             _handler = new UpdatePlotCommandHandler(
                 _repository,
+                _cropTypeCatalogRepository,
+                _cropTypeSuggestionRepository,
                 _userContext,
                 _outbox,
                 _logger);
@@ -89,6 +95,10 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
                     A<CancellationToken>._))
                 .Returns(false);
 
+            var existingCatalog = CropTypeCatalogAggregate.Create("Corn").Value;
+            A.CallTo(() => _cropTypeCatalogRepository.GetByNameAsync("Corn", ownerId, A<CancellationToken>._))
+                .Returns(existingCatalog);
+
             A.CallTo(() => _userContext.Id).Returns(ownerId);
             A.CallTo(() => _userContext.IsAdmin).Returns(false);
 
@@ -100,6 +110,76 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
             result.Value.AreaHectares.ShouldBe(65);
 
             A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_WhenOnlyCatalogIdIsProvided_ShouldResolveLegacyCropTypeFromCatalog()
+        {
+            var ownerId = Guid.NewGuid();
+            var plot = CreateValidPlot(ownerId);
+            var catalog = CropTypeCatalogAggregate.Create("Soy").Value;
+
+            var command = CreateValidCommand(plot.Id) with
+            {
+                CropType = string.Empty,
+                CropTypeCatalogId = catalog.Id
+            };
+
+            A.CallTo(() => _repository.GetByIdAsync(command.PlotId, A<CancellationToken>._))
+                .Returns(Task.FromResult<PlotAggregate?>(plot));
+            A.CallTo(() => _repository.NameExistsForPropertyExcludingAsync(
+                    command.Name,
+                    plot.PropertyId,
+                    plot.Id,
+                    A<CancellationToken>._))
+                .Returns(false);
+            A.CallTo(() => _cropTypeCatalogRepository.GetByIdScopedAsync(catalog.Id, ownerId, false, A<CancellationToken>._))
+                .Returns(catalog);
+            A.CallTo(() => _userContext.Id).Returns(ownerId);
+            A.CallTo(() => _userContext.IsAdmin).Returns(false);
+
+            var result = await _handler.ExecuteAsync(command, TestContext.Current.CancellationToken);
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Value.CropType.ShouldBe("Soy");
+            result.Value.CropTypeCatalogId.ShouldBe(catalog.Id);
+            A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_WhenSelectedSuggestionIdMatchesCatalogId_ShouldTreatItAsCatalogOnlySelection()
+        {
+            var ownerId = Guid.NewGuid();
+            var plot = CreateValidPlot(ownerId);
+            var catalog = CropTypeCatalogAggregate.Create("Soy").Value;
+
+            var command = CreateValidCommand(plot.Id) with
+            {
+                CropType = string.Empty,
+                CropTypeCatalogId = catalog.Id,
+                SelectedCropTypeSuggestionId = catalog.Id
+            };
+
+            A.CallTo(() => _repository.GetByIdAsync(command.PlotId, A<CancellationToken>._))
+                .Returns(Task.FromResult<PlotAggregate?>(plot));
+            A.CallTo(() => _repository.NameExistsForPropertyExcludingAsync(
+                    command.Name,
+                    plot.PropertyId,
+                    plot.Id,
+                    A<CancellationToken>._))
+                .Returns(false);
+            A.CallTo(() => _cropTypeCatalogRepository.GetByIdScopedAsync(catalog.Id, ownerId, false, A<CancellationToken>._))
+                .Returns(catalog);
+            A.CallTo(() => _userContext.Id).Returns(ownerId);
+            A.CallTo(() => _userContext.IsAdmin).Returns(false);
+
+            var result = await _handler.ExecuteAsync(command, TestContext.Current.CancellationToken);
+
+            result.IsSuccess.ShouldBeTrue();
+            result.Value.CropTypeCatalogId.ShouldBe(catalog.Id);
+            result.Value.SelectedCropTypeSuggestionId.ShouldBeNull();
+            A.CallTo(() => _cropTypeSuggestionRepository.GetByIdAsync(A<Guid>._, A<CancellationToken>._))
+                .MustNotHaveHappened();
         }
 
         private static UpdatePlotCommand CreateValidCommand(Guid? plotId = null)
@@ -130,7 +210,8 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
                 additionalNotes: "Initial notes",
                 latitude: -21.1775,
                 longitude: -47.8103,
-                boundaryGeoJson: null);
+                boundaryGeoJson: null,
+                cropTypeCatalogId: Guid.NewGuid());
 
             result.IsSuccess.ShouldBeTrue();
             return result.Value;

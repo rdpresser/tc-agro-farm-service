@@ -163,26 +163,6 @@ namespace TC.Agro.Farm.Tests.Domain.ValueObjects
 
         #endregion
 
-        #region Common Crop Types
-
-        [Fact]
-        public void CommonCropTypes_ShouldContainExpectedValues()
-        {
-            // Assert
-            CropType.CommonCropTypes.ShouldContain("Soy");
-            CropType.CommonCropTypes.ShouldContain("Corn");
-            CropType.CommonCropTypes.ShouldContain("Wheat");
-            CropType.CommonCropTypes.ShouldContain("Cotton");
-            CropType.CommonCropTypes.ShouldContain("Coffee");
-            CropType.CommonCropTypes.ShouldContain("Sugarcane");
-            CropType.CommonCropTypes.ShouldContain("Rice");
-            CropType.CommonCropTypes.ShouldContain("Beans");
-            CropType.CommonCropTypes.ShouldContain("Pasture");
-            CropType.CommonCropTypes.ShouldContain("Other");
-        }
-
-        #endregion
-
         #region Implicit Conversion and ToString
 
         [Fact]
