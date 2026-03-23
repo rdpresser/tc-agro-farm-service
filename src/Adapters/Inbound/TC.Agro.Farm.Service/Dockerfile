@@ -7,7 +7,7 @@ EXPOSE 8080
 
 # Kerberos/GSSAPI dependency for providers (e.g., SQL client integrated auth)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && apt-get install -y --no-install-recommends wget libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 
 # This stage is used to build the service project
@@ -29,6 +29,7 @@ COPY services/farm-service/Directory.Packages.props ./services/farm-service/
 # Copy shared common projects (required for ProjectReferences)
 COPY ["common/src/TC.Agro.SharedKernel/TC.Agro.SharedKernel.csproj", "common/src/TC.Agro.SharedKernel/"]
 COPY ["common/src/TC.Agro.Contracts/TC.Agro.Contracts.csproj", "common/src/TC.Agro.Contracts/"]
+COPY ["common/src/TC.Agro.Messaging/TC.Agro.Messaging.csproj", "common/src/TC.Agro.Messaging/"]
 
 # Copy farm-service projects maintaining directory structure (required for ProjectReferences)
 COPY ["services/farm-service/src/Adapters/Inbound/TC.Agro.Farm.Service/TC.Agro.Farm.Service.csproj", "services/farm-service/src/Adapters/Inbound/TC.Agro.Farm.Service/"]
@@ -44,12 +45,12 @@ COPY . .
 
 # Build the application
 WORKDIR "/src/services/farm-service/src/Adapters/Inbound/TC.Agro.Farm.Service"
-RUN dotnet build "./TC.Agro.Farm.Service.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./TC.Agro.Farm.Service.csproj" -c $BUILD_CONFIGURATION -o /app/build -m:1
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TC.Agro.Farm.Service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./TC.Agro.Farm.Service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -m:1
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
