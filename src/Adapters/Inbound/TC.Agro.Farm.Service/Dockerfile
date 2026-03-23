@@ -13,6 +13,7 @@ RUN apt-get update \
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
+ENV NUGET_XMLDOC_MODE=skip
 WORKDIR /src
 
 # Copy Directory.Build.props, Directory.Build.targets and Directory.Packages.props first (build optimization)
@@ -43,14 +44,11 @@ RUN dotnet restore "services/farm-service/src/Adapters/Inbound/TC.Agro.Farm.Serv
 # Copy source code maintaining structure
 COPY . .
 
-# Build the application
-WORKDIR "/src/services/farm-service/src/Adapters/Inbound/TC.Agro.Farm.Service"
-RUN dotnet build "./TC.Agro.Farm.Service.csproj" -c $BUILD_CONFIGURATION -o /app/build -m:1
-
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./TC.Agro.Farm.Service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -m:1
+WORKDIR "/src/services/farm-service/src/Adapters/Inbound/TC.Agro.Farm.Service"
+RUN dotnet publish "./TC.Agro.Farm.Service.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
