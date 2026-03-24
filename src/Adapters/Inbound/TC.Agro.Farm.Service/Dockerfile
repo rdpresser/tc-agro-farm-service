@@ -8,6 +8,9 @@ EXPOSE 8080
 # Kerberos/GSSAPI dependency for providers (e.g., SQL client integrated auth)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget libgssapi-krb5-2 \
+    && wget -q https://aka.ms/getvsdbgsh -O /tmp/getvsdbg.sh \
+    && sh /tmp/getvsdbg.sh -v latest -l /vsdbg \
+    && rm -f /tmp/getvsdbg.sh \
     && rm -rf /var/lib/apt/lists/*
 
 # This stage is used to build the service project
