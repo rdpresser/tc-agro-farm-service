@@ -137,6 +137,7 @@ public sealed class StartCropCycleCommandHandlerTests
             PlotId: plotId ?? Guid.NewGuid(),
             CropTypeCatalogId: Guid.NewGuid(),
             StartedAt: DateTimeOffset.UtcNow.AddDays(-3),
+            IrrigationType: "Drip Irrigation",
             ExpectedHarvestDate: DateTimeOffset.UtcNow.AddMonths(4),
             Status: "Planted",
             Notes: "Field prepared and planted.");

@@ -17,5 +17,10 @@ namespace TC.Agro.Farm.Application.Abstractions.Ports
             Guid plotId,
             Guid? excludingCycleId = null,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets the current crop cycle for a plot, prioritizing an active cycle and falling back to the latest historical cycle.
+        /// </summary>
+        Task<CropCycleAggregate?> GetCurrentByPlotAsync(Guid plotId, CancellationToken cancellationToken = default);
     }
 }

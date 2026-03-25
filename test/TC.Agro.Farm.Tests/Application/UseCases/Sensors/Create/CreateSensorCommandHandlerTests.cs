@@ -3,7 +3,6 @@ using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using TC.Agro.Contracts.Events.Farm;
 using TC.Agro.Farm.Application.Abstractions.Ports;
-using TC.Agro.Farm.Application.UseCases.Plots.GetById;
 using TC.Agro.Farm.Application.UseCases.Sensors.Create;
 using TC.Agro.Farm.Domain.Aggregates;
 using TC.Agro.Farm.Tests.TestHelpers;
@@ -17,7 +16,6 @@ public sealed class CreateSensorCommandHandlerTests
 {
     private readonly ISensorAggregateRepository _sensorRepository = A.Fake<ISensorAggregateRepository>();
     private readonly IPlotAggregateRepository _plotRepository = A.Fake<IPlotAggregateRepository>();
-    private readonly IPlotReadStore _plotReadStore = A.Fake<IPlotReadStore>();
     private readonly IPropertyAggregateRepository _propertyRepository = A.Fake<IPropertyAggregateRepository>();
     private readonly ITransactionalOutbox _outbox = A.Fake<ITransactionalOutbox>();
     private readonly ILogger<CreateSensorCommandHandler> _logger = A.Fake<ILogger<CreateSensorCommandHandler>>();
@@ -45,7 +43,7 @@ public sealed class CreateSensorCommandHandlerTests
         result.ValidationErrors.ShouldContain(error =>
             error.ErrorMessage.Contains("OwnerId is required", StringComparison.OrdinalIgnoreCase));
 
-        A.CallTo(() => _plotReadStore.GetByIdAsync(A<Guid>._, A<CancellationToken>._)).MustNotHaveHappened();
+        A.CallTo(() => _plotRepository.GetByIdAsync(A<Guid>._, A<CancellationToken>._)).MustNotHaveHappened();
         A.CallTo(() => _sensorRepository.Add(A<SensorAggregate>._)).MustNotHaveHappened();
         A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustNotHaveHappened();
     }
@@ -61,8 +59,8 @@ public sealed class CreateSensorCommandHandlerTests
             Label: "T-02",
             OwnerId: null);
 
-        A.CallTo(() => _plotReadStore.GetByIdAsync(command.PlotId, A<CancellationToken>._))
-            .Returns((GetPlotByIdResponse?)null);
+        A.CallTo(() => _plotRepository.GetByIdAsync(command.PlotId, A<CancellationToken>._))
+            .Returns((PlotAggregate?)null);
 
         var sut = CreateHandler(userContext);
 
@@ -80,14 +78,15 @@ public sealed class CreateSensorCommandHandlerTests
     {
         var ownerId = Guid.NewGuid();
         var propertyId = Guid.NewGuid();
+        var plot = CreatePlot(propertyId, ownerId);
         var command = new CreateSensorCommand(
-            PlotId: Guid.NewGuid(),
+            PlotId: plot.Id,
             Type: "Humidity",
             Label: "H-01",
             OwnerId: null);
 
-        A.CallTo(() => _plotReadStore.GetByIdAsync(command.PlotId, A<CancellationToken>._))
-            .Returns(CreatePlotResponse(command.PlotId, propertyId, ownerId));
+        A.CallTo(() => _plotRepository.GetByIdAsync(command.PlotId, A<CancellationToken>._))
+            .Returns(plot);
         A.CallTo(() => _propertyRepository.GetByIdAsync(propertyId, A<CancellationToken>._))
             .Returns(Task.FromResult<PropertyAggregate?>(null));
 
@@ -106,14 +105,15 @@ public sealed class CreateSensorCommandHandlerTests
         var callerId = Guid.NewGuid();
         var propertyOwnerId = Guid.NewGuid();
         var propertyId = Guid.NewGuid();
+        var plot = CreatePlot(propertyId, propertyOwnerId);
         var command = new CreateSensorCommand(
-            PlotId: Guid.NewGuid(),
+            PlotId: plot.Id,
             Type: "SoilMoisture",
             Label: "SM-01",
             OwnerId: null);
 
-        A.CallTo(() => _plotReadStore.GetByIdAsync(command.PlotId, A<CancellationToken>._))
-            .Returns(CreatePlotResponse(command.PlotId, propertyId, propertyOwnerId));
+        A.CallTo(() => _plotRepository.GetByIdAsync(command.PlotId, A<CancellationToken>._))
+            .Returns(plot);
         A.CallTo(() => _propertyRepository.GetByIdAsync(propertyId, A<CancellationToken>._))
             .Returns(CreateProperty(propertyOwnerId));
 
@@ -133,7 +133,8 @@ public sealed class CreateSensorCommandHandlerTests
     {
         var ownerId = Guid.NewGuid();
         var propertyId = Guid.NewGuid();
-        var plotId = Guid.NewGuid();
+        var plot = CreatePlot(propertyId, ownerId);
+        var plotId = plot.Id;
 
         var command = new CreateSensorCommand(
             PlotId: plotId,
@@ -144,12 +145,10 @@ public sealed class CreateSensorCommandHandlerTests
         SensorAggregate? addedAggregate = null;
         EventContext<SensorRegisteredIntegrationEvent>? publishedEvent = null;
 
-        A.CallTo(() => _plotReadStore.GetByIdAsync(plotId, A<CancellationToken>._))
-            .Returns(CreatePlotResponse(plotId, propertyId, ownerId));
         A.CallTo(() => _propertyRepository.GetByIdAsync(propertyId, A<CancellationToken>._))
             .Returns(CreateProperty(ownerId));
         A.CallTo(() => _plotRepository.GetByIdAsync(plotId, A<CancellationToken>._))
-            .Returns(CreatePlot(propertyId, ownerId));
+            .Returns(plot);
         A.CallTo(() => _sensorRepository.LabelExistsForPlotAsync("Temp-01", plotId, A<CancellationToken>._))
             .Returns(false);
 
@@ -185,34 +184,10 @@ public sealed class CreateSensorCommandHandlerTests
         => new(
             _sensorRepository,
             _plotRepository,
-            _plotReadStore,
             _propertyRepository,
             userContext,
             _outbox,
             _logger);
-
-    private static GetPlotByIdResponse CreatePlotResponse(Guid plotId, Guid propertyId, Guid ownerId)
-        => new(
-            Id: plotId,
-            PropertyId: propertyId,
-            OwnerId: ownerId,
-            OwnerName: "Producer",
-            PropertyName: "Farm Sigma",
-            Name: "North Plot",
-            CropType: "Soy",
-            AreaHectares: 50,
-            Latitude: -21.1775,
-            Longitude: -47.8103,
-            BoundaryGeoJson: null,
-            IsActive: true,
-            SensorCount: 0,
-            CreatedAt: DateTimeOffset.UtcNow.AddDays(-15),
-            UpdatedAt: null,
-            PlantingDate: DateTimeOffset.UtcNow.AddDays(-30),
-            ExpectedHarvestDate: DateTimeOffset.UtcNow.AddDays(120),
-            IrrigationType: "Center Pivot",
-            AdditionalNotes: null,
-            CropTypeCatalogId: Guid.NewGuid());
 
     private static PropertyAggregate CreateProperty(Guid ownerId)
     {

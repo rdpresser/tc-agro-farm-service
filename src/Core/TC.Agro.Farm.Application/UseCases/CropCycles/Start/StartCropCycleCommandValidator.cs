@@ -22,6 +22,14 @@ namespace TC.Agro.Farm.Application.UseCases.CropCycles.Start
                 .WithMessage("Started at date is required.")
                 .WithErrorCode($"{nameof(StartCropCycleCommand.StartedAt)}.Required");
 
+            RuleFor(x => x.IrrigationType)
+                .NotEmpty()
+                .WithMessage("Irrigation type is required.")
+                .WithErrorCode($"{nameof(StartCropCycleCommand.IrrigationType)}.Required")
+                .Must(type => Domain.ValueObjects.IrrigationType.Create(type).IsSuccess)
+                .WithMessage("Irrigation type is invalid.")
+                .WithErrorCode($"{nameof(StartCropCycleCommand.IrrigationType)}.Invalid");
+
             RuleFor(x => x.Status)
                 .NotEmpty()
                 .WithMessage("Status is required.")

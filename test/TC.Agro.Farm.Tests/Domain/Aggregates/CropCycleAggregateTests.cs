@@ -17,6 +17,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 ownerId: Guid.NewGuid(),
                 cropTypeCatalogId: Guid.NewGuid(),
                 startedAt: startedAt,
+                irrigationType: "Drip Irrigation",
                 expectedHarvestDate: expectedHarvestDate,
                 selectedCropTypeSuggestionId: Guid.NewGuid(),
                 status: CropCycleStatus.Planted,
@@ -41,6 +42,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 ownerId: Guid.NewGuid(),
                 cropTypeCatalogId: Guid.NewGuid(),
                 startedAt: DateTimeOffset.UtcNow.AddDays(-5),
+                irrigationType: "Drip Irrigation",
                 status: CropCycleStatus.Harvested);
 
             result.IsSuccess.ShouldBeFalse();
@@ -63,6 +65,30 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
             aggregate.Events.Last().EventType.ShouldBe(CropCycleEventAggregate.StatusChangedEventType);
             aggregate.Events.Last().Status.ShouldBe(CropCycleStatus.Growing);
             aggregate.Events.Last().OccurredAt.ShouldBe(occurredAt);
+        }
+
+        [Fact]
+        public void Revise_WithValidActiveCycle_ShouldAppendRevisedEventWithoutChangingStatus()
+        {
+            var aggregate = CreateActiveCycle();
+            var newStartedAt = aggregate.StartedAt.AddDays(1);
+            var newExpectedHarvestDate = aggregate.ExpectedHarvestDate!.Value.AddDays(2);
+
+            var result = aggregate.Revise(
+                cropTypeCatalogId: Guid.NewGuid(),
+                selectedCropTypeSuggestionId: Guid.NewGuid(),
+                startedAt: newStartedAt,
+                expectedHarvestDate: newExpectedHarvestDate,
+                irrigationType: "Center Pivot",
+                notes: "Cycle revised");
+
+            result.IsSuccess.ShouldBeTrue();
+            aggregate.Status.Value.ShouldBe(CropCycleStatus.Planted);
+            aggregate.StartedAt.ShouldBe(newStartedAt);
+            aggregate.ExpectedHarvestDate.ShouldBe(newExpectedHarvestDate);
+            aggregate.Events.Count.ShouldBe(2);
+            aggregate.Events.Last().EventType.ShouldBe(CropCycleEventAggregate.RevisedEventType);
+            aggregate.Events.Last().Status.ShouldBe(CropCycleStatus.Planted);
         }
 
         [Fact]
@@ -118,6 +144,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 ownerId: Guid.NewGuid(),
                 cropTypeCatalogId: Guid.NewGuid(),
                 startedAt: DateTimeOffset.UtcNow.AddDays(-7),
+                irrigationType: "Drip Irrigation",
                 expectedHarvestDate: DateTimeOffset.UtcNow.AddMonths(3),
                 status: CropCycleStatus.Planted,
                 notes: "Started");

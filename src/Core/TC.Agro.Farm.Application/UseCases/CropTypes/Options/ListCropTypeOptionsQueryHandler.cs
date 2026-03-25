@@ -4,15 +4,20 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
 {
     internal sealed class ListCropTypeOptionsQueryHandler : BaseQueryHandler<ListCropTypeOptionsQuery, IReadOnlyList<CropTypeOptionResponse>>
     {
-        private readonly ICropTypeCatalogReadStore _readStore;
+        private const string CatalogSource = "Catalog";
+
+        private readonly ICropTypeCatalogReadStore _catalogReadStore;
+        private readonly ICropTypeSuggestionReadStore _suggestionReadStore;
         private readonly ILogger<ListCropTypeOptionsQueryHandler> _logger;
 
         public ListCropTypeOptionsQueryHandler(
-            ICropTypeCatalogReadStore readStore,
+            ICropTypeCatalogReadStore catalogReadStore,
+            ICropTypeSuggestionReadStore suggestionReadStore,
             IUserContext userContext,
             ILogger<ListCropTypeOptionsQueryHandler> logger)
         {
-            _readStore = readStore ?? throw new ArgumentNullException(nameof(readStore));
+            _catalogReadStore = catalogReadStore ?? throw new ArgumentNullException(nameof(catalogReadStore));
+            _suggestionReadStore = suggestionReadStore ?? throw new ArgumentNullException(nameof(suggestionReadStore));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
@@ -21,8 +26,9 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
             CancellationToken ct = default)
         {
             _logger.LogDebug(
-                "Listing crop type options. OwnerId={OwnerId}, IncludeStale={IncludeStale}, IncludeInactive={IncludeInactive}, Filter={Filter}, Limit={Limit}",
+                "Listing crop type options. OwnerId={OwnerId}, IncludeSuggestions={IncludeSuggestions}, IncludeStale={IncludeStale}, IncludeInactive={IncludeInactive}, Filter={Filter}, Limit={Limit}",
                 query.OwnerId,
+                query.IncludeSuggestions,
                 query.IncludeStale,
                 query.IncludeInactive,
                 query.Filter,
@@ -32,6 +38,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
             {
                 OwnerId = query.OwnerId,
                 Source = query.Source,
+                IncludeSuggestions = query.IncludeSuggestions,
                 IncludeStale = query.IncludeStale,
                 IncludeInactive = query.IncludeInactive,
                 Filter = query.Filter,
@@ -41,9 +48,39 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
                 SortDirection = "asc"
             };
 
-            var (rows, _) = await _readStore
-                .ListAsync(listQuery, ct)
-                .ConfigureAwait(false);
+            IReadOnlyList<ListCropTypesResponse> rows;
+
+            if (query.IncludeSuggestions)
+            {
+                var includeCatalog = ShouldIncludeCatalog(query.Source);
+                var includeSuggestions = ShouldIncludeSuggestions(query.Source);
+
+                var catalogTask = includeCatalog
+                    ? _catalogReadStore.ListAsync(listQuery, ct)
+                    : Task.FromResult<(IReadOnlyList<ListCropTypesResponse> CropTypes, int TotalCount)>(([], 0));
+
+                var suggestionTask = includeSuggestions
+                    ? _suggestionReadStore.ListAsync(listQuery, ct)
+                    : Task.FromResult<(IReadOnlyList<ListCropTypesResponse> CropTypes, int TotalCount)>(([], 0));
+
+                await Task.WhenAll(catalogTask, suggestionTask).ConfigureAwait(false);
+
+                var (catalogRows, _) = await catalogTask.ConfigureAwait(false);
+                var (suggestionRows, _) = await suggestionTask.ConfigureAwait(false);
+
+                rows = catalogRows
+                    .Concat(suggestionRows)
+                    .OrderBy(x => x.CropType, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(x => x.Source, StringComparer.OrdinalIgnoreCase)
+                    .Take(listQuery.PageSize)
+                    .ToList();
+            }
+            else
+            {
+                (rows, _) = await _catalogReadStore
+                    .ListAsync(listQuery, ct)
+                    .ConfigureAwait(false);
+            }
 
             var options = rows
                 .Select(row => new CropTypeOptionResponse(
@@ -65,5 +102,13 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
 
             return Result.Success<IReadOnlyList<CropTypeOptionResponse>>(options);
         }
+
+        private static bool ShouldIncludeCatalog(string? source)
+            => string.IsNullOrWhiteSpace(source)
+               || string.Equals(source, CatalogSource, StringComparison.OrdinalIgnoreCase);
+
+        private static bool ShouldIncludeSuggestions(string? source)
+            => string.IsNullOrWhiteSpace(source)
+               || !string.Equals(source, CatalogSource, StringComparison.OrdinalIgnoreCase);
     }
 }

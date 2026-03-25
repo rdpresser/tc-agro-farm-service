@@ -72,6 +72,7 @@ namespace TC.Agro.Farm.Tests.Domain.Aggregates
                 ownerId: Guid.NewGuid(),
                 cropTypeCatalogId: Guid.NewGuid(),
                 startedAt: DateTimeOffset.UtcNow.AddDays(-3),
+                irrigationType: "Drip Irrigation",
                 status: CropCycleStatus.Planted).Value;
 
             var cropCycleEvent = CropCycleEventAggregate.Create(

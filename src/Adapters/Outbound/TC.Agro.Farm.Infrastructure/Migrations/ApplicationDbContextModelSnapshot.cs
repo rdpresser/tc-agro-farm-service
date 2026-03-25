@@ -720,6 +720,27 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_crop_cycles_crop_type_suggestions_selected_crop_type_sugges");
 
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.IrrigationType", "IrrigationType", b1 =>
+                        {
+                            b1.Property<Guid>("CropCycleAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("irrigation_type");
+
+                            b1.HasKey("CropCycleAggregateId");
+
+                            b1.ToTable("crop_cycles", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CropCycleAggregateId")
+                                .HasConstraintName("fk_crop_cycles_crop_cycles_id");
+                        });
+
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.CropCycleStatus", "Status", b1 =>
                         {
                             b1.Property<Guid>("CropCycleAggregateId")
@@ -745,6 +766,9 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                         });
 
                     b.Navigation("CropTypeCatalog");
+
+                    b.Navigation("IrrigationType")
+                        .IsRequired();
 
                     b.Navigation("Owner");
 
@@ -898,6 +922,27 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasConstraintName("fk_plots_plots_id");
                         });
 
+                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.IrrigationType", "IrrigationType", b1 =>
+                        {
+                            b1.Property<Guid>("PlotAggregateId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("irrigation_type");
+
+                            b1.HasKey("PlotAggregateId");
+
+                            b1.ToTable("plots", "public");
+
+                            b1.WithOwner()
+                                .HasForeignKey("PlotAggregateId")
+                                .HasConstraintName("fk_plots_plots_id");
+                        });
+
                     b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.Name", "Name", b1 =>
                         {
                             b1.Property<Guid>("PlotAggregateId")
@@ -929,27 +974,6 @@ namespace TC.Agro.Farm.Infrastructure.Migrations
                                 .HasMaxLength(1000)
                                 .HasColumnType("character varying(1000)")
                                 .HasColumnName("additional_notes");
-
-                            b1.HasKey("PlotAggregateId");
-
-                            b1.ToTable("plots", "public");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PlotAggregateId")
-                                .HasConstraintName("fk_plots_plots_id");
-                        });
-
-                    b.OwnsOne("TC.Agro.Farm.Domain.ValueObjects.IrrigationType", "IrrigationType", b1 =>
-                        {
-                            b1.Property<Guid>("PlotAggregateId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(50)
-                                .HasColumnType("character varying(50)")
-                                .HasColumnName("irrigation_type");
 
                             b1.HasKey("PlotAggregateId");
 

@@ -11,6 +11,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         private const int MaxNotesLength = 1000;
 
         public const string StartedEventType = "Started";
+        public const string RevisedEventType = "Revised";
         public const string StatusChangedEventType = "StatusChanged";
         public const string CompletedEventType = "Completed";
 

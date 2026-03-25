@@ -21,10 +21,11 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
             Summary(s =>
             {
                 s.Summary = "Get crop type options for selectors.";
-                s.Description = "Retrieves crop type options optimized for frontend selectors, including optional property overlays and references.";
+                s.Description = "Retrieves crop type options optimized for frontend selectors. Suggestions are excluded by default unless IncludeSuggestions=true is provided.";
                 s.ExampleRequest = new ListCropTypeOptionsQuery
                 {
                     PropertyId = Guid.NewGuid(),
+                    IncludeSuggestions = false,
                     IncludeStale = false,
                     IncludeInactive = false,
                     Limit = 200

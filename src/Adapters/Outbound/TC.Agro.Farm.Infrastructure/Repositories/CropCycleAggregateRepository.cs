@@ -45,5 +45,17 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             return await query.AnyAsync(cancellationToken).ConfigureAwait(false);
         }
+
+        public async Task<CropCycleAggregate?> GetCurrentByPlotAsync(Guid plotId, CancellationToken cancellationToken = default)
+        {
+            var activeStatuses = CropCycleStatus.GetActiveStatuses();
+
+            return await FilteredDbSet
+                .Where(cycle => cycle.PlotId == plotId)
+                .OrderByDescending(cycle => activeStatuses.Contains(cycle.Status.Value))
+                .ThenByDescending(cycle => cycle.StartedAt)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 }

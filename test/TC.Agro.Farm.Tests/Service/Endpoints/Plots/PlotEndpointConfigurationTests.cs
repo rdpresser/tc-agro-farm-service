@@ -59,4 +59,26 @@ public sealed class PlotEndpointConfigurationTests
             "Put(\"plots/{plotId:guid}\")",
             $"Roles({nameof(AppConstants)}.{nameof(AppConstants.AdminRole)}, {nameof(AppConstants)}.{nameof(AppConstants.ProducerRole)})");
     }
+
+    [Fact]
+    public void SubmitPlotEndpoint_ShouldExposeRouteAndAllowedRoles()
+    {
+        var source = EndpointSourceAssertions.LoadEndpointSource("Plots", "SubmitPlotEndpoint.cs");
+
+        EndpointSourceAssertions.AssertContains(
+            source,
+            "Post(\"plots/submit\")",
+            $"Roles({nameof(AppConstants)}.{nameof(AppConstants.AdminRole)}, {nameof(AppConstants)}.{nameof(AppConstants.ProducerRole)})");
+    }
+
+    [Fact]
+    public void SubmitPlotUpdateEndpoint_ShouldExposeRouteAndAllowedRoles()
+    {
+        var source = EndpointSourceAssertions.LoadEndpointSource("Plots", "SubmitPlotUpdateEndpoint.cs");
+
+        EndpointSourceAssertions.AssertContains(
+            source,
+            "Put(\"plots/{plotId:guid}/submit\")",
+            $"Roles({nameof(AppConstants)}.{nameof(AppConstants.AdminRole)}, {nameof(AppConstants)}.{nameof(AppConstants.ProducerRole)})");
+    }
 }

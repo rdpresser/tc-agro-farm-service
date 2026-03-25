@@ -133,23 +133,92 @@ namespace TC.Agro.Farm.Tests.Infrastructure.Repositories
             plots[0].CropType.ShouldBe("Soy");
         }
 
+        [Fact]
+        public async Task GetByIdAsync_WhenCurrentCycleDiffersFromLegacyPlotFields_ShouldReturnCurrentCycleData()
+        {
+            await using var dbContext = CreateDbContext();
+            var seedData = await SeedPlotAsync(
+                dbContext,
+                propertyLatitude: -21.1775,
+                propertyLongitude: -47.8103,
+                plotCropType: "Soy",
+                currentCycleCropType: "Corn");
+
+            var persistedPlot = await dbContext.Plots
+                .AsNoTracking()
+                .FirstAsync(p => p.Id == seedData.PlotId, TestContext.Current.CancellationToken);
+
+            var persistedCycle = await dbContext.CropCycles
+                .AsNoTracking()
+                .Where(c => c.PlotId == seedData.PlotId)
+                .OrderByDescending(c => c.EndedAt == null)
+                .ThenByDescending(c => c.StartedAt)
+                .FirstAsync(TestContext.Current.CancellationToken);
+
+            var sut = new PlotReadStore(dbContext, CreateUserContext(AppConstants.AdminRole, seedData.OwnerId));
+
+            var plot = await sut.GetByIdAsync(seedData.PlotId, TestContext.Current.CancellationToken);
+
+            plot.ShouldNotBeNull();
+            plot.CropType.ShouldBe("Corn");
+            plot.CropTypeCatalogId.ShouldBe(seedData.CatalogId);
+            plot.IrrigationType.ShouldBe("Drip Irrigation");
+            plot.AdditionalNotes.ShouldBe("Cycle notes");
+            plot.PlantingDate.ShouldBe(persistedCycle.StartedAt);
+            plot.ExpectedHarvestDate.ShouldBe(persistedCycle.ExpectedHarvestDate!.Value);
+
+            // Guardrail assertion to ensure this test would catch a fallback-to-plot regression.
+            (persistedPlot.PlantingDate == persistedCycle.StartedAt).ShouldBeFalse();
+            (persistedPlot.ExpectedHarvestDate == persistedCycle.ExpectedHarvestDate!.Value).ShouldBeFalse();
+        }
+
         private static async Task<(Guid OwnerId, Guid PropertyId, Guid PlotId, Guid CatalogId)> SeedPlotAsync(
             ApplicationDbContext dbContext,
             double? propertyLatitude,
             double? propertyLongitude,
             double? plotLatitude = null,
             double? plotLongitude = null,
-            string? catalogCropType = null)
+            string? catalogCropType = null,
+            string? plotCropType = null,
+            string? currentCycleCropType = null)
         {
             var ownerId = Guid.NewGuid();
             var ownerSnapshot = OwnerSnapshot.Create(ownerId, "Producer A", "producer.a@tcagro.com");
             dbContext.OwnerSnapshots.Add(ownerSnapshot);
 
-            var normalizedCropType = string.IsNullOrWhiteSpace(catalogCropType) ? "Soy" : catalogCropType;
-            var catalogResult = CropTypeCatalogAggregate.Create(normalizedCropType);
-            catalogResult.IsSuccess.ShouldBeTrue();
-            var catalogAggregate = catalogResult.Value;
-            dbContext.CropTypeCatalogs.Add(catalogAggregate);
+            var normalizedPlotCropType = plotCropType;
+            if (string.IsNullOrWhiteSpace(normalizedPlotCropType))
+            {
+                normalizedPlotCropType = string.IsNullOrWhiteSpace(catalogCropType)
+                    ? "Soy"
+                    : catalogCropType;
+            }
+
+            var normalizedCurrentCycleCropType = currentCycleCropType;
+            if (string.IsNullOrWhiteSpace(normalizedCurrentCycleCropType))
+            {
+                normalizedCurrentCycleCropType = string.IsNullOrWhiteSpace(catalogCropType)
+                    ? normalizedPlotCropType
+                    : catalogCropType;
+            }
+
+            var plotCatalogResult = CropTypeCatalogAggregate.Create(normalizedPlotCropType);
+            plotCatalogResult.IsSuccess.ShouldBeTrue();
+            var plotCatalogAggregate = plotCatalogResult.Value;
+            dbContext.CropTypeCatalogs.Add(plotCatalogAggregate);
+
+            CropTypeCatalogAggregate activeCatalogAggregate;
+            if (string.Equals(normalizedCurrentCycleCropType, normalizedPlotCropType, StringComparison.OrdinalIgnoreCase))
+            {
+                activeCatalogAggregate = plotCatalogAggregate;
+            }
+            else
+            {
+                var activeCatalogResult = CropTypeCatalogAggregate.Create(normalizedCurrentCycleCropType);
+                activeCatalogResult.IsSuccess.ShouldBeTrue();
+                activeCatalogAggregate = activeCatalogResult.Value;
+                dbContext.CropTypeCatalogs.Add(activeCatalogAggregate);
+            }
 
             var propertyResult = PropertyAggregate.Create(
                 name: "Property A",
@@ -170,24 +239,38 @@ namespace TC.Agro.Farm.Tests.Infrastructure.Repositories
                 propertyId: property.Id,
                 ownerId: ownerId,
                 name: "Plot A",
-                cropType: "Soy",
+                cropType: normalizedPlotCropType,
                 areaHectares: 25,
                 plantingDate: DateTimeOffset.UtcNow.AddDays(-30),
                 expectedHarvestDate: DateTimeOffset.UtcNow.AddDays(120),
                 irrigationType: IrrigationType.CenterPivot,
-                additionalNotes: null,
+                additionalNotes: "Legacy plot notes",
                 latitude: plotLatitude,
                 longitude: plotLongitude,
                 boundaryGeoJson: null,
-                cropTypeCatalogId: catalogAggregate.Id);
+                cropTypeCatalogId: plotCatalogAggregate.Id);
 
             plotResult.IsSuccess.ShouldBeTrue();
             var plot = plotResult.Value;
             dbContext.Plots.Add(plot);
 
+            var cropCycleResult = CropCycleAggregate.Start(
+                plotId: plot.Id,
+                propertyId: property.Id,
+                ownerId: ownerId,
+                cropTypeCatalogId: activeCatalogAggregate.Id,
+                startedAt: DateTimeOffset.UtcNow.AddDays(-20),
+                irrigationType: "Drip Irrigation",
+                expectedHarvestDate: DateTimeOffset.UtcNow.AddDays(100),
+                status: CropCycleStatus.Planted,
+                notes: "Cycle notes");
+
+            cropCycleResult.IsSuccess.ShouldBeTrue();
+            dbContext.CropCycles.Add(cropCycleResult.Value);
+
             await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            return (ownerId, property.Id, plot.Id, catalogAggregate.Id);
+            return (ownerId, property.Id, plot.Id, activeCatalogAggregate.Id);
         }
 
         private static ApplicationDbContext CreateDbContext()

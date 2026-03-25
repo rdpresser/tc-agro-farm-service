@@ -34,6 +34,7 @@ namespace TC.Agro.Farm.Service.Endpoints.CropCycles
                     PlotId: Guid.NewGuid(),
                     CropTypeCatalogId: Guid.NewGuid(),
                     StartedAt: DateTimeOffset.UtcNow,
+                    IrrigationType: Domain.ValueObjects.IrrigationType.CenterPivot,
                     ExpectedHarvestDate: DateTimeOffset.UtcNow.AddMonths(6),
                     Status: "Planned",
                     Notes: "Soil prepared and seeds selected.");

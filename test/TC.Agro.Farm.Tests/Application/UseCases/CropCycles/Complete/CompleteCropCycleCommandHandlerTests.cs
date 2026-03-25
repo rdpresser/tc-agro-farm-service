@@ -123,6 +123,7 @@ public sealed class CompleteCropCycleCommandHandlerTests
             ownerId: ownerId,
             cropTypeCatalogId: Guid.NewGuid(),
             startedAt: DateTimeOffset.UtcNow.AddDays(-14),
+            irrigationType: "Drip Irrigation",
             expectedHarvestDate: DateTimeOffset.UtcNow.AddMonths(4),
             status: "Planted",
             notes: "Started");

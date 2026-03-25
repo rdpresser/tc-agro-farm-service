@@ -18,6 +18,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public Guid? SelectedCropTypeSuggestionId { get; private set; }
         public CropCycleStatus Status { get; private set; } = default!;
         public string? Notes { get; private set; }
+        public IrrigationType IrrigationType { get; private set; } = default!;
         public DateTimeOffset StartedAt { get; private set; }
         public DateTimeOffset? ExpectedHarvestDate { get; private set; }
         public DateTimeOffset? EndedAt { get; private set; }
@@ -38,14 +39,17 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Guid ownerId,
             Guid cropTypeCatalogId,
             DateTimeOffset startedAt,
+            string irrigationType,
             DateTimeOffset? expectedHarvestDate = null,
             Guid? selectedCropTypeSuggestionId = null,
             string status = CropCycleStatus.Planned,
             string? notes = null)
         {
             var statusResult = CropCycleStatus.Create(status);
+            var irrigationTypeResult = IrrigationType.Create(irrigationType);
             var errors = ValidateIdentifiers(plotId, propertyId, ownerId, cropTypeCatalogId).ToList();
             errors.AddErrorsIfFailure(statusResult);
+            errors.AddErrorsIfFailure(irrigationTypeResult);
             errors.AddRange(ValidateDates(startedAt, expectedHarvestDate));
             errors.AddRange(ValidateOptionalValues(selectedCropTypeSuggestionId, notes));
 
@@ -71,12 +75,53 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 selectedCropTypeSuggestionId,
                 statusResult.Value.Value,
                 NormalizeNotes(notes),
+                irrigationTypeResult.Value.Value,
                 startedAt,
                 expectedHarvestDate,
                 DateTimeOffset.UtcNow);
 
             aggregate.ApplyEvent(@event);
             return Result.Success(aggregate);
+        }
+
+        public Result Revise(
+            Guid cropTypeCatalogId,
+            Guid? selectedCropTypeSuggestionId,
+            DateTimeOffset startedAt,
+            DateTimeOffset? expectedHarvestDate,
+            string irrigationType,
+            string? notes = null)
+        {
+            var irrigationTypeResult = IrrigationType.Create(irrigationType);
+            var errors = ValidateIdentifiers(PlotId, PropertyId, OwnerId, cropTypeCatalogId).ToList();
+            errors.AddErrorsIfFailure(irrigationTypeResult);
+            errors.AddRange(ValidateDates(startedAt, expectedHarvestDate));
+            errors.AddRange(ValidateOptionalValues(selectedCropTypeSuggestionId, notes));
+
+            if (!Status.IsActiveCycle || EndedAt.HasValue)
+            {
+                errors.Add(new ValidationError(
+                    "CropCycle.Status",
+                    "Only an active crop cycle can be revised."));
+            }
+
+            if (errors.Count > 0)
+            {
+                return Result.Invalid(errors.ToArray());
+            }
+
+            var @event = new CropCycleRevisedDomainEvent(
+                Id,
+                cropTypeCatalogId,
+                selectedCropTypeSuggestionId,
+                NormalizeNotes(notes),
+                irrigationTypeResult.Value.Value,
+                startedAt,
+                expectedHarvestDate,
+                DateTimeOffset.UtcNow);
+
+            ApplyEvent(@event);
+            return Result.Success();
         }
 
         public Result TransitionTo(string status, DateTimeOffset occurredAt, string? notes = null)
@@ -170,6 +215,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
             SelectedCropTypeSuggestionId = @event.SelectedCropTypeSuggestionId;
             Status = CropCycleStatus.FromDb(@event.Status).Value;
             Notes = @event.Notes;
+            IrrigationType = IrrigationType.FromDb(@event.IrrigationType).Value;
             StartedAt = @event.StartedAt;
             ExpectedHarvestDate = @event.ExpectedHarvestDate;
             EndedAt = null;
@@ -177,6 +223,19 @@ namespace TC.Agro.Farm.Domain.Aggregates
             RegisterLifecycleEvent(CropCycleEventAggregate.StartedEventType, Status.Value, Notes, @event.OccurredOn);
             SetCreatedAt(@event.OccurredOn);
             SetActivate();
+        }
+
+        public void Apply(CropCycleRevisedDomainEvent @event)
+        {
+            CropTypeCatalogId = @event.CropTypeCatalogId;
+            SelectedCropTypeSuggestionId = @event.SelectedCropTypeSuggestionId;
+            Notes = @event.Notes;
+            IrrigationType = IrrigationType.FromDb(@event.IrrigationType).Value;
+            StartedAt = @event.StartedAt;
+            ExpectedHarvestDate = @event.ExpectedHarvestDate;
+            SelectedCropTypeSuggestion = null;
+            RegisterLifecycleEvent(CropCycleEventAggregate.RevisedEventType, Status.Value, Notes, @event.OccurredOn);
+            SetUpdatedAt(@event.OccurredOn);
         }
 
         public void Apply(CropCycleStatusChangedDomainEvent @event)
@@ -204,6 +263,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             {
                 case CropCycleStartedDomainEvent startedEvent:
                     Apply(startedEvent);
+                    break;
+                case CropCycleRevisedDomainEvent revisedEvent:
+                    Apply(revisedEvent);
                     break;
                 case CropCycleStatusChangedDomainEvent statusChangedEvent:
                     Apply(statusChangedEvent);
@@ -307,6 +369,17 @@ namespace TC.Agro.Farm.Domain.Aggregates
             Guid? SelectedCropTypeSuggestionId,
             string Status,
             string? Notes,
+            string IrrigationType,
+            DateTimeOffset StartedAt,
+            DateTimeOffset? ExpectedHarvestDate,
+            DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
+
+        public record CropCycleRevisedDomainEvent(
+            Guid AggregateId,
+            Guid CropTypeCatalogId,
+            Guid? SelectedCropTypeSuggestionId,
+            string? Notes,
+            string IrrigationType,
             DateTimeOffset StartedAt,
             DateTimeOffset? ExpectedHarvestDate,
             DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);

@@ -22,13 +22,14 @@ namespace TC.Agro.Farm.Service.Endpoints.CropTypes
             Summary(s =>
             {
                 s.Summary = "Get crop type catalog entries.";
-                s.Description = "Retrieves tenant-scoped crop type catalog entries.";
+                s.Description = "Retrieves tenant-scoped crop type entries. Suggestions are excluded by default unless IncludeSuggestions=true is provided.";
                 s.ExampleRequest = new ListCropTypesQuery
                 {
                     PageNumber = 1,
                     PageSize = 10,
                     SortBy = "createdAt",
                     SortDirection = "desc",
+                    IncludeSuggestions = false,
                     IncludeStale = false,
                     IncludeInactive = false
                 };

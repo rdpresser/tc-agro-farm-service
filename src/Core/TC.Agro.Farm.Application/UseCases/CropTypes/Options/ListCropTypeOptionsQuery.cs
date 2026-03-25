@@ -5,6 +5,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
         public Guid? OwnerId { get; init; }
         public Guid? PropertyId { get; init; }
         public string? Source { get; init; }
+        public bool IncludeSuggestions { get; init; }
         public bool IncludeStale { get; init; }
         public bool IncludeInactive { get; init; }
         public string? Filter { get; init; }
@@ -12,7 +13,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
 
         private string? _cacheKey;
         public string GetCacheKey => _cacheKey ??
-            $"ListCropTypeOptionsQuery-{OwnerId}-{PropertyId}-{Source}-{IncludeStale}-{IncludeInactive}-{Filter}-{Limit}";
+            $"ListCropTypeOptionsQuery-{OwnerId}-{PropertyId}-{Source}-{IncludeSuggestions}-{IncludeStale}-{IncludeInactive}-{Filter}-{Limit}";
 
         public TimeSpan? Duration => null;
         public TimeSpan? DistributedCacheDuration => null;
@@ -26,7 +27,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.Options
         public void SetCacheKey(string cacheKey)
         {
             _cacheKey =
-                $"ListCropTypeOptionsQuery-{OwnerId}-{PropertyId}-{Source}-{IncludeStale}-{IncludeInactive}-{Filter}-{Limit}-{cacheKey}";
+                $"ListCropTypeOptionsQuery-{OwnerId}-{PropertyId}-{Source}-{IncludeSuggestions}-{IncludeStale}-{IncludeInactive}-{Filter}-{Limit}-{cacheKey}";
         }
     }
 }

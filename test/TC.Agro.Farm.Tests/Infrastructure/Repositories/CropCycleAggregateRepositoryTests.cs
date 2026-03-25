@@ -136,6 +136,7 @@ public sealed class CropCycleAggregateRepositoryTests
             ownerId,
             catalog.Id,
             DateTimeOffset.UtcNow.AddDays(-15),
+            irrigationType: "Drip Irrigation",
             expectedHarvestDate: DateTimeOffset.UtcNow.AddDays(75));
         cropCycleResult.IsSuccess.ShouldBeTrue();
         var cropCycle = cropCycleResult.Value;

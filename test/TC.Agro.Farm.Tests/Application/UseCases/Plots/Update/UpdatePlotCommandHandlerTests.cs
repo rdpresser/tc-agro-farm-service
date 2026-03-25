@@ -13,6 +13,8 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
     public sealed class UpdatePlotCommandHandlerTests
     {
         private readonly IPlotAggregateRepository _repository;
+        private readonly IPropertyAggregateRepository _propertyRepository;
+        private readonly ICropCycleAggregateRepository _cropCycleRepository;
         private readonly ICropTypeCatalogRepository _cropTypeCatalogRepository;
         private readonly ICropTypeSuggestionRepository _cropTypeSuggestionRepository;
         private readonly IUserContext _userContext;
@@ -25,6 +27,8 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
             FastEndpointsTestBootstrap.EnsureInitialized();
 
             _repository = A.Fake<IPlotAggregateRepository>();
+            _propertyRepository = A.Fake<IPropertyAggregateRepository>();
+            _cropCycleRepository = A.Fake<ICropCycleAggregateRepository>();
             _cropTypeCatalogRepository = A.Fake<ICropTypeCatalogRepository>();
             _cropTypeSuggestionRepository = A.Fake<ICropTypeSuggestionRepository>();
             _userContext = A.Fake<IUserContext>();
@@ -33,6 +37,8 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
 
             _handler = new UpdatePlotCommandHandler(
                 _repository,
+                _propertyRepository,
+                _cropCycleRepository,
                 _cropTypeCatalogRepository,
                 _cropTypeSuggestionRepository,
                 _userContext,

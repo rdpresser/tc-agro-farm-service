@@ -10,6 +10,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropCycles.Start
         Guid CropTypeCatalogId,
         string Status,
         DateTimeOffset StartedAt,
+        string IrrigationType,
         DateTimeOffset? ExpectedHarvestDate,
         Guid? SelectedCropTypeSuggestionId,
         string? Notes,

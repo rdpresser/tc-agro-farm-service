@@ -1,235 +1,91 @@
+using TC.Agro.Farm.Application.UseCases.Plots.Submit;
+
 namespace TC.Agro.Farm.Application.UseCases.Plots.Update
 {
     internal sealed class UpdatePlotCommandHandler
         : BaseHandler<UpdatePlotCommand, UpdatePlotResponse>
     {
-        private readonly IPlotAggregateRepository _repository;
-        private readonly ICropTypeCatalogRepository _cropTypeCatalogRepository;
-        private readonly ICropTypeSuggestionRepository _cropTypeSuggestionRepository;
-        private readonly IUserContext _userContext;
-        private readonly ITransactionalOutbox _outbox;
-        private readonly ILogger<UpdatePlotCommandHandler> _logger;
+        private readonly PlotSubmissionCoordinator _submissionCoordinator;
 
         public UpdatePlotCommandHandler(
             IPlotAggregateRepository repository,
+            IPropertyAggregateRepository propertyRepository,
+            ICropCycleAggregateRepository cropCycleRepository,
             ICropTypeCatalogRepository cropTypeCatalogRepository,
             ICropTypeSuggestionRepository cropTypeSuggestionRepository,
             IUserContext userContext,
             ITransactionalOutbox outbox,
             ILogger<UpdatePlotCommandHandler> logger)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _cropTypeCatalogRepository = cropTypeCatalogRepository ?? throw new ArgumentNullException(nameof(cropTypeCatalogRepository));
-            _cropTypeSuggestionRepository = cropTypeSuggestionRepository ?? throw new ArgumentNullException(nameof(cropTypeSuggestionRepository));
-            _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
-            _outbox = outbox ?? throw new ArgumentNullException(nameof(outbox));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _submissionCoordinator = new PlotSubmissionCoordinator(
+                repository,
+                propertyRepository,
+                cropCycleRepository,
+                cropTypeCatalogRepository,
+                cropTypeSuggestionRepository,
+                userContext,
+                outbox,
+                logger);
         }
 
         public override async Task<Result<UpdatePlotResponse>> ExecuteAsync(
             UpdatePlotCommand command,
             CancellationToken ct = default)
         {
-            _logger.LogInformation(
-                "Updating plot {PlotId} by user {UserId}",
-                command.PlotId,
-                _userContext.Id);
+            var request = new PlotSubmissionRequest(
+                PlotId: command.PlotId,
+                PropertyId: Guid.Empty,
+                Name: command.Name,
+                CropType: command.CropType,
+                AreaHectares: command.AreaHectares,
+                Latitude: command.Latitude,
+                Longitude: command.Longitude,
+                BoundaryGeoJson: command.BoundaryGeoJson,
+                PlantingDate: command.PlantingDate,
+                ExpectedHarvestDate: command.ExpectedHarvestDate,
+                IrrigationType: command.IrrigationType,
+                AdditionalNotes: command.AdditionalNotes,
+                OwnerId: null,
+                CropTypeCatalogId: command.CropTypeCatalogId,
+                SelectedCropTypeSuggestionId: command.SelectedCropTypeSuggestionId);
 
-            var aggregate = await _repository.GetByIdAsync(command.PlotId, ct).ConfigureAwait(false);
-            if (aggregate is null)
+            var result = await _submissionCoordinator.UpdateAsync(request, ct).ConfigureAwait(false);
+            if (result.IsSuccess)
             {
-                _logger.LogWarning("Plot {PlotId} not found", command.PlotId);
-                AddError(x => x.PlotId, "Plot not found.", FarmDomainErrors.PlotNotFound.ErrorCode);
+                return Result.Success(BuildResponse(result.Value));
+            }
+
+            if (result.Status == ResultStatus.NotFound)
+            {
+                AddError(nameof(UpdatePlotCommand.PlotId), result.Errors.FirstOrDefault() ?? "Plot not found.");
                 return BuildNotFoundResult();
             }
 
-            if (aggregate.OwnerId != _userContext.Id && !_userContext.IsAdmin)
+            if (result.Status == ResultStatus.Unauthorized || result.Status == ResultStatus.Forbidden)
             {
-                _logger.LogWarning(
-                    "User {UserId} attempted to update plot {PlotId} owned by {OwnerId}",
-                    _userContext.Id,
-                    command.PlotId,
-                    aggregate.OwnerId);
-                AddError(x => x.PlotId, "You are not authorized to update this plot.", "Plot.NotAuthorized");
+                AddError(nameof(UpdatePlotCommand), result.Errors.FirstOrDefault() ?? "Unauthorized.");
                 return BuildNotAuthorizedResult();
             }
 
-            var nameExists = await _repository
-                .NameExistsForPropertyExcludingAsync(command.Name, aggregate.PropertyId, aggregate.Id, ct)
-                .ConfigureAwait(false);
-
-            if (nameExists)
-            {
-                AddError(x => x.Name,
-                    $"A plot with name '{command.Name}' already exists for this property.",
-                    "Name.Duplicate");
-                return BuildValidationErrorResult();
-            }
-
-            var cropReferenceResult = await ResolveCropReferencesAsync(
-                command,
-                aggregate.OwnerId,
-                aggregate.PropertyId,
-                ct).ConfigureAwait(false);
-
-            if (!cropReferenceResult.IsSuccess)
-            {
-                AddErrors(cropReferenceResult.ValidationErrors);
-                return BuildValidationErrorResult();
-            }
-
-            var updateResult = aggregate.Update(
-                command.Name,
-                cropReferenceResult.Value.ResolvedCropType,
-                command.AreaHectares,
-                command.PlantingDate,
-                command.ExpectedHarvestDate,
-                command.IrrigationType,
-                command.AdditionalNotes,
-                command.Latitude,
-                command.Longitude,
-                command.BoundaryGeoJson,
-                cropReferenceResult.Value.CropTypeCatalogId,
-                cropReferenceResult.Value.SelectedCropTypeSuggestionId);
-
-            if (!updateResult.IsSuccess)
-            {
-                AddErrors(updateResult.ValidationErrors);
-                return BuildValidationErrorResult();
-            }
-
-            await _outbox.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            _logger.LogInformation("Plot {PlotId} updated successfully", aggregate.Id);
-
-            return UpdatePlotMapper.FromAggregate(aggregate, cropReferenceResult.Value.ResolvedCropType);
+            AddErrors(result.ValidationErrors);
+            return BuildValidationErrorResult();
         }
 
-        private async Task<Result<CropReferenceResolution>> ResolveCropReferencesAsync(
-            UpdatePlotCommand command,
-            Guid ownerId,
-            Guid propertyId,
-            CancellationToken ct)
-        {
-            var normalizedCropType = string.IsNullOrWhiteSpace(command.CropType)
-                ? null
-                : command.CropType.Trim();
-            var selectedSuggestionId = NormalizeSelectedSuggestionId(
-                command.CropTypeCatalogId,
-                command.SelectedCropTypeSuggestionId);
-
-            CropTypeCatalogAggregate? catalogAggregate = null;
-
-            if (command.CropTypeCatalogId.HasValue)
-            {
-                if (command.CropTypeCatalogId.Value == Guid.Empty)
-                {
-                    return Result<CropReferenceResolution>.Invalid(
-                        new ValidationError(nameof(command.CropTypeCatalogId), "CropTypeCatalogId cannot be empty when informed."));
-                }
-
-                catalogAggregate = await _cropTypeCatalogRepository
-                    .GetByIdScopedAsync(command.CropTypeCatalogId.Value, ownerId, cancellationToken: ct)
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(normalizedCropType))
-                {
-                    return Result<CropReferenceResolution>.Invalid(
-                        new ValidationError(nameof(command.CropType), "CropTypeCatalogId is required, or an existing CropType name must be informed."));
-                }
-
-                catalogAggregate = await _cropTypeCatalogRepository
-                    .GetByNameAsync(normalizedCropType, ownerId, ct)
-                    .ConfigureAwait(false);
-            }
-
-            if (catalogAggregate is null)
-            {
-                return Result<CropReferenceResolution>.Invalid(FarmDomainErrors.CropTypeCatalogNotFound);
-            }
-
-            if (!string.IsNullOrWhiteSpace(normalizedCropType) &&
-                !string.Equals(normalizedCropType, catalogAggregate.CropTypeName.Value, StringComparison.OrdinalIgnoreCase))
-            {
-                return Result<CropReferenceResolution>.Invalid(
-                    new ValidationError(
-                        nameof(command.CropType),
-                        "CropType must match the informed CropTypeCatalogId when both are provided."));
-            }
-
-            var resolvedCropType = catalogAggregate.CropTypeName.Value;
-
-            if (selectedSuggestionId.HasValue)
-            {
-                if (selectedSuggestionId.Value == Guid.Empty)
-                {
-                    return Result<CropReferenceResolution>.Invalid(
-                        new ValidationError(
-                            nameof(command.SelectedCropTypeSuggestionId),
-                            "SelectedCropTypeSuggestionId cannot be empty when informed."));
-                }
-
-                var selectedSuggestion = await _cropTypeSuggestionRepository
-                    .GetByIdAsync(selectedSuggestionId.Value, ct)
-                    .ConfigureAwait(false);
-
-                if (selectedSuggestion is null)
-                {
-                    return Result<CropReferenceResolution>.Invalid(FarmDomainErrors.CropTypeSuggestionNotFound);
-                }
-
-                if (selectedSuggestion.PropertyId != propertyId)
-                {
-                    return Result<CropReferenceResolution>.Invalid(
-                        new ValidationError(
-                            nameof(command.SelectedCropTypeSuggestionId),
-                            "Selected crop type suggestion does not belong to the informed property."));
-                }
-
-                if (selectedSuggestion.OwnerId != ownerId)
-                {
-                    return Result<CropReferenceResolution>.Invalid(
-                        new ValidationError(
-                            nameof(command.SelectedCropTypeSuggestionId),
-                            "Selected crop type suggestion does not belong to the informed owner."));
-                }
-
-                if (!string.Equals(selectedSuggestion.CropName.Value, resolvedCropType, StringComparison.OrdinalIgnoreCase))
-                {
-                    return Result<CropReferenceResolution>.Invalid(
-                        new ValidationError(
-                            nameof(command.SelectedCropTypeSuggestionId),
-                            "Selected crop type suggestion does not match the resolved crop type catalog."));
-                }
-            }
-
-            return Result<CropReferenceResolution>.Success(
-                new CropReferenceResolution(
-                    resolvedCropType,
-                    catalogAggregate.Id,
-                    selectedSuggestionId));
-        }
-
-        private static Guid? NormalizeSelectedSuggestionId(Guid? cropTypeCatalogId, Guid? selectedCropTypeSuggestionId)
-        {
-            if (!selectedCropTypeSuggestionId.HasValue)
-            {
-                return null;
-            }
-
-            if (cropTypeCatalogId.HasValue && cropTypeCatalogId.Value != Guid.Empty && cropTypeCatalogId == selectedCropTypeSuggestionId)
-            {
-                return null;
-            }
-
-            return selectedCropTypeSuggestionId;
-        }
-
-        private sealed record CropReferenceResolution(
-            string ResolvedCropType,
-            Guid CropTypeCatalogId,
-            Guid? SelectedCropTypeSuggestionId);
+        private static UpdatePlotResponse BuildResponse(PlotSubmissionResult result)
+            => new(
+                PlotId: result.Plot.Id,
+                PropertyId: result.Plot.PropertyId,
+                Name: result.Plot.Name.Value,
+                CropType: result.ResolvedCropType,
+                AreaHectares: result.Plot.AreaHectares.Hectares,
+                Latitude: result.Plot.Latitude,
+                Longitude: result.Plot.Longitude,
+                PlantingDate: result.CurrentCycle.StartedAt,
+                ExpectedHarvestDate: result.CurrentCycle.ExpectedHarvestDate ?? result.Plot.ExpectedHarvestDate,
+                IrrigationType: result.CurrentCycle.IrrigationType.Value,
+                AdditionalNotes: result.CurrentCycle.Notes,
+                UpdatedAt: result.Plot.UpdatedAt,
+                CropTypeCatalogId: result.CurrentCycle.CropTypeCatalogId,
+                SelectedCropTypeSuggestionId: result.CurrentCycle.SelectedCropTypeSuggestionId);
     }
 }

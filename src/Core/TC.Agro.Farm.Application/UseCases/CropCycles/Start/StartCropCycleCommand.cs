@@ -7,6 +7,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropCycles.Start
         Guid PlotId,
         Guid CropTypeCatalogId,
         DateTimeOffset StartedAt,
+        string IrrigationType,
         DateTimeOffset? ExpectedHarvestDate,
         string Status = CropCycleStatus.Planned,
         Guid? SelectedCropTypeSuggestionId = null,

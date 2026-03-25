@@ -77,6 +77,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropCycles.Start
                 ownerId: effectiveOwnerId,
                 cropTypeCatalogId: command.CropTypeCatalogId,
                 startedAt: command.StartedAt,
+                irrigationType: command.IrrigationType,
                 expectedHarvestDate: command.ExpectedHarvestDate,
                 selectedCropTypeSuggestionId: command.SelectedCropTypeSuggestionId,
                 status: command.Status,

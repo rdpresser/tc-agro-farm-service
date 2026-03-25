@@ -6,6 +6,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.List
     {
         public Guid? OwnerId { get; init; }
         public string? Source { get; init; }
+        public bool IncludeSuggestions { get; init; }
         public bool IncludeStale { get; init; }
         public bool IncludeInactive { get; init; }
 
@@ -17,7 +18,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.List
 
         private string? _cacheKey;
         public string GetCacheKey => _cacheKey ??
-            $"ListCropTypesQuery-{OwnerId}-{Source}-{IncludeStale}-{IncludeInactive}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}";
+            $"ListCropTypesQuery-{OwnerId}-{Source}-{IncludeSuggestions}-{IncludeStale}-{IncludeInactive}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}";
 
         public TimeSpan? Duration => null;
         public TimeSpan? DistributedCacheDuration => null;
@@ -31,7 +32,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropTypes.List
         public void SetCacheKey(string cacheKey)
         {
             _cacheKey =
-                $"ListCropTypesQuery-{OwnerId}-{Source}-{IncludeStale}-{IncludeInactive}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{cacheKey}";
+                $"ListCropTypesQuery-{OwnerId}-{Source}-{IncludeSuggestions}-{IncludeStale}-{IncludeInactive}-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{cacheKey}";
         }
     }
 }

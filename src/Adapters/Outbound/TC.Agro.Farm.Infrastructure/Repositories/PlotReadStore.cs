@@ -17,32 +17,135 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             ? _dbContext.Plots
             : _dbContext.Plots.Where(x => x.OwnerId == _userContext.Id);
 
+        private IQueryable<PlotReadProjection> BuildProjectionQuery()
+        {
+            var cropCycles = _dbContext.CropCycles.AsNoTracking();
+
+            return FilteredDbSet
+                .AsNoTracking()
+                .GroupJoin(
+                    cropCycles,
+                    p => p.Id,
+                    c => c.PlotId,
+                    (p, cycles) => new
+                    {
+                        Plot = p,
+                        FallbackCropType = p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
+                        FallbackAdditionalNotes = p.AdditionalNotes != null ? p.AdditionalNotes.Value : null,
+                        LatestCycle = cycles
+                            .OrderByDescending(c => c.EndedAt == null)
+                            .ThenByDescending(c => c.StartedAt)
+                            .Select(c => new
+                            {
+                                CropType = c.CropTypeCatalog.CropTypeName.Value,
+                                StartedAt = (DateTimeOffset?)c.StartedAt,
+                                c.ExpectedHarvestDate,
+                                IrrigationType = c.IrrigationType.Value,
+                                c.Notes,
+                                CropTypeCatalogId = (Guid?)c.CropTypeCatalogId,
+                                c.SelectedCropTypeSuggestionId
+                            })
+                            .FirstOrDefault()
+                    })
+                .Select(x => new PlotReadProjection(
+                    x.Plot.Id,
+                    x.Plot.PropertyId,
+                    x.Plot.OwnerId,
+                    x.Plot.Owner.Name,
+                    x.Plot.Property.Name.Value,
+                    x.Plot.Name.Value,
+                    x.LatestCycle != null ? x.LatestCycle.CropType : x.FallbackCropType,
+                    x.Plot.AreaHectares.Hectares,
+                    x.Plot.Latitude ?? x.Plot.Property.Location.Latitude,
+                    x.Plot.Longitude ?? x.Plot.Property.Location.Longitude,
+                    x.Plot.BoundaryGeoJson,
+                    x.Plot.IsActive,
+                    x.Plot.Sensors.Count,
+                    x.Plot.CreatedAt,
+                    x.Plot.UpdatedAt,
+                    x.LatestCycle != null && x.LatestCycle.StartedAt.HasValue
+                        ? x.LatestCycle.StartedAt.Value
+                        : x.Plot.PlantingDate,
+                    x.LatestCycle != null && x.LatestCycle.ExpectedHarvestDate.HasValue
+                        ? x.LatestCycle.ExpectedHarvestDate.Value
+                        : x.Plot.ExpectedHarvestDate,
+                    x.LatestCycle != null
+                        ? x.LatestCycle.IrrigationType
+                        : x.Plot.IrrigationType.Value,
+                    x.LatestCycle != null ? x.LatestCycle.Notes : x.FallbackAdditionalNotes,
+                    x.LatestCycle != null && x.LatestCycle.CropTypeCatalogId.HasValue
+                        ? x.LatestCycle.CropTypeCatalogId.Value
+                        : x.Plot.CropTypeCatalogId,
+                    x.LatestCycle != null
+                        ? x.LatestCycle.SelectedCropTypeSuggestionId
+                        : x.Plot.SelectedCropTypeSuggestionId));
+        }
+
+        private static IQueryable<PlotReadProjection> ApplyTextFilter(
+            IQueryable<PlotReadProjection> query,
+            string? filter)
+        {
+            if (string.IsNullOrWhiteSpace(filter))
+            {
+                return query;
+            }
+
+            var pattern = $"%{filter.Trim()}%";
+            return query.Where(p =>
+                EF.Functions.ILike(p.Name, pattern) ||
+                EF.Functions.ILike(p.PropertyName, pattern) ||
+                EF.Functions.ILike(p.CropType, pattern));
+        }
+
+        private static IQueryable<PlotReadProjection> ApplySorting(
+            IQueryable<PlotReadProjection> query,
+            string? sortBy,
+            string? sortDirection)
+        {
+            if (string.IsNullOrWhiteSpace(sortBy))
+            {
+                return query.OrderByDescending(p => p.CreatedAt);
+            }
+
+            var isAscending = string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+
+            return sortBy.ToLowerInvariant() switch
+            {
+                "name" => isAscending ? query.OrderBy(p => p.Name) : query.OrderByDescending(p => p.Name),
+                "croptype" => isAscending ? query.OrderBy(p => p.CropType) : query.OrderByDescending(p => p.CropType),
+                "areahectares" => isAscending ? query.OrderBy(p => p.AreaHectares) : query.OrderByDescending(p => p.AreaHectares),
+                "createdat" => isAscending ? query.OrderBy(p => p.CreatedAt) : query.OrderByDescending(p => p.CreatedAt),
+                "propertyname" => isAscending ? query.OrderBy(p => p.PropertyName) : query.OrderByDescending(p => p.PropertyName),
+                "sensorscount" => isAscending ? query.OrderBy(p => p.SensorCount) : query.OrderByDescending(p => p.SensorCount),
+                _ => query.OrderByDescending(p => p.CreatedAt)
+            };
+        }
+
         /// <inheritdoc />
         public async Task<GetPlotByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var plot = await FilteredDbSet
-                .AsNoTracking()
+            var plot = await BuildProjectionQuery()
                 .Where(p => p.Id == id)
                 .Select(p => new GetPlotByIdResponse(
                     p.Id,
                     p.PropertyId,
                     p.OwnerId,
-                    p.Owner.Name,
-                    p.Property.Name.Value,
-                    p.Name.Value,
-                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
-                    p.AreaHectares.Hectares,
-                    p.Latitude ?? p.Property.Location.Latitude,
-                    p.Longitude ?? p.Property.Location.Longitude,
+                    p.OwnerName,
+                    p.PropertyName,
+                    p.Name,
+                    p.CropType,
+                    p.AreaHectares,
+                    p.Latitude,
+                    p.Longitude,
                     p.BoundaryGeoJson,
                     p.IsActive,
-                    p.Sensors.Count,
+                    p.SensorCount,
                     p.CreatedAt,
                     p.UpdatedAt,
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
-                    p.IrrigationType.Value,
-                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null,
+                    p.IrrigationType,
+                    p.AdditionalNotes,
                     p.CropTypeCatalogId,
                     p.SelectedCropTypeSuggestionId))
                 .FirstOrDefaultAsync(cancellationToken)
@@ -56,8 +159,7 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             ListPlotsFromPropertyQuery query,
             CancellationToken cancellationToken = default)
         {
-            var plotsQuery = FilteredDbSet
-                .AsNoTracking()
+            var plotsQuery = BuildProjectionQuery()
                 .Where(p => p.PropertyId == query.Id);
 
             if (query.CropTypeCatalogId.HasValue && query.CropTypeCatalogId.Value != Guid.Empty)
@@ -68,41 +170,37 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             // Apply optional crop type filter (using index on crop_type)
             if (!string.IsNullOrWhiteSpace(query.CropType))
             {
-                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(
-                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
-                    query.CropType));
+                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(p.CropType, $"%{query.CropType.Trim()}%"));
             }
 
-            // Apply text filter (searches name and crop type)
-            plotsQuery = plotsQuery.ApplyTextFilter(query.Filter);
+            plotsQuery = ApplyTextFilter(plotsQuery, query.Filter);
 
-            // Get total count before pagination
             var totalCount = await plotsQuery
                 .CountAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            // Apply sorting, pagination, and projection in one go
+            plotsQuery = ApplySorting(plotsQuery, query.SortBy, query.SortDirection);
+
             var plots = await plotsQuery
-                .ApplySorting(query.SortBy, query.SortDirection)
                 .ApplyPagination(query.PageNumber, query.PageSize)
                 .Select(p => new ListPlotsFromPropertyResponse(
                     p.Id,
                     p.PropertyId,
                     p.OwnerId,
-                    p.Owner.Name,
-                    p.Property.Name.Value,
-                    p.Name.Value,
-                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
-                    p.AreaHectares.Hectares,
-                    p.Latitude ?? p.Property.Location.Latitude,
-                    p.Longitude ?? p.Property.Location.Longitude,
+                    p.OwnerName,
+                    p.PropertyName,
+                    p.Name,
+                    p.CropType,
+                    p.AreaHectares,
+                    p.Latitude,
+                    p.Longitude,
                     p.IsActive,
-                    p.Sensors.Count,
+                    p.SensorCount,
                     p.CreatedAt,
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
-                    p.IrrigationType.Value,
-                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null,
+                    p.IrrigationType,
+                    p.AdditionalNotes,
                     p.CropTypeCatalogId,
                     p.SelectedCropTypeSuggestionId))
                 .ToListAsync(cancellationToken)
@@ -116,12 +214,10 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             ListPlotsQuery query,
             CancellationToken cancellationToken = default)
         {
-            var plotsQuery = FilteredDbSet
-                .AsNoTracking();
+            var plotsQuery = BuildProjectionQuery();
 
             if (_userContext.IsAdmin && query.OwnerId is not null && query.OwnerId.HasValue && query.OwnerId.Value != Guid.Empty)
             {
-                //when loggedin as admin on frontend
                 plotsQuery = plotsQuery.Where(x => x.OwnerId == query.OwnerId);
             }
 
@@ -138,41 +234,37 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
             // Apply optional crop type filter (using index on crop_type)
             if (!string.IsNullOrWhiteSpace(query.CropType))
             {
-                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(
-                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
-                    query.CropType));
+                plotsQuery = plotsQuery.Where(p => EF.Functions.ILike(p.CropType, $"%{query.CropType.Trim()}%"));
             }
 
-            // Apply text filter (searches name and crop type)
-            plotsQuery = plotsQuery.ApplyTextFilter(query.Filter);
+            plotsQuery = ApplyTextFilter(plotsQuery, query.Filter);
 
-            // Get total count before pagination
             var totalCount = await plotsQuery
                 .CountAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            // Apply sorting, pagination, and projection in one go
+            plotsQuery = ApplySorting(plotsQuery, query.SortBy, query.SortDirection);
+
             var plots = await plotsQuery
-                .ApplySorting(query.SortBy, query.SortDirection)
                 .ApplyPagination(query.PageNumber, query.PageSize)
                 .Select(p => new ListPlotsResponse(
                     p.Id,
                     p.PropertyId,
                     p.OwnerId,
-                    p.Owner.Name,
-                    p.Property.Name.Value,
-                    p.Name.Value,
-                    p.CropTypeCatalog == null ? string.Empty : p.CropTypeCatalog.CropTypeName.Value,
-                    p.AreaHectares.Hectares,
-                    p.Latitude ?? p.Property.Location.Latitude,
-                    p.Longitude ?? p.Property.Location.Longitude,
+                    p.OwnerName,
+                    p.PropertyName,
+                    p.Name,
+                    p.CropType,
+                    p.AreaHectares,
+                    p.Latitude,
+                    p.Longitude,
                     p.IsActive,
-                    p.Sensors.Count,
+                    p.SensorCount,
                     p.CreatedAt,
                     p.PlantingDate,
                     p.ExpectedHarvestDate,
-                    p.IrrigationType.Value,
-                    p.AdditionalNotes != null ? p.AdditionalNotes.Value : null,
+                    p.IrrigationType,
+                    p.AdditionalNotes,
                     p.CropTypeCatalogId,
                     p.SelectedCropTypeSuggestionId))
                 .ToListAsync(cancellationToken)
@@ -180,5 +272,28 @@ namespace TC.Agro.Farm.Infrastructure.Repositories
 
             return ([.. plots], totalCount);
         }
+
+        private sealed record PlotReadProjection(
+            Guid Id,
+            Guid PropertyId,
+            Guid OwnerId,
+            string OwnerName,
+            string PropertyName,
+            string Name,
+            string CropType,
+            double AreaHectares,
+            double? Latitude,
+            double? Longitude,
+            string? BoundaryGeoJson,
+            bool IsActive,
+            int SensorCount,
+            DateTimeOffset CreatedAt,
+            DateTimeOffset? UpdatedAt,
+            DateTimeOffset PlantingDate,
+            DateTimeOffset ExpectedHarvestDate,
+            string IrrigationType,
+            string? AdditionalNotes,
+            Guid CropTypeCatalogId,
+            Guid? SelectedCropTypeSuggestionId);
     }
 }

@@ -11,6 +11,7 @@ namespace TC.Agro.Farm.Application.UseCases.CropCycles.Start
                 CropTypeCatalogId: aggregate.CropTypeCatalogId,
                 Status: aggregate.Status.Value,
                 StartedAt: aggregate.StartedAt,
+                IrrigationType: aggregate.IrrigationType.Value,
                 ExpectedHarvestDate: aggregate.ExpectedHarvestDate,
                 SelectedCropTypeSuggestionId: aggregate.SelectedCropTypeSuggestionId,
                 Notes: aggregate.Notes,

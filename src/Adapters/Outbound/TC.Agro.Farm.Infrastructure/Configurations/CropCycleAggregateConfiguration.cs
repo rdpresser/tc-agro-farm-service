@@ -32,6 +32,16 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
                 .HasMaxLength(1000)
                 .IsRequired(false);
 
+            builder.OwnsOne(c => c.IrrigationType, irrigationType =>
+            {
+                irrigationType.Property(i => i.Value)
+                    .HasColumnName("irrigation_type")
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                irrigationType.WithOwner();
+            });
+
             builder.Property(c => c.StartedAt)
                 .HasColumnName("started_at")
                 .HasColumnType("timestamptz")
@@ -97,6 +107,7 @@ namespace TC.Agro.Farm.Infrastructure.Configurations
             });
 
             builder.Navigation(c => c.Status).IsRequired();
+            builder.Navigation(c => c.IrrigationType).IsRequired();
             builder.Navigation(c => c.CropTypeCatalog).IsRequired();
         }
     }
