@@ -13,7 +13,7 @@
     <!-- API / Endpoints -->
     <PackageReference Include="FastEndpoints.Swagger" />
 
-    <!-- Misc -->
+    <!-- Swagger examples generator used by endpoints -->
     <PackageReference Include="Bogus" />
 
     <!-- Health Check -->

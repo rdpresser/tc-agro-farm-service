@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,7 +16,10 @@ public sealed class OpenAiCropTypeSuggestionProviderTests
     private readonly ILogger<OpenAiCropTypeSuggestionProvider> _logger =
         A.Fake<ILogger<OpenAiCropTypeSuggestionProvider>>();
 
-    private static CropTypeSuggestionAiRequest CreateRequest(double latitude = -23.5, double longitude = -46.6) =>
+    private static CropTypeSuggestionAiRequest CreateRequest(
+        double latitude = -23.5,
+        double longitude = -46.6,
+        int suggestionCount = 3) =>
         new(
             PropertyId: Guid.NewGuid(),
             OwnerId: Guid.NewGuid(),
@@ -24,7 +28,7 @@ public sealed class OpenAiCropTypeSuggestionProviderTests
             Country: "Brazil",
             Latitude: latitude,
             Longitude: longitude,
-            SuggestionCount: 3);
+            SuggestionCount: suggestionCount);
 
     private static OpenAiCropSuggestionOptions CreateOptions(
         bool enabled = true,
@@ -234,6 +238,150 @@ public sealed class OpenAiCropTypeSuggestionProviderTests
         var result = await provider.GenerateSuggestionsAsync(CreateRequest(), CancellationToken.None);
 
         result.ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public async Task GenerateSuggestionsAsync_WhenApiReturnsMarkdownWrappedArray_ShouldNormalizeAndParseSuggestions()
+    {
+        var wrappedContent = "```json\n[{\"cropType\":\"Cassava\",\"confidenceScore\":81}]\n```";
+
+        var openAiResponse = new
+        {
+            choices = new[]
+            {
+                new
+                {
+                    message = new
+                    {
+                        content = wrappedContent
+                    }
+                }
+            }
+        };
+
+        var handler = new FakeHttpMessageHandler(
+            HttpStatusCode.OK,
+            JsonSerializer.Serialize(openAiResponse));
+
+        var provider = CreateProvider(handler);
+
+        var result = await provider.GenerateSuggestionsAsync(CreateRequest(), CancellationToken.None);
+
+        result.Count.ShouldBe(1);
+        result[0].CropType.ShouldBe("Cassava");
+        result[0].ConfidenceScore.ShouldBe(81);
+    }
+
+    [Fact]
+    public async Task GenerateSuggestionsAsync_WhenApiReturnsInvalidRangesAndDuplicates_ShouldClampAndDeduplicate()
+    {
+        var longNotes = new string('n', 600);
+        var openAiResponse = new
+        {
+            choices = new[]
+            {
+                new
+                {
+                    message = new
+                    {
+                        content = JsonSerializer.Serialize(new
+                        {
+                            suggestions = new object[]
+                            {
+                                new
+                                {
+                                    cropType = "Soy",
+                                    confidenceScore = 150,
+                                    harvestCycleMonths = 99,
+                                    minSoilMoisture = -5,
+                                    maxTemperature = 99,
+                                    minHumidity = 120,
+                                    notes = longNotes,
+                                    suggestedImage = "12345678901"
+                                },
+                                new
+                                {
+                                    cropType = "soy",
+                                    confidenceScore = 40
+                                },
+                                new
+                                {
+                                    cropType = "Corn",
+                                    confidenceScore = -20,
+                                    harvestCycleMonths = 0,
+                                    maxTemperature = -40,
+                                    minHumidity = -1
+                                }
+                            }
+                        })
+                    }
+                }
+            }
+        };
+
+        var handler = new FakeHttpMessageHandler(
+            HttpStatusCode.OK,
+            JsonSerializer.Serialize(openAiResponse));
+
+        var provider = CreateProvider(handler);
+
+        var result = await provider.GenerateSuggestionsAsync(CreateRequest(), CancellationToken.None);
+
+        result.Count.ShouldBe(2);
+        result[0].CropType.ShouldBe("Soy");
+        result[0].ConfidenceScore.ShouldBe(100);
+        result[0].HarvestCycleMonths.ShouldBe(36);
+        result[0].MinSoilMoisture.ShouldBe(0);
+        result[0].MaxTemperature.ShouldBe(80);
+        result[0].MinHumidity.ShouldBe(100);
+        result[0].Notes!.Length.ShouldBe(500);
+        result[0].SuggestedImage.ShouldBe("1234567890");
+
+        result[1].CropType.ShouldBe("Corn");
+        result[1].ConfidenceScore.ShouldBe(0);
+        result[1].HarvestCycleMonths.ShouldBe(1);
+        result[1].MaxTemperature.ShouldBe(-30);
+        result[1].MinHumidity.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task GenerateSuggestionsAsync_WhenRequestExceedsMaximum_ShouldReturnAtMostThirtySuggestions()
+    {
+        var suggestions = Enumerable.Range(1, 40)
+            .Select(i => new
+            {
+                cropType = $"Crop-{i}",
+                confidenceScore = 70
+            })
+            .ToArray();
+
+        var openAiResponse = new
+        {
+            choices = new[]
+            {
+                new
+                {
+                    message = new
+                    {
+                        content = JsonSerializer.Serialize(new { suggestions })
+                    }
+                }
+            }
+        };
+
+        var handler = new FakeHttpMessageHandler(
+            HttpStatusCode.OK,
+            JsonSerializer.Serialize(openAiResponse));
+
+        var provider = CreateProvider(handler);
+
+        var result = await provider.GenerateSuggestionsAsync(
+            CreateRequest(suggestionCount: 100),
+            CancellationToken.None);
+
+        result.Count.ShouldBe(30);
+        result[0].CropType.ShouldBe("Crop-1");
+        result[29].CropType.ShouldBe("Crop-30");
     }
 
     [Fact]

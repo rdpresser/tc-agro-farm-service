@@ -217,6 +217,51 @@ public sealed class SubmitPlotCommandHandlerTests
         A.CallTo(() => _cropTypeCatalogRepository.Add(A<CropTypeCatalogAggregate>._)).MustNotHaveHappened();
     }
 
+    [Fact]
+    public async Task ExecuteAsync_WhenAdminCreatesWithoutOwnerId_ShouldReturnValidationError()
+    {
+        var userContext = TestUserContextFactory.CreateAdmin();
+        var command = CreateValidCommand() with
+        {
+            OwnerId = null
+        };
+
+        var sut = CreateHandler(userContext);
+
+        var result = await sut.ExecuteAsync(command, CancellationToken.None);
+
+        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.ValidationErrors.ShouldContain(x => x.Identifier == nameof(SubmitPlotCommand.OwnerId));
+        A.CallTo(() => _propertyRepository.GetByIdAsync(A<Guid>._, A<CancellationToken>._)).MustNotHaveHappened();
+        A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustNotHaveHappened();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenAdminOwnerIdDoesNotMatchPropertyOwner_ShouldReturnValidationError()
+    {
+        var selectedOwnerId = Guid.NewGuid();
+        var propertyOwnerId = Guid.NewGuid();
+        var userContext = TestUserContextFactory.CreateAdmin();
+        var property = CreateProperty(propertyOwnerId);
+
+        var command = CreateValidCommand() with
+        {
+            PropertyId = property.Id,
+            OwnerId = selectedOwnerId
+        };
+
+        A.CallTo(() => _propertyRepository.GetByIdAsync(property.Id, A<CancellationToken>._)).Returns(property);
+
+        var sut = CreateHandler(userContext);
+
+        var result = await sut.ExecuteAsync(command, CancellationToken.None);
+
+        result.Status.ShouldBe(ResultStatus.Invalid);
+        result.ValidationErrors.ShouldContain(x => x.Identifier == nameof(SubmitPlotCommand.OwnerId));
+        A.CallTo(() => _plotRepository.Add(A<PlotAggregate>._)).MustNotHaveHappened();
+        A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustNotHaveHappened();
+    }
+
     private SubmitPlotCommandHandler CreateHandler(IUserContext userContext)
         => new(
             _plotRepository,
