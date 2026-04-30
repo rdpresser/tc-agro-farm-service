@@ -15,11 +15,12 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListByProperty
         public string SortDirection { get; init; } = "desc";
         public string? Filter { get; init; }
         public string? CropType { get; init; }
+        public Guid? CropTypeCatalogId { get; init; }
 
         private string? _cacheKey;
         public string GetCacheKey
         {
-            get => _cacheKey ?? $"ListPlotsFromPropertyQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{Id}";
+            get => _cacheKey ?? $"ListPlotsFromPropertyQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{CropTypeCatalogId}-{Id}";
         }
 
         public TimeSpan? Duration => null;
@@ -33,7 +34,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListByProperty
 
         public void SetCacheKey(string cacheKey)
         {
-            _cacheKey = $"ListPlotsFromPropertyQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{Id}-{cacheKey}";
+            _cacheKey = $"ListPlotsFromPropertyQuery-{PageNumber}-{PageSize}-{SortBy}-{SortDirection}-{Filter}-{CropType}-{CropTypeCatalogId}-{Id}-{cacheKey}";
         }
     }
 }

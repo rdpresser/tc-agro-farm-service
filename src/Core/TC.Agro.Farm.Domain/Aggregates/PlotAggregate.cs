@@ -9,8 +9,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
     public sealed class PlotAggregate : BaseAggregateRoot, ITenantAware
     {
         public Name Name { get; private set; } = default!;
-        public CropType CropType { get; private set; } = default!;
         public Area AreaHectares { get; private set; } = default!;
+        public Guid CropTypeCatalogId { get; private set; }
+        public Guid? SelectedCropTypeSuggestionId { get; private set; }
 
         public double? Latitude { get; private set; } = default!;
         public double? Longitude { get; private set; } = default!;
@@ -25,6 +26,8 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public Guid OwnerId { get; private set; }
         public PropertyAggregate Property { get; private set; } = default!;
         public OwnerSnapshot Owner { get; private set; } = default!;
+        public CropTypeCatalogAggregate? CropTypeCatalog { get; private set; }
+        public CropTypeSuggestionAggregate? SelectedCropTypeSuggestion { get; private set; }
 
         public ICollection<SensorAggregate> Sensors { get; private set; } = [];
 
@@ -48,7 +51,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string? additionalNotes,
             double? latitude = null,
             double? longitude = null,
-            string? boundaryGeoJson = null)
+            string? boundaryGeoJson = null,
+            Guid cropTypeCatalogId = default,
+            Guid? selectedCropTypeSuggestionId = null)
         {
             var nameResult = ValueObjects.Name.Create(name);
             var cropTypeResult = ValueObjects.CropType.Create(cropType);
@@ -67,6 +72,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 errors.AddRange(additionalNotesResult.ValidationErrors);
             errors.AddRange(ValidateDates(plantingDate, expectedHarvestDate));
             errors.AddRange(ValidateCoordinates(latitude, longitude));
+            errors.AddRange(ValidateCropReferences(cropTypeCatalogId, selectedCropTypeSuggestionId));
 
             if (errors.Count > 0)
             {
@@ -85,7 +91,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 additionalNotesResult.Value,
                 latitude,
                 longitude,
-                boundaryGeoJson);
+                boundaryGeoJson,
+                cropTypeCatalogId,
+                selectedCropTypeSuggestionId);
         }
 
         private static Result<PlotAggregate> CreateAggregate(
@@ -100,7 +108,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             AdditionalNotes? additionalNotes,
             double? latitude = null,
             double? longitude = null,
-            string? boundaryGeoJson = null)
+            string? boundaryGeoJson = null,
+            Guid cropTypeCatalogId = default,
+            Guid? selectedCropTypeSuggestionId = null)
         {
             var aggregate = new PlotAggregate(Guid.NewGuid());
             var @event = new PlotCreatedDomainEvent(
@@ -117,7 +127,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 expectedHarvestDate,
                 irrigationType.Value,
                 additionalNotes?.Value,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                cropTypeCatalogId,
+                selectedCropTypeSuggestionId);
 
             aggregate.ApplyEvent(@event);
             return Result.Success(aggregate);
@@ -137,7 +149,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             string? additionalNotes,
             double? latitude = null,
             double? longitude = null,
-            string? boundaryGeoJson = null)
+            string? boundaryGeoJson = null,
+            Guid cropTypeCatalogId = default,
+            Guid? selectedCropTypeSuggestionId = null)
         {
             var nameResult = ValueObjects.Name.Create(name);
             var cropTypeResult = ValueObjects.CropType.Create(cropType);
@@ -154,6 +168,7 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 errors.AddRange(additionalNotesResult.ValidationErrors);
             errors.AddRange(ValidateDates(plantingDate, expectedHarvestDate));
             errors.AddRange(ValidateCoordinates(latitude, longitude));
+            errors.AddRange(ValidateCropReferences(cropTypeCatalogId, selectedCropTypeSuggestionId));
 
             if (errors.Count > 0)
             {
@@ -172,13 +187,18 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 expectedHarvestDate,
                 irrigationTypeResult.Value.Value,
                 additionalNotesResult.Value?.Value,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                cropTypeCatalogId,
+                selectedCropTypeSuggestionId);
 
             ApplyEvent(@event);
             return Result.Success();
         }
 
-        public Result ChangeCropType(string cropType)
+        public Result ChangeCropType(
+            string cropType,
+            Guid cropTypeCatalogId = default,
+            Guid? selectedCropTypeSuggestionId = null)
         {
             var cropTypeResult = CropType.Create(cropType);
 
@@ -187,10 +207,18 @@ namespace TC.Agro.Farm.Domain.Aggregates
                 return Result.Invalid(cropTypeResult.ValidationErrors);
             }
 
+            var referenceErrors = ValidateCropReferences(cropTypeCatalogId, selectedCropTypeSuggestionId).ToArray();
+            if (referenceErrors.Length > 0)
+            {
+                return Result.Invalid(referenceErrors);
+            }
+
             var @event = new PlotCropTypeChangedDomainEvent(
                 Id,
                 cropTypeResult.Value.Value,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow,
+                cropTypeCatalogId,
+                selectedCropTypeSuggestionId);
 
             ApplyEvent(@event);
             return Result.Success();
@@ -230,7 +258,6 @@ namespace TC.Agro.Farm.Domain.Aggregates
             PropertyId = @event.PropertyId;
             OwnerId = @event.OwnerId;
             Name = ValueObjects.Name.FromDb(@event.Name).Value;
-            CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
             AreaHectares = Area.FromDb(@event.AreaHectares).Value;
             Latitude = @event.Latitude;
             Longitude = @event.Longitude;
@@ -239,6 +266,10 @@ namespace TC.Agro.Farm.Domain.Aggregates
             ExpectedHarvestDate = @event.ExpectedHarvestDate;
             IrrigationType = ValueObjects.IrrigationType.FromDb(@event.IrrigationType).Value;
             AdditionalNotes = ValueObjects.AdditionalNotes.FromDb(@event.AdditionalNotes).Value;
+            CropTypeCatalogId = @event.CropTypeCatalogId;
+            SelectedCropTypeSuggestionId = @event.SelectedCropTypeSuggestionId;
+            CropTypeCatalog = null;
+            SelectedCropTypeSuggestion = null;
             SetCreatedAt(@event.OccurredOn);
             SetActivate();
         }
@@ -246,7 +277,6 @@ namespace TC.Agro.Farm.Domain.Aggregates
         public void Apply(PlotUpdatedDomainEvent @event)
         {
             Name = ValueObjects.Name.FromDb(@event.Name).Value;
-            CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
             AreaHectares = Area.FromDb(@event.AreaHectares).Value;
             Latitude = @event.Latitude;
             Longitude = @event.Longitude;
@@ -255,12 +285,19 @@ namespace TC.Agro.Farm.Domain.Aggregates
             ExpectedHarvestDate = @event.ExpectedHarvestDate;
             IrrigationType = ValueObjects.IrrigationType.FromDb(@event.IrrigationType).Value;
             AdditionalNotes = ValueObjects.AdditionalNotes.FromDb(@event.AdditionalNotes).Value;
+            CropTypeCatalogId = @event.CropTypeCatalogId;
+            SelectedCropTypeSuggestionId = @event.SelectedCropTypeSuggestionId;
+            CropTypeCatalog = null;
+            SelectedCropTypeSuggestion = null;
             SetUpdatedAt(@event.OccurredOn);
         }
 
         public void Apply(PlotCropTypeChangedDomainEvent @event)
         {
-            CropType = ValueObjects.CropType.FromDb(@event.CropType).Value;
+            CropTypeCatalogId = @event.CropTypeCatalogId;
+            SelectedCropTypeSuggestionId = @event.SelectedCropTypeSuggestionId;
+            CropTypeCatalog = null;
+            SelectedCropTypeSuggestion = null;
             SetUpdatedAt(@event.OccurredOn);
         }
 
@@ -349,6 +386,26 @@ namespace TC.Agro.Farm.Domain.Aggregates
             }
         }
 
+        private static IEnumerable<ValidationError> ValidateCropReferences(Guid cropTypeCatalogId, Guid? selectedCropTypeSuggestionId)
+        {
+            if (cropTypeCatalogId == Guid.Empty)
+            {
+                yield return new ValidationError("Plot.CropTypeCatalogId", "CropTypeCatalogId is required.");
+            }
+
+            if (selectedCropTypeSuggestionId.HasValue && selectedCropTypeSuggestionId.Value == Guid.Empty)
+            {
+                yield return new ValidationError("Plot.SelectedCropTypeSuggestionId", "SelectedCropTypeSuggestionId cannot be empty when provided.");
+            }
+
+            if (selectedCropTypeSuggestionId.HasValue && cropTypeCatalogId == Guid.Empty)
+            {
+                yield return new ValidationError(
+                    "Plot.CropTypeCatalogId",
+                    "CropTypeCatalogId is required when SelectedCropTypeSuggestionId is informed.");
+            }
+        }
+
         #endregion
 
         #region Domain Events
@@ -367,7 +424,9 @@ namespace TC.Agro.Farm.Domain.Aggregates
             DateTimeOffset ExpectedHarvestDate,
             string IrrigationType,
             string? AdditionalNotes,
-            DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
+            DateTimeOffset OccurredOn,
+            Guid CropTypeCatalogId,
+            Guid? SelectedCropTypeSuggestionId = null) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record PlotUpdatedDomainEvent(
             Guid AggregateId,
@@ -381,12 +440,16 @@ namespace TC.Agro.Farm.Domain.Aggregates
             DateTimeOffset ExpectedHarvestDate,
             string IrrigationType,
             string? AdditionalNotes,
-            DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
+            DateTimeOffset OccurredOn,
+            Guid CropTypeCatalogId,
+            Guid? SelectedCropTypeSuggestionId = null) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record PlotCropTypeChangedDomainEvent(
             Guid AggregateId,
             string CropType,
-            DateTimeOffset OccurredOn) : BaseDomainEvent(AggregateId, OccurredOn);
+            DateTimeOffset OccurredOn,
+            Guid CropTypeCatalogId,
+            Guid? SelectedCropTypeSuggestionId = null) : BaseDomainEvent(AggregateId, OccurredOn);
 
         public record PlotDeactivatedDomainEvent(
             Guid AggregateId,

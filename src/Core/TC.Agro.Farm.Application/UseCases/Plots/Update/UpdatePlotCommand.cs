@@ -14,7 +14,9 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Update
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
         string IrrigationType,
-        string? AdditionalNotes) : IBaseCommand<UpdatePlotResponse>, IInvalidateCache
+        string? AdditionalNotes,
+        Guid? CropTypeCatalogId = null,
+        Guid? SelectedCropTypeSuggestionId = null) : IBaseCommand<UpdatePlotResponse>, IInvalidateCache
     {
         public IReadOnlyCollection<string> CacheTags =>
         [

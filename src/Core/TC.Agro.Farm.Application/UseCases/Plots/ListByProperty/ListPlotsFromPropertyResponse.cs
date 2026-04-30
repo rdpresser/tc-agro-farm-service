@@ -20,5 +20,7 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListByProperty
         DateTimeOffset PlantingDate,
         DateTimeOffset ExpectedHarvestDate,
         string IrrigationType,
-        string? AdditionalNotes);
+        string? AdditionalNotes,
+        Guid CropTypeCatalogId,
+        Guid? SelectedCropTypeSuggestionId = null);
 }

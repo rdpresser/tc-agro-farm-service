@@ -3,6 +3,7 @@ using FakeItEasy;
 using Microsoft.Extensions.Logging;
 using TC.Agro.Contracts.Events.Farm;
 using TC.Agro.Farm.Application.Abstractions.Ports;
+using TC.Agro.Farm.Application.UseCases.CropTypes.Regenerate;
 using TC.Agro.Farm.Application.UseCases.Properties.Create;
 using TC.Agro.Farm.Domain.Aggregates;
 using TC.Agro.Farm.Tests.TestHelpers;
@@ -42,6 +43,7 @@ public sealed class CreatePropertyCommandHandlerTests
 
         PropertyAggregate? addedAggregate = null;
         EventContext<PropertyCreatedIntegrationEvent>? publishedEvent = null;
+        GeneratePropertyCropTypeSuggestionsMessage? queuedGenerationMessage = null;
 
         A.CallTo(() => _repository.NameExistsForOwnerAsync(command.Name, producerId, A<CancellationToken>._))
             .Returns(false);
@@ -49,6 +51,8 @@ public sealed class CreatePropertyCommandHandlerTests
             .Invokes(call => addedAggregate = call.GetArgument<PropertyAggregate>(0));
         A.CallTo(() => _outbox.EnqueueAsync(A<EventContext<PropertyCreatedIntegrationEvent>>._, A<CancellationToken>._))
             .Invokes(call => publishedEvent = call.GetArgument<EventContext<PropertyCreatedIntegrationEvent>>(0));
+        A.CallTo(() => _outbox.EnqueueAsync(A<GeneratePropertyCropTypeSuggestionsMessage>._, A<CancellationToken>._))
+            .Invokes(call => queuedGenerationMessage = call.GetArgument<GeneratePropertyCropTypeSuggestionsMessage>(0));
         A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._))
             .Returns(Task.FromResult(1));
 
@@ -67,10 +71,49 @@ public sealed class CreatePropertyCommandHandlerTests
         publishedEvent!.EventData.OwnerId.ShouldBe(producerId);
         publishedEvent.EventData.Name.ShouldBe("Farm Alpha");
 
+        queuedGenerationMessage.ShouldNotBeNull();
+        queuedGenerationMessage!.PropertyId.ShouldBe(addedAggregate.Id);
+        queuedGenerationMessage.OwnerId.ShouldBe(producerId);
+        queuedGenerationMessage.TriggerReason.ShouldBe("property-created");
+
         A.CallTo(() => _repository.Add(A<PropertyAggregate>._)).MustHaveHappenedOnceExactly();
         A.CallTo(() => _outbox.EnqueueAsync(A<EventContext<PropertyCreatedIntegrationEvent>>._, A<CancellationToken>._))
             .MustHaveHappenedOnceExactly();
+        A.CallTo(() => _outbox.EnqueueAsync(A<GeneratePropertyCropTypeSuggestionsMessage>._, A<CancellationToken>._))
+            .MustHaveHappenedOnceExactly();
         A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenCoordinatesAreMissing_ShouldNotQueueCropSuggestionGeneration()
+    {
+        var producerId = Guid.NewGuid();
+        var userContext = TestUserContextFactory.CreateProducer(producerId);
+
+        var command = new CreatePropertyCommand(
+            Name: "Farm Delta",
+            Address: "Road 8",
+            City: "Jaboticabal",
+            State: "SP",
+            Country: "Brazil",
+            AreaHectares: 60,
+            Latitude: null,
+            Longitude: null,
+            OwnerId: null);
+
+        A.CallTo(() => _repository.NameExistsForOwnerAsync(command.Name, producerId, A<CancellationToken>._))
+            .Returns(false);
+        A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._))
+            .Returns(Task.FromResult(1));
+
+        var sut = CreateHandler(userContext);
+
+        var result = await sut.ExecuteAsync(command, CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+
+        A.CallTo(() => _outbox.EnqueueAsync(A<GeneratePropertyCropTypeSuggestionsMessage>._, A<CancellationToken>._))
+            .MustNotHaveHappened();
     }
 
     [Fact]

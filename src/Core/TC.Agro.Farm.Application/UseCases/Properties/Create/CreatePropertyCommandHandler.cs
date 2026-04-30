@@ -85,6 +85,26 @@ namespace TC.Agro.Farm.Application.UseCases.Properties.Create
                 }
             }
 
+            if (aggregate.Location.Latitude.HasValue && aggregate.Location.Longitude.HasValue)
+            {
+                var triggerUserId = UserContext.Id == Guid.Empty ? aggregate.OwnerId : UserContext.Id;
+
+                await Outbox.EnqueueAsync(
+                    new CropTypes.Regenerate.GeneratePropertyCropTypeSuggestionsMessage(
+                        PropertyId: aggregate.Id,
+                        OwnerId: aggregate.OwnerId,
+                        TriggeredByUserId: triggerUserId,
+                        TriggerReason: "property-created",
+                        RequestedAt: DateTimeOffset.UtcNow),
+                    ct).ConfigureAwait(false);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Skipping crop suggestion generation queue for property {PropertyId} because coordinates are missing.",
+                    aggregate.Id);
+            }
+
             _logger.LogInformation(
                 "Enqueued {Count} integration events for property {PropertyId}",
                 integrationEvents.Count,

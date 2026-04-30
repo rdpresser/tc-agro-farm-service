@@ -10,6 +10,7 @@ global using TC.Agro.Farm.Application.Abstractions;
 global using TC.Agro.Farm.Application.Abstractions.Mappers;
 global using TC.Agro.Farm.Application.Abstractions.Ports;
 global using TC.Agro.Farm.Domain.Aggregates;
+global using TC.Agro.Farm.Domain.ValueObjects;
 global using TC.Agro.SharedKernel.Application.Commands;
 global using TC.Agro.SharedKernel.Application.Handlers;
 global using TC.Agro.SharedKernel.Application.Ports;

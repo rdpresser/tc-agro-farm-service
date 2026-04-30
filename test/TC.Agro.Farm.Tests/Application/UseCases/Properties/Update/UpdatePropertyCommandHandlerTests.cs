@@ -15,6 +15,8 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Properties.Update;
 public sealed class UpdatePropertyCommandHandlerTests
 {
     private readonly IPropertyAggregateRepository _repository = A.Fake<IPropertyAggregateRepository>();
+    private readonly ICropTypeSuggestionRepository _cropTypeRepository = A.Fake<ICropTypeSuggestionRepository>();
+    private readonly ICropCycleAggregateRepository _cropCycleRepository = A.Fake<ICropCycleAggregateRepository>();
     private readonly ITransactionalOutbox _outbox = A.Fake<ITransactionalOutbox>();
     private readonly ILogger<UpdatePropertyCommandHandler> _logger = A.Fake<ILogger<UpdatePropertyCommandHandler>>();
 
@@ -112,6 +114,8 @@ public sealed class UpdatePropertyCommandHandlerTests
             .Returns(aggregate);
         A.CallTo(() => _repository.NameExistsForOwnerExcludingAsync(command.Name, ownerId, aggregate.Id, A<CancellationToken>._))
             .Returns(false);
+        A.CallTo(() => _cropCycleRepository.HasActiveCyclesByPropertyAsync(aggregate.Id, A<CancellationToken>._))
+            .Returns(false);
         A.CallTo(() => _outbox.EnqueueAsync(A<EventContext<PropertyUpdatedIntegrationEvent>>._, A<CancellationToken>._))
             .Invokes(call => publishedEvent = call.GetArgument<EventContext<PropertyUpdatedIntegrationEvent>>(0));
         A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._))
@@ -130,11 +134,76 @@ public sealed class UpdatePropertyCommandHandlerTests
         publishedEvent!.EventData.OwnerId.ShouldBe(ownerId);
         publishedEvent.EventData.Name.ShouldBe("Farm Updated");
 
+        A.CallTo(() => _cropTypeRepository.MarkAiSuggestionsAsStaleByPropertyAsync(A<Guid>._, A<CancellationToken>._))
+            .MustNotHaveHappened();
         A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustHaveHappenedOnceExactly();
     }
 
+    [Fact]
+    public async Task ExecuteAsync_WhenLocationChanges_ShouldMarkAiSuggestionsAsStale()
+    {
+        var ownerId = Guid.NewGuid();
+        var userContext = TestUserContextFactory.CreateProducer(ownerId);
+        var aggregate = CreateProperty(ownerId);
+        var command = CreateCommand(aggregate.Id) with
+        {
+            Latitude = -20.1234,
+            Longitude = -47.9999
+        };
+
+        A.CallTo(() => _repository.GetByIdAsync(command.Id, A<CancellationToken>._))
+            .Returns(aggregate);
+        A.CallTo(() => _repository.NameExistsForOwnerExcludingAsync(command.Name, ownerId, aggregate.Id, A<CancellationToken>._))
+            .Returns(false);
+        A.CallTo(() => _cropCycleRepository.HasActiveCyclesByPropertyAsync(aggregate.Id, A<CancellationToken>._))
+            .Returns(false);
+        A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._))
+            .Returns(Task.FromResult(1));
+
+        var sut = CreateHandler(userContext);
+
+        var result = await sut.ExecuteAsync(command, CancellationToken.None);
+
+        result.IsSuccess.ShouldBeTrue();
+
+        A.CallTo(() => _cropTypeRepository.MarkAiSuggestionsAsStaleByPropertyAsync(aggregate.Id, A<CancellationToken>._))
+            .MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenLocationChangesAndPropertyHasActiveCycles_ShouldReturnInvalid()
+    {
+        var ownerId = Guid.NewGuid();
+        var userContext = TestUserContextFactory.CreateProducer(ownerId);
+        var aggregate = CreateProperty(ownerId);
+        var command = CreateCommand(aggregate.Id) with
+        {
+            Latitude = -19.8888,
+            Longitude = -48.2222
+        };
+
+        A.CallTo(() => _repository.GetByIdAsync(command.Id, A<CancellationToken>._))
+            .Returns(aggregate);
+        A.CallTo(() => _repository.NameExistsForOwnerExcludingAsync(command.Name, ownerId, aggregate.Id, A<CancellationToken>._))
+            .Returns(false);
+        A.CallTo(() => _cropCycleRepository.HasActiveCyclesByPropertyAsync(aggregate.Id, A<CancellationToken>._))
+            .Returns(true);
+
+        var sut = CreateHandler(userContext);
+
+        var result = await sut.ExecuteAsync(command, CancellationToken.None);
+
+        result.IsSuccess.ShouldBeFalse();
+        result.ValidationErrors.ShouldContain(error =>
+            error.ErrorMessage.Contains("active crop cycles", StringComparison.OrdinalIgnoreCase));
+
+        A.CallTo(() => _cropTypeRepository.MarkAiSuggestionsAsStaleByPropertyAsync(A<Guid>._, A<CancellationToken>._))
+            .MustNotHaveHappened();
+        A.CallTo(() => _outbox.SaveChangesAsync(A<CancellationToken>._)).MustNotHaveHappened();
+    }
+
     private UpdatePropertyCommandHandler CreateHandler(IUserContext userContext)
-        => new(_repository, userContext, _outbox, _logger);
+        => new(_repository, _cropTypeRepository, _cropCycleRepository, userContext, _outbox, _logger);
 
     private static UpdatePropertyCommand CreateCommand(Guid? id = null)
         => new(

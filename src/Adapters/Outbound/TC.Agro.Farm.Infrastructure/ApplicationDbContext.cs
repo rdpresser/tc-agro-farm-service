@@ -6,6 +6,10 @@ namespace TC.Agro.Farm.Infrastructure
         public DbSet<PropertyAggregate> Properties { get; set; } = default!;
         public DbSet<PlotAggregate> Plots { get; set; } = default!;
         public DbSet<SensorAggregate> Sensors { get; set; } = default!;
+        public DbSet<CropTypeCatalogAggregate> CropTypeCatalogs { get; set; } = default!;
+        public DbSet<CropTypeSuggestionAggregate> CropTypeSuggestions { get; set; } = default!;
+        public DbSet<CropCycleAggregate> CropCycles { get; set; } = default!;
+        public DbSet<CropCycleEventAggregate> CropCycleEvents { get; set; } = default!;
         public DbSet<OwnerSnapshot> OwnerSnapshots { get; set; } = default!;
 
         /// <inheritdoc />
@@ -30,6 +34,10 @@ namespace TC.Agro.Farm.Infrastructure
             modelBuilder.Entity<PropertyAggregate>().HasQueryFilter(p => p.IsActive);
             modelBuilder.Entity<PlotAggregate>().HasQueryFilter(p => p.IsActive);
             modelBuilder.Entity<SensorAggregate>().HasQueryFilter(s => s.IsActive);
+            modelBuilder.Entity<CropTypeCatalogAggregate>().HasQueryFilter(c => c.IsActive);
+            modelBuilder.Entity<CropTypeSuggestionAggregate>().HasQueryFilter(c => c.IsActive);
+            modelBuilder.Entity<CropCycleAggregate>().HasQueryFilter(c => c.IsActive);
+            modelBuilder.Entity<CropCycleEventAggregate>().HasQueryFilter(e => e.CropCycle.IsActive);
         }
 
         /// <inheritdoc />

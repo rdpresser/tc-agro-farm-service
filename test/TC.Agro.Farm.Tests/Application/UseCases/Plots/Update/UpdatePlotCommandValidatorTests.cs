@@ -43,6 +43,50 @@ namespace TC.Agro.Farm.Tests.Application.UseCases.Plots.Update
             result.Errors.ShouldContain(x => x.PropertyName == nameof(UpdatePlotCommand.ExpectedHarvestDate));
         }
 
+        [Fact]
+        public void Validate_WithEmptyCropTypeAndCatalogIdProvided_ShouldSucceed()
+        {
+            var command = CreateValidCommand() with
+            {
+                CropType = string.Empty,
+                CropTypeCatalogId = Guid.NewGuid()
+            };
+
+            var result = _validator.Validate(command);
+
+            result.IsValid.ShouldBeTrue();
+        }
+
+        [Fact]
+        public void Validate_WithEmptyCropTypeAndNoCatalogId_ShouldFail()
+        {
+            var command = CreateValidCommand() with
+            {
+                CropType = string.Empty,
+                CropTypeCatalogId = null
+            };
+
+            var result = _validator.Validate(command);
+
+            result.IsValid.ShouldBeFalse();
+            result.Errors.ShouldContain(x => x.ErrorCode == "CropTypeCatalog.CompatibilityRequired");
+        }
+
+        [Fact]
+        public void Validate_WithSuggestionIdAndNoCatalogId_ShouldFail()
+        {
+            var command = CreateValidCommand() with
+            {
+                CropTypeCatalogId = null,
+                SelectedCropTypeSuggestionId = Guid.NewGuid()
+            };
+
+            var result = _validator.Validate(command);
+
+            result.IsValid.ShouldBeFalse();
+            result.Errors.ShouldContain(x => x.ErrorCode == $"{nameof(UpdatePlotCommand.CropTypeCatalogId)}.RequiredWhenSuggestionInformed");
+        }
+
         private static UpdatePlotCommand CreateValidCommand()
             => new(
                 PlotId: Guid.NewGuid(),

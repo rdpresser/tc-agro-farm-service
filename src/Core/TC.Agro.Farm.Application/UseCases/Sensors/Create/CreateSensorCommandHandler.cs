@@ -4,14 +4,12 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
         : BaseCommandHandler<CreateSensorCommand, CreateSensorResponse, SensorAggregate, ISensorAggregateRepository>
     {
         private readonly IPlotAggregateRepository _plotRepository;
-        private readonly IPlotReadStore _plotReadStore;
         private readonly IPropertyAggregateRepository _propertyRepository;
         private readonly ILogger<CreateSensorCommandHandler> _logger;
 
         public CreateSensorCommandHandler(
             ISensorAggregateRepository repository,
             IPlotAggregateRepository plotRepository,
-            IPlotReadStore plotReadStore,
             IPropertyAggregateRepository propertyRepository,
             IUserContext userContext,
             ITransactionalOutbox outbox,
@@ -19,7 +17,6 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
             : base(repository, userContext, outbox, logger)
         {
             _plotRepository = plotRepository ?? throw new ArgumentNullException(nameof(plotRepository));
-            _plotReadStore = plotReadStore ?? throw new ArgumentNullException(nameof(plotReadStore));
             _propertyRepository = propertyRepository ?? throw new ArgumentNullException(nameof(propertyRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -33,14 +30,14 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
             }
 
             var ownerId = ownerIdResult.Value;
-            var searchPlot = await _plotReadStore.GetByIdAsync(command.PlotId, ct);
+            var plot = await _plotRepository.GetByIdAsync(command.PlotId, ct).ConfigureAwait(false);
 
-            if (searchPlot == null)
+            if (plot == null)
             {
                 return Result.Invalid(FarmDomainErrors.PlotNotFound);
             }
 
-            var propertyId = searchPlot.PropertyId;
+            var propertyId = plot.PropertyId;
             var property = await _propertyRepository.GetByIdAsync(propertyId, ct).ConfigureAwait(false);
 
             if (property is null)
@@ -60,11 +57,11 @@ namespace TC.Agro.Farm.Application.UseCases.Sensors.Create
                 ownerId: ownerId,
                 propertyId: propertyId,
                 plotId: command.PlotId,
-                propertyName: searchPlot.PropertyName,
-                plotName: searchPlot.Name,
-                plotLatitude: searchPlot.Latitude ?? property.Location.Latitude,
-                plotLongitude: searchPlot.Longitude ?? property.Location.Longitude,
-                plotBoundaryGeoJson: searchPlot.BoundaryGeoJson);
+                propertyName: property.Name.Value,
+                plotName: plot.Name.Value,
+                plotLatitude: plot.Latitude ?? property.Location.Latitude,
+                plotLongitude: plot.Longitude ?? property.Location.Longitude,
+                plotBoundaryGeoJson: plot.BoundaryGeoJson);
 
             return aggregateResult;
         }

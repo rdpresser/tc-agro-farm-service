@@ -14,5 +14,13 @@ namespace TC.Agro.Farm.Application.Abstractions
         public const string Owners = "owners";
         public const string OwnerList = "owners:list";
         public const string OwnerById = "owners:by-id";
+
+        public const string CropTypes = "crop-types";
+        public const string CropTypeList = "crop-types:list";
+        public const string CropTypeById = "crop-types:by-id";
+
+        public const string CropCycles = "crop-cycles";
+        public const string CropCycleList = "crop-cycles:list";
+        public const string CropCycleById = "crop-cycles:by-id";
     }
 }

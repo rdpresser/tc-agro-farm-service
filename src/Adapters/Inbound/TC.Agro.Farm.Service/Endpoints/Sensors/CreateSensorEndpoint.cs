@@ -50,9 +50,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Sensors
 
             if (response.IsSuccess)
             {
-                string location = $"/api/sensor/{response.Value.Id}";
-                object routeValues = new { id = response.Value.Id };
-                await Send.CreatedAtAsync(location, routeValues, response.Value, cancellation: ct).ConfigureAwait(false);
+                await HttpContext!.Response.SendAsync(response.Value, (int)HttpStatusCode.Created, cancellation: ct).ConfigureAwait(false);
                 return;
             }
 

@@ -18,6 +18,7 @@ namespace TC.Agro.Farm.Service.Extensions
                 .AddCorrelationIdGenerator()
                 .AddValidatorsFromAssemblyContaining<CreatePropertyCommandValidator>()
                 .AddCaching()
+                .AddCropTypeSuggestionAi(builder.Configuration)
                 .AddCustomCors(builder.Configuration)
                 .AddCustomAuthentication(builder.Configuration)
                 .AddCustomFastEndpoints(builder.Configuration)
@@ -26,6 +27,33 @@ namespace TC.Agro.Farm.Service.Extensions
                 // ENHANCED: Register telemetry metrics
                 .AddSingleton<FarmMetrics>()
                 .AddSingleton<SystemMetrics>();
+
+            return services;
+        }
+
+        private static IServiceCollection AddCropTypeSuggestionAi(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<Options.OpenAi.OpenAiCropSuggestionOptions>(
+                configuration.GetSection(Options.OpenAi.OpenAiCropSuggestionOptions.SectionName));
+
+            services.AddHttpClient<Application.Abstractions.Ports.ICropTypeSuggestionAiProvider, Providers.OpenAiCropTypeSuggestionProvider>((serviceProvider, client) =>
+            {
+                var options = serviceProvider
+                    .GetRequiredService<Microsoft.Extensions.Options.IOptions<Options.OpenAi.OpenAiCropSuggestionOptions>>()
+                    .Value;
+
+                var baseUrl = string.IsNullOrWhiteSpace(options.BaseUrl)
+                    ? "https://api.openai.com/"
+                    : options.BaseUrl;
+
+                if (!baseUrl.EndsWith("/", StringComparison.Ordinal))
+                {
+                    baseUrl += "/";
+                }
+
+                client.BaseAddress = new Uri(baseUrl, UriKind.Absolute);
+                client.Timeout = TimeSpan.FromSeconds(Math.Clamp(options.TimeoutSeconds, 5, 180));
+            });
 
             return services;
         }

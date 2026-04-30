@@ -1,0 +1,23 @@
+namespace TC.Agro.Farm.Application.UseCases.CropTypes.Promote
+{
+    public sealed record PromoteCropTypeSuggestionResponse(
+        Guid Id,
+        Guid PropertyId,
+        Guid OwnerId,
+        string CropType,
+        string? SuggestedImage,
+        string Source,
+        bool IsOverride,
+        bool IsStale,
+        string? PlantingWindow,
+        int? HarvestCycleMonths,
+        string? SuggestedIrrigationType,
+        double? MinSoilMoisture,
+        double? MaxTemperature,
+        double? MinHumidity,
+        string? Notes,
+        DateTimeOffset CreatedAt,
+        Guid CropTypeCatalogId,
+        Guid PromotedSuggestionId,
+        bool AlreadyPromoted);
+}

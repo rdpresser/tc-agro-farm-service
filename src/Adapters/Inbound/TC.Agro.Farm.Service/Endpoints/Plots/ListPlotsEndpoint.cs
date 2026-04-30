@@ -23,6 +23,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                       .Produces((int)HttpStatusCode.Unauthorized));
 
             var faker = new Faker();
+            string[] exampleCropTypes = ["Soy", "Corn", "Wheat", "Rice", "Coffee", "Sugarcane"];
             List<ListPlotsResponse> plotList = [];
             for (int i = 0; i < 5; i++)
             {
@@ -33,7 +34,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     faker.Name.FullName(),
                     faker.Company.CompanyName() + " Farm",
                     $"Talhão {faker.Random.AlphaNumeric(2).ToUpper()}",
-                    faker.PickRandom(CropType.CommonCropTypes),
+                    faker.PickRandom(exampleCropTypes),
                     faker.Random.Double(10, 100),
                     -21.1775,
                     -47.8103,
@@ -43,7 +44,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddMonths(-2),
                     DateTimeOffset.UtcNow.AddMonths(6),
                     IrrigationType.CenterPivot,
-                    null));
+                    null,
+                    Guid.NewGuid()));
             }
 
             var exampleResponse = new PaginatedResponse<ListPlotsResponse>(

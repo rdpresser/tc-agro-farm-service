@@ -20,11 +20,12 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.ListByProperty
             CancellationToken ct = default)
         {
             _logger.LogDebug(
-                "Getting plot list. Page: {PageNumber}, Size: {PageSize}, PropertyId: {PropertyId}, CropType: {CropType}",
+                "Getting plot list. Page: {PageNumber}, Size: {PageSize}, PropertyId: {PropertyId}, CropType: {CropType}, CropTypeCatalogId: {CropTypeCatalogId}",
                 query.PageNumber,
                 query.PageSize,
                 query.Id,
-                query.CropType);
+                query.CropType,
+                query.CropTypeCatalogId);
 
             var (plots, totalCount) = await _plotReadStore
                 .ListPlotsFromPropertyAsync(query, ct)

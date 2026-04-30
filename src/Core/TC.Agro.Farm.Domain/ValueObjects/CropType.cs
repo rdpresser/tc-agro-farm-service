@@ -11,31 +11,6 @@ namespace TC.Agro.Farm.Domain.ValueObjects
         public static readonly ValidationError TooLong = new("CropType.TooLong", $"Crop type cannot exceed {MaxLength} characters.");
         public static readonly ValidationError InvalidValue = new("CropType.InvalidValue", "Crop type contains invalid characters.");
 
-        // Common crop types for validation suggestions
-        public static readonly string[] CommonCropTypes =
-        [
-            "Soy",
-            "Corn",
-            "Wheat",
-            "Cotton",
-            "Coffee",
-            "Sugarcane",
-            "Rice",
-            "Beans",
-            "Potato",
-            "Tomato",
-            "Lettuce",
-            "Carrot",
-            "Onion",
-            "Orange",
-            "Grape",
-            "Apple",
-            "Banana",
-            "Mango",
-            "Pasture",
-            "Other"
-        ];
-
         private static readonly Regex ValidCropTypeRegex = new(
             @"^[a-zA-ZÀ-ÿ0-9\s\-]+$",
             RegexOptions.Compiled);

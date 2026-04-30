@@ -20,7 +20,7 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
             Summary(s =>
             {
                 s.Summary = "Create a new plot within a property.";
-                s.Description = "This endpoint allows producers or admins to register a new plot (talhão) within an existing property. Crop type is mandatory.";
+                s.Description = "This endpoint allows producers or admins to register a new plot (talhão) within an existing property. Crop type catalog reference is mandatory.";
                 s.ExampleRequest = new CreatePlotCommand(
                     Guid.NewGuid(),
                     "North Plot",
@@ -32,7 +32,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     DateTimeOffset.UtcNow.AddMonths(1),
                     DateTimeOffset.UtcNow.AddMonths(6),
                     Domain.ValueObjects.IrrigationType.CenterPivot,
-                    "Optional notes about soil or irrigation.");
+                    "Optional notes about soil or irrigation.",
+                    CropTypeCatalogId: Guid.NewGuid());
                 s.ResponseExamples[201] = new CreatePlotResponse(
                     Guid.NewGuid(),
                     Guid.NewGuid(),
@@ -46,7 +47,8 @@ namespace TC.Agro.Farm.Service.Endpoints.Plots
                     Domain.ValueObjects.IrrigationType.CenterPivot,
                     "Optional notes about soil or irrigation.",
                     true,
-                    DateTimeOffset.UtcNow);
+                    DateTimeOffset.UtcNow,
+                    Guid.NewGuid());
                 s.Responses[201] = "Returned when the plot is successfully created.";
                 s.Responses[400] = "Returned when the request contains validation errors.";
                 s.Responses[401] = "Returned when the request is made without a valid user token.";

@@ -2,13 +2,18 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
 {
     public static class CreatePlotMapper
     {
-        public static Result<PlotAggregate> ToAggregate(CreatePlotCommand command, Guid ownerId)
+        public static Result<PlotAggregate> ToAggregate(
+            CreatePlotCommand command,
+            Guid ownerId,
+            string resolvedCropType,
+            Guid cropTypeCatalogId,
+            Guid? selectedCropTypeSuggestionId)
         {
             return PlotAggregate.Create(
                 command.PropertyId,
                 ownerId,
                 command.Name,
-                command.CropType,
+                resolvedCropType,
                 command.AreaHectares,
                 command.PlantingDate,
                 command.ExpectedHarvestDate,
@@ -16,16 +21,18 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 command.AdditionalNotes,
                 command.Latitude,
                 command.Longitude,
-                command.BoundaryGeoJson);
+                command.BoundaryGeoJson,
+                cropTypeCatalogId,
+                selectedCropTypeSuggestionId);
         }
 
-        public static CreatePlotResponse FromAggregate(PlotAggregate aggregate)
+        public static CreatePlotResponse FromAggregate(PlotAggregate aggregate, string cropTypeDisplayName)
         {
             return new CreatePlotResponse(
                 Id: aggregate.Id,
                 PropertyId: aggregate.PropertyId,
                 Name: aggregate.Name.Value,
-                CropType: aggregate.CropType.Value,
+                CropType: cropTypeDisplayName,
                 AreaHectares: aggregate.AreaHectares.Hectares,
                 Latitude: aggregate.Latitude,
                 Longitude: aggregate.Longitude,
@@ -34,7 +41,9 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 IrrigationType: aggregate.IrrigationType.Value,
                 AdditionalNotes: aggregate.AdditionalNotes?.Value,
                 IsActive: aggregate.IsActive,
-                CreatedAt: aggregate.CreatedAt);
+                CreatedAt: aggregate.CreatedAt,
+                CropTypeCatalogId: aggregate.CropTypeCatalogId,
+                SelectedCropTypeSuggestionId: aggregate.SelectedCropTypeSuggestionId);
         }
 
         public static PlotCreatedIntegrationEvent ToIntegrationEvent(PlotCreatedDomainEvent domainEvent)
@@ -48,6 +57,8 @@ namespace TC.Agro.Farm.Application.UseCases.Plots.Create
                 domainEvent.ExpectedHarvestDate,
                 domainEvent.IrrigationType,
                 domainEvent.AdditionalNotes ?? string.Empty,
-                domainEvent.OccurredOn);
+                domainEvent.OccurredOn,
+                domainEvent.CropTypeCatalogId,
+                domainEvent.SelectedCropTypeSuggestionId);
     }
 }
